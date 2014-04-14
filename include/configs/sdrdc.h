@@ -19,6 +19,9 @@
 #ifndef __CONFIG_SDRDC_H
 #define __CONFIG_SDRDC_H
 
+// SDRDC uses a 38.4MHz VCTCXO
+#define CONFIG_ZYNQ_PS_CLK_FREQ 38400000
+
 // RAM size matches ZC702 (1GByte) using 2x16-bit parts rather than 4x8-bit
 #define PHYS_SDRAM_1_SIZE (1024 * 1024 * 1024)
 
