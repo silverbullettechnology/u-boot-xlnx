@@ -302,7 +302,7 @@ static int bootm_find_ramdisk(int flag, int argc, char * const argv[])
 			       &images.rd_start, &images.rd_end);
 	if (ret) {
 		puts("Ramdisk image is corrupt or invalid\n");
-		return 1;
+		images.rd_start = images.rd_end = 0;
 	}
 
 	return 0;
@@ -487,19 +487,25 @@ static int bootm_load_os(bootm_headers_t *images, unsigned long *load_end,
 	return 0;
 }
 
+typedef int (* standalone_entry_t)(int, char * const []);
 static int bootm_start_standalone(int argc, char * const argv[])
 {
 	char  *s;
-	int   (*appl)(int, char * const []);
+	standalone_entry_t appl;
+
+	if ( images.ep == 0 ) {
+		printf("No entry point, not starting\n");
+		return 0;
+	}
 
 	/* Don't start if "autostart" is set to "no" */
 	if (((s = getenv("autostart")) != NULL) && (strcmp(s, "no") == 0)) {
 		setenv_hex("filesize", images.os.image_len);
 		return 0;
 	}
-	appl = (int (*)(int, char * const []))(ulong)ntohl(images.ep);
-	(*appl)(argc, argv);
-	return 0;
+
+	appl = (standalone_entry_t)images.ep;
+	return appl (argc-1, &argv[1]);
 }
 
 /* we overload the cmd field with our state machine info instead of a

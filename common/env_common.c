@@ -108,8 +108,7 @@ void set_default_env(const char *s)
 
 	if (s) {
 		if (*s == '!') {
-			printf("*** Warning - %s, "
-				"using default environment\n\n",
+			printf("Using default environment (%s)\n\n",
 				s + 1);
 		} else {
 			flags = H_INTERACTIVE;

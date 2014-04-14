@@ -79,7 +79,8 @@ static int sdhci_transfer_data(struct sdhci_host *host, struct mmc_data *data,
 	do {
 		stat = sdhci_readl(host, SDHCI_INT_STATUS);
 		if (stat & SDHCI_INT_ERROR) {
-			printf("Error detected in status(0x%X)!\n", stat);
+			if(stat!=0x208100)			
+				printf("Error detected in status(0x%X)!\n", stat);
 			return -1;
 		}
 		if (stat & rdy) {
