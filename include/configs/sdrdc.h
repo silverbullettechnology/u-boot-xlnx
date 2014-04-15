@@ -29,7 +29,7 @@
 #define CONFIG_ZYNQ_SERIAL_UART1
 #define CONFIG_SYS_NO_FLASH
 #define CONFIG_MMC
-#define CONFIG_ZYNQ_SPI
+#define CONFIG_ZYNQ_QSPI
 
 /* High Level Configuration Options */
 #define CONFIG_ARMV7 /* CPU */
@@ -96,7 +96,7 @@
 #undef CONFIG_CMD_NFS
 
 /* QSPI */
-#ifdef CONFIG_ZYNQ_SPI
+#ifdef CONFIG_ZYNQ_QSPI
 # define CONFIG_SF_DEFAULT_SPEED    30000000
 # define CONFIG_SPI_FLASH
 # define CONFIG_SPI_FLASH_SPANSION
