@@ -33,14 +33,13 @@ LIB	= $(obj)lib$(BOARD).o
 COBJS-y	:= board.o # ../../xilinx/zynq/libzynq.o
 
 
-ifdef MMC_PROGRAMMER
 LIB_DIR = /home/andrew/Silver-Bullet/tdsdr-uboot/bist_bsp/ps7_cortexa9_0/lib/
 
 LDFLAGS += -L$(LIB_DIR) -static
 
 LIBFLAG += -lxil
 COBJS-y += program_atmel.o low_level_pdi.o pdi_main.o stream.o xmega_pdi_nvm.o
-endif
+
 
 COBJS	:= $(sort $(COBJS-y))
 

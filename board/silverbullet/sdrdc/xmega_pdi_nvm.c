@@ -35,7 +35,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH
  * DAMAGE.
  */
-#include <xmega_pdi_nvm.h>
+#include "xmega_pdi_nvm.h"
 
 uint8_t cmd_buffer[20];
 enum status_code retval;

@@ -40,7 +40,7 @@
 #define STREAM_H_
 
 #include "config.h"
-#include <status_codes.h>
+#include "status_codes.h"
 
 struct stream {
 	uint8_t size;

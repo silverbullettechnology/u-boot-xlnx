@@ -35,7 +35,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH
  * DAMAGE.
  */
-#include <low_level_pdi.h>
+#include "low_level_pdi.h"
 
 #include "xparameters.h"
 #include "xgpiops.h"

@@ -41,10 +41,10 @@
 #include "config.h"
 
 /* PDI driver includes */
-#include <atxmega128a1_nvm_regs.h>
-#include <xmega_pdi_nvm.h>
+#include "atxmega128a1_nvm_regs.h"
+#include "xmega_pdi_nvm.h"
 
-#include <status_codes.h>
+#include "status_codes.h"
 
 /* Static strings */
 /* Test program defined in this file */

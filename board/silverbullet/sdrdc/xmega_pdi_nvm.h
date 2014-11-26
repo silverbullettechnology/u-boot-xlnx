@@ -39,9 +39,9 @@
 #define XMEGA_PDI_NVM_H_
 
 #include "config.h"
-#include <status_codes.h>
-#include <low_level_pdi.h>
-#include <atxmega128a1_nvm_regs.h>
+#include "status_codes.h"
+#include "low_level_pdi.h"
+#include "atxmega128a1_nvm_regs.h"
 
 
 #define XNVM_PDI_LDS_INSTR    0x00 //!< LDS instruction.

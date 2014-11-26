@@ -36,7 +36,7 @@
  * DAMAGE.
  */
 
-#include <stream.h>
+#include "stream.h"
 
 /**
  * \brief Function for putting a single byte into the steam
