@@ -34,8 +34,11 @@ COBJS-y	:= board.o # ../../xilinx/zynq/libzynq.o
 
 
 LIB_DIR = /home/andrew/Silver-Bullet/tdsdr-uboot/bist_bsp/ps7_cortexa9_0/lib/
+INCL_DIR = /home/andrew/Silver-Bullet/tdsdr-uboot/bist_bsp/ps7_cortexa9_0/include/
 
 LDFLAGS += -L$(LIB_DIR) -static
+INFLAGS := -I$(INCL_DIR)
+CFLAGS += -I$(INCL_DIR)
 
 LIBFLAG += -lxil
 COBJS-y += program_atmel.o low_level_pdi.o pdi_main.o stream.o xmega_pdi_nvm.o
