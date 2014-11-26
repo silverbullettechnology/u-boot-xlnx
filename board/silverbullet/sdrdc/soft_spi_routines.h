@@ -135,5 +135,5 @@
 int SpiPs_write_sensor(u16 SpiDeviceId);
 int SpiPs_read_sensor(u16 SpiDeviceId);
 
-void soft_spi_transfer(XGpioPs *InstancePtr, u8 *SendBufPtr,u8 *RecvBufPtr, unsigned ByteCount);
-void soft_spi_transfer_invert(XGpioPs *InstancePtr, u8 *SendBufPtr,u8 *RecvBufPtr, unsigned ByteCount);
+void soft_spi_transfer(XGpioPs *InstancePtr, char *SendBufPtr,char *RecvBufPtr, unsigned ByteCount);
+void soft_spi_transfer_invert(XGpioPs *InstancePtr, char *SendBufPtr,char *RecvBufPtr, unsigned ByteCount);

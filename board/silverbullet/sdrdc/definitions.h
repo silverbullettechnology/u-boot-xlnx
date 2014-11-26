@@ -24,12 +24,11 @@
 //put build definition here.  CUT2_BUILD for Cut 2, PPR_BUILD for PPR
 #define PPR_BUILD
 
-extern XGpioPs Gpio; //gpio instance
-extern u8 gpio_bank;
-extern u8 ss_pin;
-extern u8 mosi_pin;
-extern u8 miso_pin;
-extern u8 clk_pin;
-extern u32 port_mask;
-extern u32 miso_pin_mask;
-extern u8 miso_shift;
+extern char gpio_bank;
+extern char ss_pin;
+extern char mosi_pin;
+extern char miso_pin;
+extern char clk_pin;
+extern unsigned long port_mask;
+extern unsigned long miso_pin_mask;
+extern char miso_shift;

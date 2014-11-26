@@ -1,7 +1,7 @@
 /*
  * routines.h
  *
- *  Created on: Sep 17, 2013
+ * Created on: Sep 17, 2013
  *      Author: andrew
  */
 
@@ -10,8 +10,8 @@
 
 int hexToInt(char s[]);
 int atoint(const char *str);
-u8* hex_decode(const char *in, u8 len,u8 *out);
-u16 read_ascii_hex_u16();
+char* hex_decode(const char *in, char len,char *out);
+unsigned short read_ascii_hex_u16();
 void adi_hw_reset();
 char *xil_fgets(char *buf, int bsize);
 float standard_deviation(float data[], int n);

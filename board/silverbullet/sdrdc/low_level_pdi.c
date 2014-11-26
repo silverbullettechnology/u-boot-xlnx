@@ -102,6 +102,15 @@ int GpioPolledOutputExample(u16 DeviceId, u32 *DataRead);
  * easily accessible from a debugger.
  */
 XGpioPs Gpio;	/* The driver instance for GPIO Device. */
+
+ char gpio_bank;
+ char ss_pin;
+ char mosi_pin;
+ char miso_pin;
+ char clk_pin;
+ unsigned long port_mask;
+ unsigned long miso_pin_mask;
+ char miso_shift;
 /*****************************************************************************/
 
 

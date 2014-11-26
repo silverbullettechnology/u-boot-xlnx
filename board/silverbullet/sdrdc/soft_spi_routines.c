@@ -80,14 +80,14 @@
  */
 //static XSpiPs SpiInstance;
 extern XGpioPs Gpio; //gpio instance
-extern u8 gpio_bank;
-extern u8 ss_pin;
-extern u8 mosi_pin;
-extern u8 miso_pin;
-extern u8 clk_pin;
-extern u32 port_mask;
-extern u32 miso_pin_mask;
-extern u8 miso_shift;
+extern char gpio_bank;
+extern char ss_pin;
+extern char mosi_pin;
+extern char miso_pin;
+extern char clk_pin;
+extern unsigned long port_mask;
+extern unsigned long miso_pin_mask;
+extern char miso_shift;
 
 /*****************************************************************************/
 /**
@@ -98,19 +98,19 @@ Main function to do SPI transfers
 
 
 //sends MSB first
-void soft_spi_transfer(XGpioPs *InstancePtr, u8 *SendBufPtr,u8 *RecvBufPtr, unsigned ByteCount)
+void soft_spi_transfer(XGpioPs *InstancePtr, char *SendBufPtr,char *RecvBufPtr, unsigned ByteCount)
 {
 	volatile int Delay;
 	int i;
 	int j;
 
-	u8 shift;
+	char shift;
 
-	u8 current_byte;
-	u32 current_recv;
+	char current_byte;
+	unsigned long current_recv;
 
 	int active_tx_bit;
-	u32 active_rx_bit;
+	unsigned long active_rx_bit;
 
 
 
@@ -170,19 +170,19 @@ void soft_spi_transfer(XGpioPs *InstancePtr, u8 *SendBufPtr,u8 *RecvBufPtr, unsi
 }
 
 //sends LSB first
-void soft_spi_transfer_invert(XGpioPs *InstancePtr, u8 *SendBufPtr,u8 *RecvBufPtr, unsigned ByteCount)
+void soft_spi_transfer_invert(XGpioPs *InstancePtr, char *SendBufPtr,char *RecvBufPtr, unsigned ByteCount)
 {
 	volatile int Delay;
 	int i;
 	int j;
 
-	u8 shift;
+	char shift;
 
-	u8 current_byte;
-	u32 current_recv;
+	char current_byte;
+	unsigned long current_recv;
 
 	int active_tx_bit;
-	u32 active_rx_bit;
+	unsigned long active_rx_bit;
 
 
 

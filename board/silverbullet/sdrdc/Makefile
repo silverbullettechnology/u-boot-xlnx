@@ -41,7 +41,7 @@ INFLAGS := -I$(INCL_DIR)
 CFLAGS += -I$(INCL_DIR)
 
 LIBFLAG += -lxil
-COBJS-y += program_atmel.o low_level_pdi.o pdi_main.o stream.o xmega_pdi_nvm.o
+COBJS-y += program_atmel.o low_level_pdi.o pdi_main.o stream.o xmega_pdi_nvm.o routines.o soft_spi_routines.o fixture_spi_test.o
 
 
 COBJS	:= $(sort $(COBJS-y))

@@ -3,28 +3,37 @@
 
 /***************************** Include Files *********************************/
 
+#include "stdio.h"
+#include "stdlib.h"
+#include "string.h"
+
 #include "definitions.h"
 #include "soft_spi_routines.h"
 #include "routines.h"
+
+#include "xparameters.h"
+#include "xgpiops.h"
+#include "xstatus.h"
+#include "xuartps_hw.h"
 
 
 //static XSpiPs SpiInstance;
 extern XGpioPs Gpio; //gpio instance
 
-//extern u8 Slave_Select_Var = 3;
-//extern u8 Device_Id_Var = 2;
+//extern char Slave_Select_Var = 3;
+//extern char Device_Id_Var = 2;
 
-extern u8 gpio_bank;
-extern u8 ss_pin;
-extern u8 mosi_pin;
-extern u8 miso_pin;
-extern u8 clk_pin;
-extern u32 port_mask;
-extern u32 miso_pin_mask;
-extern u8 miso_shift;
+extern char gpio_bank;
+extern char ss_pin;
+extern char mosi_pin;
+extern char miso_pin;
+extern char clk_pin;
+extern unsigned long port_mask;
+extern unsigned long miso_pin_mask;
+extern char miso_shift;
 
-//static u8 Slave_Select_Var = 3;
-//static u8 Device_Id_Var = 2;
+//static char Slave_Select_Var = 3;
+//static char Device_Id_Var = 2;
 /*****************************************************************************/
 /**
 *
@@ -42,61 +51,59 @@ extern u8 miso_shift;
 
 
 /******************************************************************************/
-int fixture_write_read(u16 SpiDeviceId, u16 SlaveSelectVar)
+int fixture_write_read()
 {
+	XGpioPs_Config *ConfigPtr;	
 	int Status;
 	int i;
 
 	char invert;
+	char inbyte;
 
 	int size;
 
-
-	XGpioPs_Config *ConfigPtr;
-
 	volatile int Delay;
+	#define write_array_size 128
+	char write_buffer[write_array_size];
+	char read_buffer[write_array_size];
+	char input_buffer[2];
 
-#define write_array_size 10
+	char *write_buffer_p = &write_buffer[0];
+	char *read_buffer_p = &read_buffer[0];
 
-	u8 write_buffer[write_array_size] = { 0 };
-	u8 read_buffer[write_array_size] = { 0 };
-	u8 input_buffer[2];
-
-	u8 *write_buffer_p = &write_buffer[0];
-	u8 *read_buffer_p = &read_buffer[0];
 while(1){
-	print("Write flash Function\r\n");
-	print("Enter write array size in hex XXX\r\n");
-	size = read_ascii_hex_u16();
+	printf("Atmel SPI Test Function\r\n");
 
-	xil_printf("\r\n");
+	printf("Enter write string:\r\n");
 
-	if(size == 0xff)
-		break;
+	//size = read_ascii_hex_u16();
 
-	if(size == 0xFE){
-		invert = 1;
-		size = 1;}
+	//empty the buffers
+	/*for(i = 0; i<write_array_size; i++){
+		write_buffer[i] = 0x00;
+		read_buffer[i] = 0x00;
+    }*/
 
-	if(size == 0xFD){
-		invert = 0;
-		size = 1;}
 
-	if (size > write_array_size)
-		size = write_array_size;
 
-	for (i=0;i<size;i++){
-		xil_printf("enter value %d ", i);
-		write_buffer[i] = read_ascii_hex_u16();
-		xil_printf("%02x\r\n",write_buffer[i]);
-	}
+	printf("\r\n");
 
-	xil_printf("\r\n");
+	//read the input
+
+    xil_fgets(write_buffer, write_array_size);
+
+    size = strlen(write_buffer);
+    write_buffer[size] = '\0';
+    size--;
+
+	printf("\r\nsize: %d\r\n",size);
+
+	printf("\r\n");
 
 	print("Write Buffer Start: ");
 	for(i = 0; i < size; i++){
-	xil_printf("%x ", write_buffer[i]);}
-	xil_printf("\r\n");
+	printf("%x ", write_buffer[i]);}
+	printf("\r\n");
 
 
 	ConfigPtr = XGpioPs_LookupConfig(GPIO_DEVICE_ID);
@@ -135,6 +142,7 @@ while(1){
 	for (Delay = 0; Delay < LED_DELAY; Delay++);
 
 	//start a polled transfer
+	invert = 0;
 	if(invert){
 		print("Starting inverted data transfer\r\n");
 		soft_spi_transfer_invert(&Gpio, write_buffer_p, read_buffer_p,size);
@@ -142,20 +150,20 @@ while(1){
 	else{
 		soft_spi_transfer(&Gpio, write_buffer_p, read_buffer_p,size);
 	}
-	//xil_printf("Clear the Select pin %d\r\n",Slave_Select_Var);
+	//printf("Clear the Select pin %d\r\n",Slave_Select_Var);
 
 	/*
 	 * Set the chip select, must use GPIO due to Zynq errata?
 	 */
-	//xil_printf("Clear the Select pin %d\r\n",Slave_Select_Var);
+	//printf("Clear the Select pin %d\r\n",Slave_Select_Var);
 	for (Delay = 0; Delay < LED_DELAY; Delay++);
 	XGpioPs_WritePin(&Gpio, ss_pin, 0x1);
 	XGpioPs_WritePin(&Gpio, EMIO_SS0_PIN, 0x1);
 
 	print("Read Buffer end: ");
 	for(i = 0; i < size; i++){
-	xil_printf("%x ", read_buffer[i]);}
-	xil_printf("\r\n");
+	printf("%x ", read_buffer[i]);}
+	printf("\r\n");
 
 }
 print("back to menu.\r\n");

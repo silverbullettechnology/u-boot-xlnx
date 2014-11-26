@@ -1,32 +1,29 @@
 /*
  * routines.c
  *
- *  Created on: Sep 17, 2013
- *      Author: andrew
  */
 /*****************************************************************************/
 
-#include "definitions.h"
-#include "xuartps_hw.h"
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+
+#include "stdio.h"
+#include "stdlib.h"
+#include "string.h"
+
+#include "definitions.h"
+
+#include "xparameters.h"
+#include "printf.h"
+#include "xgpiops.h"
+#include "xstatus.h"
+#include "xuartps_hw.h"
 
 #define EMIO_BANK		XGPIOPS_BANK2	/* Bank to be used for emio */
 #define GPIO_DEVICE_ID  	XPAR_XGPIOPS_0_DEVICE_ID
 #define LED_DELAY		1000000
 
-XGpioPs Gpio;	/* The driver instance for GPIO Device. */
-XGpioPs Gpio; //gpio instance
-u8 gpio_bank;
-u8 ss_pin;
-u8 mosi_pin;
-u8 miso_pin;
-u8 clk_pin;
-u32 port_mask;
-u32 miso_pin_mask;
-u8 miso_shift;
+extern XGpioPs Gpio; //gpio instance
+
 
 int hexToInt(char s[]) {
 
@@ -140,13 +137,13 @@ u16 read_ascii_hex_u16(){
 	while(1){
 		if(XUartPs_IsReceiveData(STDIN_BASEADDRESS)){
 			input = inbyte();
-			xil_printf("%c",input);
+			printf("%c",input);
 
 			if(input == '\r' || input == '\n')
 				break;
 
 			if(input_counter+1 > MAX_LEN){
-				xil_printf("\r\ntoo many characters, try again\r\n");
+				printf("\r\ntoo many characters, try again\r\n");
 				for(i=0;i<10;i++){
 					input_buffer[i] = '\0';
 				}
@@ -249,12 +246,12 @@ char *xil_fgets(char *buf, int bsize){
 			input = inbyte();
 
 			if(input == '\r' || input == '\n'){
-				xil_printf("%c",input);
+				printf("%c",input);
 				break;
 			}
 
 			if(input_counter+1 > bsize){
-				xil_printf("\r\nBuffer Overflow\r\n");
+				printf("\r\nBuffer Overflow\r\n");
 				return 0;
 			}
 
@@ -263,9 +260,9 @@ char *xil_fgets(char *buf, int bsize){
 				if(input_counter<0)
 					input_counter=0;
 				else
-					xil_printf("%c",input);
+					printf("%c",input);
 			}else{
-				xil_printf("%c",input);
+				printf("%c",input);
 				buf[input_counter] = input;
 				input_counter++;
 			}

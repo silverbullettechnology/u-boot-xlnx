@@ -35,6 +35,7 @@
 	 pdi_main();
          break;
        case 'c':
+	 fixture_write_read();
          printf("doing 'c'!\n");
          break;
        case '\r':
