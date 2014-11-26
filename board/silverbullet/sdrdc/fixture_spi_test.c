@@ -93,8 +93,8 @@ while(1){
     xil_fgets(write_buffer, write_array_size);
 
     size = strlen(write_buffer);
-    write_buffer[size] = '\0';
-    size--;
+    //write_buffer[size] = '\0';
+    //size--;
 
 	printf("\r\nsize: %d\r\n",size);
 
