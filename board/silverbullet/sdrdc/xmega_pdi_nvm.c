@@ -148,6 +148,7 @@ static enum status_code xnvm_wait_for_nvmen(uint32_t retries)
 	uint8_t pdi_status;
 
 	while (retries != 0) {
+		pdi_udelay(100);
 		if (xnvm_read_pdi_status(&pdi_status) != STATUS_OK) {
 				return ERR_BAD_DATA;
 		}
@@ -685,7 +686,7 @@ static enum status_code xnvm_ctrl_wait_nvmbusy(uint32_t retries)
 
 	while (retries != 0) {
 			xnvm_ctrl_read_status(&status);
-
+			pdi_udelay(100);
 			/* Check if the NVMBUSY bit is clear in the NVM_STATUS register. */
 			if ((status & XNVM_NVM_BUSY) == 0) {
 					return STATUS_OK;

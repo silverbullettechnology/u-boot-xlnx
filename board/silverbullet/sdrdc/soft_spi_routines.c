@@ -134,6 +134,9 @@ void soft_spi_transfer(XGpioPs *InstancePtr, char *SendBufPtr,char *RecvBufPtr, 
 			XGpioPs_WritePin(&Gpio, mosi_pin, active_tx_bit);
 			XGpioPs_WritePin(&Gpio, EMIO_MOSI_PIN, active_tx_bit);
 
+			//xil_printf("wait clock period\r\n");
+			for (Delay = 0; Delay < LED_DELAY; Delay++);
+
 			//xil_printf("set the clock high\r\n");
 			XGpioPs_WritePin(&Gpio, clk_pin, 0x1);
 			XGpioPs_WritePin(&Gpio, EMIO_CLK_PIN, 0x1);

@@ -40,6 +40,8 @@
 
 #include "config.h"
 
+#include "stdio.h"
+
 #define PDI_BAUD_RATE 1000000UL               //!< PDI Baud rate.
 
 
@@ -49,5 +51,7 @@ void pdi_deinit(void);
 enum status_code pdi_write(const uint8_t *data, uint16_t length);
 uint16_t pdi_read(uint8_t *data, uint16_t length, uint32_t retries);
 enum status_code pdi_get_byte(uint8_t *ret, uint32_t retries);
+void pdi_mdelay(int ms);//need custom delays that keep the pdi clk running
+void pdi_udelay(int us);//need custom delays that keep the pdi clk running, min delay is 10us (1 clock tick)
 
 

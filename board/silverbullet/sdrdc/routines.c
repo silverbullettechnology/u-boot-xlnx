@@ -247,6 +247,8 @@ char *xil_fgets(char *buf, int bsize){
 
 			if(input == '\r' || input == '\n'){
 				printf("%c",input);
+				buf[input_counter] = input;
+				input_counter++;
 				break;
 			}
 

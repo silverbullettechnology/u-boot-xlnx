@@ -90,19 +90,30 @@ while(1){
 
 	//read the input
 
-    xil_fgets(write_buffer, write_array_size);
+    	xil_fgets(write_buffer, write_array_size-3);
 
-    size = strlen(write_buffer);
-    //write_buffer[size] = '\0';
-    //size--;
+    	size = strlen(write_buffer);
 
-	printf("\r\nsize: %d\r\n",size);
+   	printf("\r\nsize: %d\r\n",size);
+
+	for(i = size; i > 0; i--){
+        	write_buffer[i] = write_buffer[i-1];
+    	}
+    	write_buffer[0] = 0x02;
+    	write_buffer[size] = 0x03;
+    	size++;
+    	write_buffer[size] = '\n';
+	size++;
 
 	printf("\r\n");
+	printf("%s",write_buffer);
+	printf("\r\nsize: %d\r\n",size);
+	printf("\r\n");
 
-	print("Write Buffer Start: ");
+	printf("Write Buffer Start: \r\n");
 	for(i = 0; i < size; i++){
 	printf("%x ", write_buffer[i]);}
+	write_buffer[size] = '\n';
 	printf("\r\n");
 
 
@@ -163,7 +174,8 @@ while(1){
 	print("Read Buffer end: ");
 	for(i = 0; i < size; i++){
 	printf("%x ", read_buffer[i]);}
-	printf("\r\n");
+	read_buffer[size] = '\0';
+	printf("\r\n%s\r\n",read_buffer);
 
 }
 print("back to menu.\r\n");

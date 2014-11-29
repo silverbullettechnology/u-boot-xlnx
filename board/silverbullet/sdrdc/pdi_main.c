@@ -40,6 +40,7 @@
  */
 #include "config.h"
 
+
 /* PDI driver includes */
 #include "atxmega128a1_nvm_regs.h"
 #include "xmega_pdi_nvm.h"
@@ -66,7 +67,7 @@ uint8_t dev_id[3];
 int pdi_main (void)
 {
 	/* Wait to make sure that the target device has power */
-	mdelay(100);
+	//pdi_mdelay(100);
 
 	/* Initialize the PDI interface */
 	xnvm_init();
@@ -76,7 +77,7 @@ int pdi_main (void)
 
 	/* Wait to make sure that the device has been erased before
 	 * next command */
-	mdelay(100);
+	pdi_mdelay(100);
 
 	/* Verify that the device is erased, at least the first page */
 	xnvm_read_memory(XNVM_FLASH_BASE, page_buffer, 512);
