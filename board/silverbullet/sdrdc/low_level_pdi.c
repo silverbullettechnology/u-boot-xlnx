@@ -130,10 +130,10 @@ void pdi_mdelay(int ms){
 	 */
 
 	while(cycle >0){
+		for (Delay = 0; Delay < PDI_DELAY; Delay++);
 		XGpioPs_WritePin(&Gpio, PDI_CLOCK_pin, 0x1);
 		for (Delay = 0; Delay < PDI_DELAY; Delay++);
 		XGpioPs_WritePin(&Gpio, PDI_CLOCK_pin, 0x0);
-		for (Delay = 0; Delay < PDI_DELAY; Delay++);
 		cycle--;
 	}
 	
@@ -349,7 +349,13 @@ void pdi_init( void )
 	 * Cycle PDI clock a few times
 	 */
 
-	pdi_udelay(200);
+	for(cycle = 0; cycle < 15; cycle++;){
+		for (Delay = 0; Delay < PDI_DELAY; Delay++);
+		XGpioPs_WritePin(&Gpio, PDI_CLOCK_pin, 0x1);
+		for (Delay = 0; Delay < PDI_DELAY; Delay++);
+		XGpioPs_WritePin(&Gpio, PDI_CLOCK_pin, 0x0);
+
+	}
 }
 
 /**
@@ -370,6 +376,7 @@ enum status_code pdi_write( const uint8_t *data, uint16_t length )
 	int active_tx_bit;
 	u8 current_byte;
 	volatile int Delay;
+	char parity = 0;
 	
 
 	//enable TX mode
@@ -377,14 +384,45 @@ enum status_code pdi_write( const uint8_t *data, uint16_t length )
 
 	for (i = 0; i < length; i++) {
 		current_byte = data[i];
+
+		//line starts high, write the start bit (0x00)
+		XGpioPs_WritePin(&Gpio, PDI_DATA_pin,0);
+		for (Delay = 0; Delay < PDI_DELAY; Delay++);
+		XGpioPs_WritePin(&Gpio, PDI_CLOCK_pin, 0x1);
+		for (Delay = 0; Delay < PDI_DELAY; Delay++);
+		XGpioPs_WritePin(&Gpio, PDI_CLOCK_pin, 0x0);
+		
+		//write the data bits		
 		for(j=7;j>=0;j--){
 			active_tx_bit = current_byte>>j&0x1;
+			//twiddle parity
+			if(active_tx_bit == 1)
+				parity = ~parity;
 			XGpioPs_WritePin(&Gpio, PDI_DATA_pin, active_tx_bit);
 			for (Delay = 0; Delay < PDI_DELAY; Delay++);
 			XGpioPs_WritePin(&Gpio, PDI_CLOCK_pin, 0x1);
 			for (Delay = 0; Delay < PDI_DELAY; Delay++);
 			XGpioPs_WritePin(&Gpio, PDI_CLOCK_pin, 0x0);
-		}		
+		}
+
+		//send parity bit (even)
+		parity = parity&0x01;
+		XGpioPs_WritePin(&Gpio, PDI_DATA_pin, parity);
+		for (Delay = 0; Delay < PDI_DELAY; Delay++);
+		XGpioPs_WritePin(&Gpio, PDI_CLOCK_pin, 0x1);
+		for (Delay = 0; Delay < PDI_DELAY; Delay++);
+		XGpioPs_WritePin(&Gpio, PDI_CLOCK_pin, 0x0);
+
+		//send two stop bits (line is high).
+		XGpioPs_WritePin(&Gpio, PDI_DATA_pin,1);
+		for (Delay = 0; Delay < PDI_DELAY; Delay++);
+		XGpioPs_WritePin(&Gpio, PDI_CLOCK_pin, 0x1);
+		for (Delay = 0; Delay < PDI_DELAY; Delay++);
+		XGpioPs_WritePin(&Gpio, PDI_CLOCK_pin, 0x0);
+		for (Delay = 0; Delay < PDI_DELAY; Delay++);
+		XGpioPs_WritePin(&Gpio, PDI_CLOCK_pin, 0x1);
+		for (Delay = 0; Delay < PDI_DELAY; Delay++);
+		XGpioPs_WritePin(&Gpio, PDI_CLOCK_pin, 0x0);				
 	}
 
 	return STATUS_OK;
@@ -409,19 +447,19 @@ uint16_t pdi_read( uint8_t *data, uint16_t ByteCount, uint32_t retries )
 	int i;
 	int j;
 
-	char current_recv;
+	unsigned int current_recv;
 
-	char active_rx_bit;
+	unsigned int active_rx_bit;
 
 	//enable RX mode
 	XGpioPs_SetDirectionPin(&Gpio, PDI_DATA_pin, 0);
 
 	j = 0;
 	while(j<ByteCount){
-		//xil_printf("\r\nCurrent Byte: %x\r\n", current_byte);
+		//printf("\r\nCurrent Byte: %x\r\n", current_byte);
 		current_recv = 0;		
 
-		for(i=7;i>=0;i--){
+		for(i=11;i>=0;i--){
 			for (Delay = 0; Delay < PDI_DELAY; Delay++);
 			XGpioPs_WritePin(&Gpio, PDI_CLOCK_pin, 0x1);
 			for (Delay = 0; Delay < PDI_DELAY/2; Delay++);
@@ -431,12 +469,19 @@ uint16_t pdi_read( uint8_t *data, uint16_t ByteCount, uint32_t retries )
 			current_recv = current_recv|active_rx_bit<<i;
 		}
 
-		//xil_printf("\r\nrx_byte:%x\r\n", current_recv);
+		current_recv = current_recv>>2;
+		current_recv = current_recv&0xff;
+
+		//printf("\r\nrx_byte:%x\r\n", current_recv);
 		*(data + j) = current_recv;
+		printf("%x ", current_recv);
 		bytes_read++;
 		j++;
 	}
 
+	//re-enable TX mode
+	XGpioPs_SetDirectionPin(&Gpio, PDI_DATA_pin, 1);
+	XGpioPs_WritePin(&Gpio, PDI_DATA_pin,1);
 	/*for (i = 0; i < length; i++) {
 		count = retries;
 		while (count != 0) {
@@ -478,10 +523,10 @@ enum status_code pdi_get_byte( uint8_t *ret, uint32_t retries )
 	//enable RX mode
 	XGpioPs_SetDirectionPin(&Gpio, PDI_DATA_pin, 0);
 
-		//xil_printf("\r\nCurrent Byte: %x\r\n", current_byte);
+		//printf("\r\nCurrent Byte: %x\r\n", current_byte);
 		current_recv = 0;		
 
-		for(i=7;i>=0;i--){
+		for(i=11;i>=0;i--){
 			for (Delay = 0; Delay < PDI_DELAY; Delay++);
 			XGpioPs_WritePin(&Gpio, PDI_CLOCK_pin, 0x1);
 			for (Delay = 0; Delay < PDI_DELAY/2; Delay++);
@@ -491,8 +536,13 @@ enum status_code pdi_get_byte( uint8_t *ret, uint32_t retries )
 			current_recv = current_recv|active_rx_bit<<i;
 		}
 
-		//xil_printf("\r\nrx_byte:%x\r\n", current_recv);
+		current_recv = current_recv>>2;
+		current_recv = current_recv&0xff;
+		printf("%x ", current_recv);
 		*ret = current_recv;
+
+	XGpioPs_SetDirectionPin(&Gpio, PDI_DATA_pin, 1);
+	XGpioPs_WritePin(&Gpio, PDI_DATA_pin,1);
 
 	/*while (retries != 0) {
 		/f (usart_rx_is_complete(&USART)) {
