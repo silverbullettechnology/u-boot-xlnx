@@ -35,17 +35,18 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH
  * DAMAGE.
  */
+#include <common.h>
 
 #include "status_codes.h"
 
 #include "config.h"
 
-#include "stdio.h"
+//#include "stdio.h"
 
 #define PDI_BAUD_RATE 1000000UL               //!< PDI Baud rate.
 
 
-
+void pdi_clock_pulse(void);
 void pdi_init(void);
 void pdi_deinit(void);
 enum status_code pdi_write(const uint8_t *data, uint16_t length);

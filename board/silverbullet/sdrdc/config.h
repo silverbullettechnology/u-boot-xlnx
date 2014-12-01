@@ -36,9 +36,11 @@
  * DAMAGE.
  */
 
-#include "stdbool.h"
-#include "stdint.h"
-#include "stddef.h"
+#include <common.h>
+
+//#include "stdbool.h"
+//#include "stdint.h"
+//#include "stddef.h"
 //#include "stdlib.h"
 
 //typedef unsigned short int uint16_t;

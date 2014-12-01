@@ -76,8 +76,28 @@ enum status_code xnvm_init (void)
 
 		pdi_init();
 
+                /*cmd_buffer[0] = 0xc2;
+		cmd_buffer[1] = 0xc3;
+		cmd_buffer[2] = 0x82;
+		cmd_buffer[3] = 0xc3;
+
+                pdi_write(cmd_buffer, 4);
+                
+                pdi_udelay(5000);
+                
+                cmd_buffer[0] = 0xc2;
+		cmd_buffer[1] = 0xc3;
+		cmd_buffer[2] = 0x82;
+		cmd_buffer[3] = 0xc3;
+
+                pdi_write(cmd_buffer, 4);
+                
 		/* Put the device in reset mode */
 		xnvm_put_dev_in_reset();
+
+                cmd_buffer[0] = 0xc2;
+		cmd_buffer[1] = 0x02;
+                pdi_write(cmd_buffer, 2);
 
 		/* Create the key command */
 		cmd_buffer[0] = XNVM_PDI_KEY_INSTR;
@@ -92,7 +112,13 @@ enum status_code xnvm_init (void)
 
 		pdi_write(cmd_buffer, 9);
 
+
+                //pdi_mdelay(200);
+
+
 		retval = xnvm_ctrl_wait_nvmbusy(WAIT_RETRIES_NUM);
+                //if(retval != STATUS_OK)
+                //  digitalWrite(13, LOW);
 
 		initialized = 1;
 	}
@@ -148,8 +174,9 @@ static enum status_code xnvm_wait_for_nvmen(uint32_t retries)
 	uint8_t pdi_status;
 
 	while (retries != 0) {
-		pdi_udelay(100);
+		//pdi_udelay(100);
 		if (xnvm_read_pdi_status(&pdi_status) != STATUS_OK) {
+			printf("ERR_BAD_DATA\r\n");
 				return ERR_BAD_DATA;
 		}
 		if ((pdi_status & XNVM_NVMEN) != 0) {
@@ -157,6 +184,7 @@ static enum status_code xnvm_wait_for_nvmen(uint32_t retries)
 		}
 		--retries;
 	}
+	printf("ERR_TIMEOUT\r\n");
 	return ERR_TIMEOUT;
 
 }
@@ -324,7 +352,8 @@ enum status_code xnvm_chip_erase(void)
 	xnvm_ctrl_cmd_write(XNVM_CMD_CHIP_ERASE);
 	/* Write the CMDEX to execute command */
 	xnvm_ctrl_cmdex_write();
-	return xnvm_wait_for_nvmen(WAIT_RETRIES_NUM);
+	pdi_mdelay(200);
+	return 0;//xnvm_wait_for_nvmen(WAIT_RETRIES_NUM);
 }
 
 /**

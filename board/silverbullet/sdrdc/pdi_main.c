@@ -39,7 +39,10 @@
  * DAMAGE.
  */
 #include "config.h"
-
+#include "low_level_pdi.h"
+#include "atxmega128a1_nvm_regs.h"
+#include "xmega_pdi_nvm.h"
+#include "status_codes.h"
 
 /* PDI driver includes */
 #include "atxmega128a1_nvm_regs.h"
@@ -66,61 +69,81 @@ uint8_t dev_id[3];
  */
 int pdi_main (void)
 {
-	/* Wait to make sure that the target device has power */
-	//pdi_mdelay(100);
+  int i;
+	
+  /* Wait to make sure that the target device has power */
+  //pdi_mdelay(100);
 
-	/* Initialize the PDI interface */
-	xnvm_init();
+  /* Initialize the PDI interface */
+  //printf("initializing\r\n");
+  xnvm_init();
 
-	/* Erase the target device */
-	xnvm_chip_erase();
+  /* Erase the target device */
+  pdi_mdelay(100);
+  xnvm_chip_erase();
 
-	/* Wait to make sure that the device has been erased before
-	 * next command */
-	pdi_mdelay(100);
+  /* Wait to make sure that the device has been erased before
+   * next command */
+  //pdi_mdelay(100);
 
-	/* Verify that the device is erased, at least the first page */
-	xnvm_read_memory(XNVM_FLASH_BASE, page_buffer, 512);
+  /* Verify that the device is erased, at least the first page */
+  xnvm_read_memory(XNVM_FLASH_BASE, page_buffer, 512);
+  pdi_mdelay(100);
 
-	/* Program the target device using the test program supplied in the test_prg.h file */
-	xnvm_erase_program_flash_page(0x0000, program, 102);
+  /* Program the target device using the test program supplied in the test_prg.h file */
+  xnvm_erase_program_flash_page(0x0000, program, 102);
+  pdi_mdelay(100);
 
-	/* Read back the flash contents to a buffer on the device */
-	xnvm_read_memory(XNVM_FLASH_BASE, page_buffer, 512);
+  /* Read back the flash contents to a buffer on the device */
+  xnvm_read_memory(XNVM_FLASH_BASE, page_buffer, 512);
+  pdi_mdelay(100);
 
-	/* Write "hello world" to the EEPROM of the target device */
-	xnvm_erase_program_eeprom_page(0x0000, hello_world_buf, 11);
+  /* Write "hello world" to the EEPROM of the target device */
+  xnvm_erase_program_eeprom_page(0x0000, hello_world_buf, 11);
+  pdi_mdelay(100);
 
-	/* Read the EEPROM content */
-	xnvm_read_memory(XNVM_EEPROM_BASE, page_buffer, 512);
+  /* Read the EEPROM content */
+  //xnvm_read_memory(XNVM_EEPROM_BASE, page_buffer, 512);
 
-	/* Read fuses */
-	xnvm_read_memory(XNVM_FUSE_BASE, fuses, 6);
+  /* Read fuses */
+  //xnvm_read_memory(XNVM_FUSE_BASE, fuses, 6);
+  //pdi_mdelay(100);
 
-	/* Option to write to fuses */
-	xnvm_write_fuse_bit(0, 0xFF, 1000);
-	xnvm_write_fuse_bit(1, 0x72, 1000);
-	xnvm_write_fuse_bit(2, 0xFE, 1000);
-	/* Fuse byte number three is always 0x00 */
-	xnvm_write_fuse_bit(4, 0xFE, 1000);
-	xnvm_write_fuse_bit(5, 0xE2, 1000);
+  /* Option to write to fuses */
+  //xnvm_write_fuse_bit(0, 0xFF, 1000);
+  //xnvm_write_fuse_bit(1, 0x72, 1000);
+  //xnvm_write_fuse_bit(2, 0xFE, 1000);
+  /* Fuse byte number three is always 0x00 */
+  //xnvm_write_fuse_bit(4, 0xFE, 1000);
+  //xnvm_write_fuse_bit(5, 0xE2, 1000);
 
-	/* Read fuses */
-	xnvm_read_memory(XNVM_FUSE_BASE, fuses, 6);
+  /* Read fuses */
+  //xnvm_read_memory(XNVM_FUSE_BASE, fuses, 6);
 
-	/* Option to write lock bits */
-	/* THIS WILL PREVENT FURTHER ACCESS TO THE DEVICE MEMORIES, RESET
-	 *  BY ERASING THE DEVICE
-	 */
-	xnvm_write_fuse_bit(NVM_LOCKBIT_ADDR, 0x00, 1000);
+  /* Option to write lock bits */
+  /* THIS WILL PREVENT FURTHER ACCESS TO THE DEVICE MEMORIES, RESET
+   *  BY ERASING THE DEVICE
+   */
+  //xnvm_write_fuse_bit(NVM_LOCKBIT_ADDR, 0x00, 1000);
 
-	/* Read lock bits */
-	xnvm_read_memory(XNVM_FUSE_BASE + NVM_LOCKBIT_ADDR, &lock_bit, 1);
+  /* Read lock bits */
+  //xnvm_read_memory(XNVM_FUSE_BASE + NVM_LOCKBIT_ADDR, &lock_bit, 1);
 
-	/* Read device ID */
-	xnvm_read_memory(XNVM_DATA_BASE + NVM_MCU_CONTROL, dev_id, 3);
+  /* Read device ID */
+  pdi_mdelay(50);
+  xnvm_read_memory(XNVM_DATA_BASE + NVM_MCU_CONTROL, dev_id, 3);
+  pdi_mdelay(50);
+  /* Unload and stop the PDI interface */
+  //printf("deinit\r\n");
+  xnvm_deinit();
+  printf("\r\nDev ID: %02X ", dev_id[0]);
+  printf("%2X ", dev_id[1]);
+  printf("%2X \r\n", dev_id[2]);
 
-	/* Unload and stop the PDI interface */
-	xnvm_deinit();
+  printf("\r\nmemory Buffer:\r\n");
+  for (i = 0; i < 32; i++) {
+    printf("%2X ", page_buffer[i]);
+  }
+  printf("\r\n");
 
 }
