@@ -147,7 +147,7 @@ int pdi_main (uint8_t *buffer, uint16_t size)
         num_srec++;
     }
 
-    printf("end of parsing\r\n");
+    printf("\r\nend of parsing\r\n");
     //print_application(&flash_data);
 
 
@@ -163,7 +163,7 @@ int pdi_main (uint8_t *buffer, uint16_t size)
   printf("\r\nDev ID: %02X ", dev_id[0]);
   printf("%2X ", dev_id[1]);
   printf("%2X \r\n", dev_id[2]);
-  printf("\r\nUsed Pages: %d\r\n",flash_data.used_buffers);
+  printf("\r\nUsed Pages: %d\r\n",flash_data.used_buffers+1);
   xnvm_deinit();
   xnvm_init();
 
@@ -213,10 +213,9 @@ for(i=0;i<=flash_data.used_buffers;i++){
 	    }
 
 	printf("\r\n");
+ 	xnvm_deinit();
+  	xnvm_init();
   }	
-
-  xnvm_deinit();
-  xnvm_init();
 }
 
 
@@ -251,9 +250,10 @@ for(i=0;i<=flash_data.used_buffers;i++){
   /* Read lock bits */
   //xnvm_read_memory(XNVM_FUSE_BASE + NVM_LOCKBIT_ADDR, &lock_bit, 1);
 
-  //disconnect the PDI interface.
+  //disconnect the PDI interface and reset the device.
   xnvm_deinit();
-
+  xnvm_init();
+  xnvm_deinit();
 }
 
 int compare_mem(uint8_t * write, uint8_t * read, int length){
