@@ -441,6 +441,31 @@ enum status_code xnvm_erase_program_flash_page(uint32_t address, uint8_t *dat_bu
  *  \retval STATUS_OK program succussfully.
  *  \retval ERR_TIMEOUT Time out.
  */
+enum status_code xnvm_erase_program_boot_flash_page(uint32_t address, uint8_t *dat_buf, uint16_t length)
+{
+	address = address + XNVM_FLASH_BASE;
+
+	xnvm_erase_flash_buffer(WAIT_RETRIES_NUM);
+	xnvm_load_flash_page_buffer(address, dat_buf, length);
+	xnvm_ctrl_cmd_write(XNVM_CMD_ERASE_AND_WRITE_BOOT_PAGE);
+
+	/* Dummy write for starting the erase and write command */
+	xnvm_st_ptr(address);
+	xnvm_st_star_ptr_postinc(DUMMY_BYTE);
+
+	return xnvm_ctrl_wait_nvmbusy(WAIT_RETRIES_NUM);
+}
+
+/**
+ *  \internal
+ *  \brief Erase and program the flash page buffer with NVM controller.
+ *
+ *  \param  address the address of the flash.
+ *  \param  dat_buf the pointer which points to the data buffer.
+ *  \param  length the data length.
+ *  \retval STATUS_OK program succussfully.
+ *  \retval ERR_TIMEOUT Time out.
+ */
 static enum status_code xnvm_erase_application_flash_page(uint32_t address, uint8_t *dat_buf, uint16_t length)
 {
 	address = address + XNVM_FLASH_BASE;

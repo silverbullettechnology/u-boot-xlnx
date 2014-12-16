@@ -151,6 +151,7 @@ enum status_code xnvm_iowrite_byte(uint16_t address, uint8_t value);
 enum status_code xnvm_chip_erase(void);
 uint16_t xnvm_read_memory(uint32_t address, uint8_t *data, uint16_t length);
 enum status_code xnvm_erase_program_flash_page(uint32_t address, uint8_t *dat_buf, uint16_t length);
+enum status_code xnvm_erase_program_boot_flash_page(uint32_t address, uint8_t *dat_buf, uint16_t length);
 enum status_code xnvm_put_dev_in_reset (void);
 enum status_code xnvm_pull_dev_out_of_reset (void);
 enum status_code xnvm_erase_program_eeprom_page(uint32_t address, uint8_t *dat_buf, uint16_t length);

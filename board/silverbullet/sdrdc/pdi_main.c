@@ -91,7 +91,8 @@ S_record parse_srec_line (uint8_t * line);
 int add_srec_to_app (S_record rec, Atmel_application *app);
 void print_application (Atmel_application * app);
 void print_srecord (S_record rec);
-void program_flash_page_buffer (Flash_page_buffer *buf);
+void print_flash_page_buffer (Flash_page_buffer buf);
+int compare_mem(uint8_t * write, uint8_t * read, int length);
 
 /*
  * \brief Main function for PDI driver test
@@ -112,6 +113,7 @@ int pdi_main (uint8_t *buffer, uint16_t size)
   uint8_t * eol;
   int line_counter;
   uint32_t addr;
+  int equ;
 
   image = buffer;
   eol = image;
@@ -121,13 +123,6 @@ int pdi_main (uint8_t *buffer, uint16_t size)
   flash_data.application_data[0].address = 0;
   flash_data.application_data[0].byte_count = 0;
 
-
- /*        printf("printing srecord:\r\n");
-	 for(i=0;i<size;i++){
-	 	printf("%c",*(image+i));
-	 }
-	 printf("\r\n**END**\r\n");
-*/
   //parse the srecord file passed from uboot
 
     num_srec = 0;
@@ -154,9 +149,7 @@ int pdi_main (uint8_t *buffer, uint16_t size)
 
     printf("end of parsing\r\n");
     //print_application(&flash_data);
-	
-  /* Wait to make sure that the target device has power */
-  //pdi_mdelay(100);
+
 
   /* Initialize the PDI interface */
   //printf("initializing\r\n");
@@ -170,14 +163,13 @@ int pdi_main (uint8_t *buffer, uint16_t size)
   printf("\r\nDev ID: %02X ", dev_id[0]);
   printf("%2X ", dev_id[1]);
   printf("%2X \r\n", dev_id[2]);
+  printf("\r\nUsed Pages: %d\r\n",flash_data.used_buffers);
+  xnvm_deinit();
+  xnvm_init();
 
   /* Erase the target device */
   pdi_mdelay(100);
   xnvm_chip_erase();
-
-  /* Wait to make sure that the device has been erased before
-   * next command */
-  //pdi_mdelay(100);
 
   /* Verify that the device is erased, at least the first page */
   xnvm_read_memory(XNVM_FLASH_BASE, page_buffer, 128);
@@ -185,25 +177,30 @@ int pdi_main (uint8_t *buffer, uint16_t size)
   i=0;
   j = 0;
 
-//program some shit
-
-printf("\r\nUsed Buffers: %d\r\n",flash_data.used_buffers);
+//program the flash with the application image.
   
 for(i=0;i<=flash_data.used_buffers;i++){
-
-  xnvm_erase_program_flash_page(flash_data.application_data[i].address, flash_data.application_data[i].data, flash_data.application_data[i].byte_count);
-  program_flash_page_buffer(&flash_data.application_data[i]);
-  pdi_mdelay(100);
+  
+  if(flash_data.application_data[i].address >= 0x20000)
+    xnvm_erase_program_boot_flash_page(flash_data.application_data[i].address, flash_data.application_data[i].data, flash_data.application_data[i].byte_count);
+  else
+    xnvm_erase_program_flash_page(flash_data.application_data[i].address, flash_data.application_data[i].data, flash_data.application_data[i].byte_count);
+  pdi_mdelay(10);
 
   //Read back the flash contents to a buffer on the device
-  /*addr =  XNVM_FLASH_BASE+flash_data.application_data[i].address;
+  addr =  XNVM_FLASH_BASE+flash_data.application_data[i].address;
   xnvm_read_memory(addr, page_buffer, PAGE_SIZE);
-  pdi_mdelay(100);
+  pdi_mdelay(10);
 
-	printf("\r\n");
+  equ = compare_mem(flash_data.application_data[i].data, page_buffer, flash_data.application_data[i].byte_count);
+  if(equ){
+    printf(".");
+  } else {
+    printf("\r\nProgramming error:\r\n");
+            
+            print_flash_page_buffer(flash_data.application_data[i]);
 
-
-	    printf("\r\nFlash Read Page %d: \r\n",i);
+	    printf("\r\nReadback page %d: \r\n",i);
 	    line_counter = 0;
 	    printf("\r\n%06X    ",addr);
 	    for(j=0;j<PAGE_SIZE;j++){
@@ -215,11 +212,13 @@ for(i=0;i<=flash_data.used_buffers;i++){
 		line_counter++;
 	    }
 
-	printf("\r\n");*/
+	printf("\r\n");
+  }	
 
   xnvm_deinit();
   xnvm_init();
 }
+
 
   /* Write "hello world" to the EEPROM of the target device */
   //xnvm_erase_program_eeprom_page(0x0000, hello_world_buf, 11);
@@ -257,20 +256,24 @@ for(i=0;i<=flash_data.used_buffers;i++){
 
 }
 
-void program_flash_page_buffer (Flash_page_buffer *buf){
+int compare_mem(uint8_t * write, uint8_t * read, int length){
+  int i;
+  for(i=0;i<length;i++){
+    if(write[i] != read[i])
+      return 0;
+  }
+  return 1;
+}
 
-  uint32_t addr = buf->address;
+void print_flash_page_buffer (Flash_page_buffer buf){
+
+  uint32_t addr = buf.address;
   uint8_t pointer[PAGE_SIZE];
-  int cnt = buf->byte_count;
+  int cnt = buf.byte_count;
   int line_counter;
   int i;
 
-for (i=0;i<cnt;i++){
-	pointer[i] = buf->data[i];}
-
-printf("\r\nprogram count: %d\r\n",cnt);
-
-printf("\r\n");
+printf("Flash byte count: %d\r\n",cnt);
 
     line_counter = 0;
     printf("\r\n%06X    ",addr);
@@ -279,14 +282,9 @@ printf("\r\n");
             printf("\r\n%06X    ",addr+i);
             line_counter = 0;
             }
-        printf("%02X ",pointer[i]);
+        printf("%02X ",buf.data[i]);
         line_counter++;
     }
-
-
-
-  //xnvm_erase_program_flash_page(addr, pointer, cnt);
-  //pdi_mdelay(100);	
 }
 
 int add_srec_to_app(S_record rec, Atmel_application *app){
