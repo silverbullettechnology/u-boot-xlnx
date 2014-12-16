@@ -46,7 +46,8 @@
 #define XNVM_CALIBRATION_BASE          0x008E0200 //!< Address where calibration row starts.
 #define XNVM_SIGNATURE_BASE            0x008E0400 //!< Address where signature bytes start.
 
-#define XNVM_FLASH_PAGE_SIZE			512			//
+#define XNVM_FLASH_PAGE_SIZE			256			//
+#define PAGE_SIZE XNVM_FLASH_PAGE_SIZE
 
 #define XNVM_CONTROLLER_BASE 0x01C0               //!< NVM Controller register base address.
 #define XNVM_CONTROLLER_CMD_REG_OFFSET 0x0A       //!< NVM Controller Command Register offset.

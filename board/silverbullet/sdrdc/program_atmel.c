@@ -8,6 +8,7 @@
 #include "atxmega128a1_nvm_regs.h"
 #include "xparameters.h"
 #include "xuartps_hw.h"
+#include "routines.h"
  DECLARE_GLOBAL_DATA_PTR;
 
 
@@ -25,6 +26,24 @@
         unsigned char statusbyte;
         unsigned char cmd_buffer[20];
         uint8_t dev_id[3];
+	uint32_t buf_loc;
+	char *image;
+	unsigned int size;
+	int i;
+
+	printf("argc: %d\r\n",argc);
+	printf("argv[1]: %s\r\n",argv[1]);
+	printf("argv[2]: %s\r\n",argv[2]);
+
+	buf_loc = hexToInt(argv[1]);
+	size = atoint (argv[2]);
+
+	printf("location: 0x%X\r\n",buf_loc);
+	printf("    size: %d\r\v",size);	
+	
+	image = buf_loc;
+
+	printf("pointer: 0x%X\r\n",image);
 
    puts("in ja\n");
    for (;;)
@@ -33,8 +52,9 @@
      puts(" q    quit\n");
      puts(" a    Spin LEDs\n");
      puts(" b    Run Programmer\n");
-     puts(" c    run 'c'\n");
-     puts(" d    run 'd'\n");
+     puts(" c    SPI Test Interface\n");
+     puts(" d    programming manual commands\n");
+     puts(" p    print loaded image to screen\n");
      puts("-- enter cmd: ");
      char c = getc();
      switch (c)
@@ -48,13 +68,19 @@
          break;
        case 'b':
          printf("doing 'b'!\n");
-	 pdi_main();
+	 pdi_main(image,size);
          break;
        case 'c':
 	 fixture_write_read();
          printf("doing 'c'!\n");
          break;
-
+	case 'p':
+         printf("doing 'p'!\n");
+	 for(i=0;i<size;i++){
+	 	printf("%c",*(image+i));
+	 }
+	 printf("\r\n**END**\r\n");	
+         break;
        case 'd':
 	 //fixture_write_read();
          printf("doing 'd'!\n");
@@ -149,4 +175,4 @@
  
  /***************************************************/
  //        name,#parms, isrepeatable?, cmd list, help text
- U_BOOT_CMD(ja, 1, 1, do_ja, "do cool things", "invoke the 'ja' application");
+ U_BOOT_CMD(ja, 3, 1, do_ja, "do cool things", "invoke the 'ja' application");

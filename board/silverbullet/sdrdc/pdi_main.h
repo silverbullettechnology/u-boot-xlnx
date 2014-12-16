@@ -3,6 +3,6 @@
 #include "xmega_pdi_nvm.h"
 #include "status_codes.h"
 
-int pdi_main (void);
+int pdi_main (char *buffer, unsigned int size);
 
 
