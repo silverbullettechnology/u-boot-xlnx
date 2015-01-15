@@ -68,6 +68,10 @@
 /***************************** Include Files *********************************/
 
 #include "definitions.h"
+#include "xparameters.h"
+#include "xil_printf.h"
+#include "xgpiops.h"
+#include "xstatus.h"
 
 
 /************************** Constant Definitions *****************************/

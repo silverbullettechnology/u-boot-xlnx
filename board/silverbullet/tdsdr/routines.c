@@ -5,15 +5,14 @@
 /*****************************************************************************/
 
 
-
-#include "stdio.h"
-#include "stdlib.h"
-#include "string.h"
+#include <stdarg.h>
+#include <common.h> 
+#include <math.h>
 
 #include "definitions.h"
+#include "routines.h"
 
 #include "xparameters.h"
-#include "printf.h"
 #include "xgpiops.h"
 #include "xstatus.h"
 #include "xuartps_hw.h"
@@ -21,6 +20,8 @@
 #define EMIO_BANK		XGPIOPS_BANK2	/* Bank to be used for emio */
 #define GPIO_DEVICE_ID  	XPAR_XGPIOPS_0_DEVICE_ID
 #define LED_DELAY		1000000
+
+#define SCAN_BUF_SIZE		100
 
 extern XGpioPs Gpio; //gpio instance
 
@@ -92,7 +93,7 @@ int atoint(const char *str)
 
 /*****************************************************************************/
 
-u8* hex_decode(const char *in, u8 len,u8 *out)
+char* hex_decode(const char *in, char len,char *out)
 {
         unsigned int i, t, hn, ln;
 
@@ -293,3 +294,161 @@ float standard_deviation(float data[], int n)
     sum_deviation+=(data[i]-mean)*(data[i]-mean);
     return sqrt(sum_deviation/n);
 }
+
+//
+// Reduced version of sscanf (%d, %x, %c, %n are supported)
+// %d dec integer (E.g.: 12)
+// %x hex integer (E.g.: 0xa0)
+// %b bin integer (E.g.: b1010100010)
+// %n hex, de or bin integer (e.g: 12, 0xa0, b1010100010)
+// %c any character
+//
+
+static int r_sscanf(const char* str, const char* format, va_list ap)
+{
+	//va_list ap;
+	int value, tmp;
+	int count;
+	int pos;
+	char neg, fmt_code;
+	const char* pf;
+	char* sval;
+	//va_start(ap, format);
+
+	for (pf = format, count = 0; *format != 0 && *str != 0; format++, str++)
+	{
+		while (*format == ' ' && *format != 0) format++;//
+		if (*format == 0) break;
+
+		while (*str == ' ' && *str != 0) str++;//increment pointer of input string
+		if (*str == 0) break;
+
+		if (*format == '%')//recognize how to format
+		{
+			format++;
+			if (*format == 'n')
+			{
+                if (str[0] == '0' && (str[1] == 'x' || str[1] == 'X'))//if in str sth like 0xff
+                {
+                    fmt_code = 'x';
+                    str += 2;
+                }
+                else
+                if (str[0] == 'b')
+                {
+                    fmt_code = 'b';
+                    str++;
+                }
+                else
+                    fmt_code = 'd';
+			}
+			else
+				fmt_code = *format; //it is format letter
+
+			switch (fmt_code)
+			{
+			case 'x':
+			case 'X':
+				for (value = 0, pos = 0; *str != 0; str++, pos++)
+				{
+					if ('0' <= *str && *str <= '9')
+						tmp = *str - '0';
+					else
+					if ('a' <= *str && *str <= 'f')
+						tmp = *str - 'a' + 10;
+					else
+					if ('A' <= *str && *str <= 'F')
+						tmp = *str - 'A' + 10;
+					else
+						break;
+
+					value *= 16;
+					value += tmp;
+				}
+				if (pos == 0)
+					return count;
+				*(va_arg(ap, int*)) = value;
+				count++;
+				break;
+
+            case 'b':
+				for (value = 0, pos = 0; *str != 0; str++, pos++)
+				{
+					if (*str != '0' && *str != '1')
+                        break;
+					value *= 2;
+					value += *str - '0';
+				}
+				if (pos == 0)
+					return count;
+				*(va_arg(ap, int*)) = value;
+				count++;
+				break;
+
+			case 'd':
+				if (*str == '-')
+				{
+					neg = 1;
+					str++;
+				}
+				else
+					neg = 0;
+				for (value = 0, pos = 0; *str != 0; str++, pos++)
+				{
+					if ('0' <= *str && *str <= '9')
+						value = value*10 + (int)(*str - '0');
+					else
+						break;
+				}
+				if (pos == 0)
+					return count;
+				*(va_arg(ap, int*)) = neg ? -value : value;
+				count++;
+				break;
+
+			case 'c':
+				*(va_arg(ap, char*)) = *str;
+				count++;
+				break;
+			case 's':
+				sval = va_arg(ap, char*);
+
+
+				while(*str){
+				 *sval++ = *str++;
+				count++;
+				}
+				*sval = NULL;
+
+				break;
+
+			default:
+				return count;
+			}
+		}
+		else
+		{
+			if (*format != *str)//
+				break;
+		}
+	}
+
+
+
+	return count;
+}
+
+int rsscanf(char* input_string, const char* format, ...){
+	va_list args;
+	va_start( args, format );
+	int count = 0;
+
+	count =  r_sscanf(input_string, format, args);
+	va_end(args);
+	return count;
+
+}
+/******************************************************************************
+* END OF FILE
+******************************************************************************/
+

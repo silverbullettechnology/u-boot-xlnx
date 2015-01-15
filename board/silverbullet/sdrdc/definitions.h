@@ -1,8 +1,8 @@
 
-#include "xparameters.h"
-#include "xil_printf.h"
-#include "xgpiops.h"
-#include "xstatus.h"
+
+#ifndef DEFINITIONS_H_
+#define DEFINITIONS_H_
+
 
 #define RSSI_PAUSE 150000
 #define RSSI_AVG 40

@@ -1,5 +1,5 @@
 
-make sdrdc
+make tdsdr
 rm u-boot.elf
 cp u-boot u-boot.elf
 rm boot.bin
