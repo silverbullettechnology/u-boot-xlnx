@@ -7,7 +7,7 @@
 
 #include <stdarg.h>
 #include <common.h> 
-#include <math.h>
+//#include <math.h>
 
 #include "definitions.h"
 #include "routines.h"
@@ -114,20 +114,12 @@ u16 read_ascii_hex_u16(){
 #define MAX_LEN 5
 
 	char input_buffer[MAX_LEN];
-
 	char *input_buffer_pointer;
-
 	int input_counter;
-
 	char input;
-
 	int i;
-
 	int ret;
-
 	input_buffer_pointer = &input_buffer[0];
-
-
 
 	for(i=0;i<MAX_LEN;i++){
 		input_buffer[i] = '\0';
@@ -157,7 +149,6 @@ u16 read_ascii_hex_u16(){
 	}
 
 	ret = hexToInt(input_buffer_pointer);
-
 	return ret;
 }
 
@@ -187,12 +178,6 @@ void adi_hw_reset(){
 	XGpioPs_WritePin(&Gpio, 59, 0x1);
 	//XGpioPs_WritePin(&Gpio, 70, 0x1);
 
-	//USB Reset
-	XGpioPs_WritePin(&Gpio, 87, 0x1);
-
-	//Emmc Reset
-	XGpioPs_WritePin(&Gpio, 88, 0x1);
-
 	//LEDs
 	XGpioPs_WritePin(&Gpio, 54, 0x1);
 	XGpioPs_WritePin(&Gpio, 55, 0x1);
@@ -205,12 +190,6 @@ void adi_hw_reset(){
 	XGpioPs_WritePin(&Gpio, 59, 0x0);
 	//XGpioPs_WritePin(&Gpio, 70, 0x0);
 
-	//USB Reset
-	XGpioPs_WritePin(&Gpio, 87, 0x0);
-
-	//Emmc Reset
-	XGpioPs_WritePin(&Gpio, 88, 0x0);
-
 	XGpioPs_WritePin(&Gpio, 54, 0x0);
 	XGpioPs_WritePin(&Gpio, 55, 0x0);
 	XGpioPs_WritePin(&Gpio, 56, 0x0);
@@ -222,12 +201,6 @@ void adi_hw_reset(){
 	XGpioPs_WritePin(&Gpio, 58, 0x1);
 	XGpioPs_WritePin(&Gpio, 59, 0x1);
 	//XGpioPs_WritePin(&Gpio, 70, 0x1);
-
-	//USB Reset
-	XGpioPs_WritePin(&Gpio, 87, 0x1);
-
-	//Emmc Reset
-	XGpioPs_WritePin(&Gpio, 88, 0x1);
 
 	XGpioPs_WritePin(&Gpio, 54, 0x1);
 	XGpioPs_WritePin(&Gpio, 55, 0x1);
@@ -448,7 +421,30 @@ int rsscanf(char* input_string, const char* format, ...){
 	return count;
 
 }
+/******************************************************************************/
+
+#define EPSILON 0.0000001
+
+double sqrt(double val) {
+
+        double low = 0;
+        double high = 10000000; // a sufficiently big number
+        double mid = 0;
+
+
+        while (high - low > EPSILON) {
+                mid = low + (high - low) / 2;
+                if (mid*mid > val) {
+                        high = mid;
+                } else {
+                        low = mid;
+                }
+        }
+
+        return mid;
+
+}
+
 /******************************************************************************
 * END OF FILE
 ******************************************************************************/
-

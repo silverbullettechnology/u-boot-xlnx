@@ -26,6 +26,7 @@
 #include <netdev.h>
 #include <zynqpl.h>
 #include <asm/arch/sys_proto.h>
+#include <asm/arch/hardware.h>
 #include <config.h>
 
 DECLARE_GLOBAL_DATA_PTR;
@@ -84,6 +85,42 @@ int board_late_init(void)
 
 	return 0;
 }
+
+#ifdef CONFIG_CMD_NET
+int board_eth_init(bd_t *bis)
+{
+	u32 ret = 0;
+
+#ifdef CONFIG_XILINX_AXIEMAC
+	ret |= xilinx_axiemac_initialize(bis, XILINX_AXIEMAC_BASEADDR,
+						XILINX_AXIDMA_BASEADDR);
+#endif
+#ifdef CONFIG_XILINX_EMACLITE
+	u32 txpp = 0;
+	u32 rxpp = 0;
+# ifdef CONFIG_XILINX_EMACLITE_TX_PING_PONG
+	txpp = 1;
+# endif
+# ifdef CONFIG_XILINX_EMACLITE_RX_PING_PONG
+	rxpp = 1;
+# endif
+	ret |= xilinx_emaclite_initialize(bis, XILINX_EMACLITE_BASEADDR,
+			txpp, rxpp);
+#endif
+
+#if defined(CONFIG_ZYNQ_GEM)
+# if defined(CONFIG_ZYNQ_GEM0)
+	ret |= zynq_gem_initialize(bis, ZYNQ_GEM_BASEADDR0,
+						CONFIG_ZYNQ_GEM_PHY_ADDR0, 0);
+# endif
+# if defined(CONFIG_ZYNQ_GEM1)
+	ret |= zynq_gem_initialize(bis, ZYNQ_GEM_BASEADDR1,
+						CONFIG_ZYNQ_GEM_PHY_ADDR1, 0);
+# endif
+#endif
+	return ret;
+}
+#endif
 
 #ifdef CONFIG_CMD_MMC
 int board_mmc_init(bd_t *bd)

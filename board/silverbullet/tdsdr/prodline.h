@@ -62,7 +62,7 @@
 
 /************************** Function Prototypes *****************************/
 
-int prod_main(void);
+int prod_main(int argc, char * const argv[]);
 
 /************************** Variable Definitions ****************************/
 

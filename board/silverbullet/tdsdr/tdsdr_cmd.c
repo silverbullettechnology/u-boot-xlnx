@@ -88,16 +88,17 @@ static int do_bist(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]);
 
    printf("\n\nTD-SDRDC BIST\n\n");
 
-	prod_main();
+	prod_main(argc, argv);
  
    printf("exiting. rcode=%d\n\n", rcode);
    return rcode;
    }
- 
+
  /***************************************************/
  //        name,#parms, isrepeatable?, cmd list, help text
- U_BOOT_CMD(bist, 1, 1, do_bist, "Perform firmware update on MMC module", "<ADDRESS> <Length>");
+ U_BOOT_CMD(bist, 10, 1, do_bist, "initiate the bist interface", "");
 
+ /***************************************************/
 static int hexToInt(char s[]) {
 
     #define YES 1

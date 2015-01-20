@@ -79,15 +79,15 @@
  * but should at least be static so they are zeroed.
  */
 //static XSpiPs SpiInstance;
-extern XGpioPs Gpio; //gpio instance
-extern char gpio_bank;
-extern char ss_pin;
-extern char mosi_pin;
-extern char miso_pin;
-extern char clk_pin;
-extern unsigned long port_mask;
-extern unsigned long miso_pin_mask;
-extern char miso_shift;
+extern XGpioPs Gpio; //gpio instance from PDI
+ char gpio_bank;
+ char ss_pin;
+ char mosi_pin;
+ char miso_pin;
+ char clk_pin;
+ unsigned long port_mask;
+ unsigned long miso_pin_mask;
+ char miso_shift = 0;
 
 /*****************************************************************************/
 /**
@@ -98,7 +98,7 @@ Main function to do SPI transfers
 
 
 //sends MSB first
-void soft_spi_transfer(XGpioPs *InstancePtr, char *SendBufPtr,char *RecvBufPtr, unsigned ByteCount)
+void soft_spi_transfer(XGpioPs *InstancePtr, char *SendBufPtr,char *RecvBufPtr, unsigned char ByteCount)
 {
 	volatile int Delay;
 	int i;
@@ -145,7 +145,8 @@ void soft_spi_transfer(XGpioPs *InstancePtr, char *SendBufPtr,char *RecvBufPtr, 
 			for (Delay = 0; Delay < LED_DELAY; Delay++);
 
 			//xil_printf("read MISO line\r\n");
-			active_rx_bit = XGpioPs_Read(&Gpio, gpio_bank)&miso_pin_mask;
+			//active_rx_bit = XGpioPs_Read(&Gpio, gpio_bank)&miso_pin_mask;
+			active_rx_bit = XGpioPs_ReadPin(&Gpio, miso_pin);
 			XGpioPs_WritePin(&Gpio, EMIO_MISO_PIN, active_rx_bit>>miso_shift);
 			//xil_printf("\r\nrx_bit:%x\r\n", active_rx_bit);
 
@@ -163,7 +164,7 @@ void soft_spi_transfer(XGpioPs *InstancePtr, char *SendBufPtr,char *RecvBufPtr, 
 			for (Delay = 0; Delay < LED_DELAY; Delay++);
 		}
 
-		current_recv = current_recv>>miso_shift;
+		//current_recv = current_recv>>miso_shift;
 		//xil_printf("\r\nrx_byte:%x\r\n", current_recv);
 		*(RecvBufPtr+j) = current_recv;
 
@@ -173,7 +174,7 @@ void soft_spi_transfer(XGpioPs *InstancePtr, char *SendBufPtr,char *RecvBufPtr, 
 }
 
 //sends LSB first
-void soft_spi_transfer_invert(XGpioPs *InstancePtr, char *SendBufPtr,char *RecvBufPtr, unsigned ByteCount)
+void soft_spi_transfer_invert(XGpioPs *InstancePtr, char *SendBufPtr,char *RecvBufPtr, unsigned char ByteCount)
 {
 	volatile int Delay;
 	int i;
@@ -216,7 +217,7 @@ void soft_spi_transfer_invert(XGpioPs *InstancePtr, char *SendBufPtr,char *RecvB
 			for (Delay = 0; Delay < LED_DELAY; Delay++);
 
 			//xil_printf("read MISO line\r\n");
-			active_rx_bit = XGpioPs_Read(&Gpio, gpio_bank)&miso_pin_mask;
+			active_rx_bit = XGpioPs_ReadPin(&Gpio, miso_pin);
 			//active_rx_bit = active_tx_bit;
 			XGpioPs_WritePin(&Gpio, EMIO_MISO_PIN, active_rx_bit>>miso_shift);
 			//xil_printf("\r\nrx_bit:%x\r\n", active_rx_bit);
@@ -236,7 +237,7 @@ void soft_spi_transfer_invert(XGpioPs *InstancePtr, char *SendBufPtr,char *RecvB
 		}
 
 		//xil_printf("\r\n");
-		current_recv = current_recv>>miso_shift;
+		//current_recv = current_recv>>miso_shift;
 		//xil_printf("\r\nrx_byte:%x\r\n", current_recv);
 		*(RecvBufPtr+j) = current_recv;
 

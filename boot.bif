@@ -1,6 +1,6 @@
 the_ROM_image:
 {
-	[bootloader]zynq_fsbl.elf
-	system_stub.bit
+	[bootloader]zynq_fsbl_01191449.elf
+	system_top_01191519.bit
 	u-boot.elf
 }

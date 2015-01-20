@@ -34,9 +34,11 @@
 *
 ******************************************************************************/
  #include <common.h> 
+//#include <stdio.h>
 //#include "definitions.h"
 
 #include "routines.h"
+#include "fixture_spi_test.h"
 
 //#include "xparameters.h"
 //#include "xil_cache.h"
@@ -44,10 +46,6 @@
 //#include "xgpiops.h"
 //#include "xstatus.h"
 //#include "xuartps_hw.h"
-
-#include "routines.h"
-
-
 
 #include "prodline_command.h"
 
@@ -114,10 +112,10 @@ void rf_loopback_test(char (*param)[50], char param_no){
     }
 
 	if(param_no == 4){
-		scanf(param[0],"%d",&arg1);
-		scanf(param[1],"%d",&arg2);
-		scanf(param[2],"%d",&arg3);
-		scanf(param[3],"%lf",&freq);
+		sscanf(param[0],"%d",&arg1);
+		sscanf(param[1],"%d",&arg2);
+		sscanf(param[2],"%d",&arg3);
+		sscanf(param[3],"%lf",&freq);
 
 		//prodline_RF_loopback_test(RSSI_UPPER,RSSI_LOWER, arg1, arg2, arg3, freq);
 	}else{
@@ -207,7 +205,7 @@ void rfinit(char (*param)[50], char param_no){
     }
 
 	if(param_no ==1 ){
-		scanf(param[0],"%d",&gainoffset);
+		sscanf(param[0],"%d",&gainoffset);
 
 		printf("gainoffset = %d\r\n",gainoffset);
 		//rf_test_init(gainoffset);
@@ -224,7 +222,7 @@ void rftest(char (*param)[50], char param_no){
     }
 
 	if(param_no == 1){
-		scanf(param[0],"%d",&adi_num);
+		sscanf(param[0],"%d",&adi_num);
 
 		//rf_test(adi_num);
 	}else{

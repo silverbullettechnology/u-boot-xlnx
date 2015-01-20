@@ -34,13 +34,16 @@
 *
 ******************************************************************************/
 //#include "ctype.h"
-//#include <common.h>
+#include <common.h>
 
 //#define _GNU_SOURCE
 
-#include <common.h> 
+//#include <stdio.h>
+//#include <common.h> 
 //#include "definitions.h"
 #include "routines.h"
+
+
 
 //#include "xil_cache.h"
 
@@ -64,18 +67,20 @@
 extern prod_command	  	prodline_cmd_list[];
 extern char				prod_cmd_no;
 //main function for production test
-int prod_main(void)
+int prod_main(int argc, char * const argv[])
 {
-	int stop = 1;
+	//int stop = 1;
 	int i;
 
-    char linebuffer[128];
+    //char linebuffer[128];
     char arg[10][50];
 
     char (*arguments)[50] = arg;
-    char (*param)[50] = arg;
+    //char (*param)[50] = arg;
 
     char targ[50];
+
+    int argcount = 0;
 
     //ADI_initialization();
 
@@ -88,58 +93,33 @@ int prod_main(void)
 	printf("\r\n");
 
 	printf("\n\r********************************************************");
-    printf("\n\r********************************************************");
-	printf("\n\r**     SDRDC - Production Test Interface              **");
+        printf("\n\r********************************************************");
+	printf("\n\r**     TDSDR - Production Test Interface              **");
 	printf("\n\r********************************************************");
 	printf("\n\r********************************************************\r\n");
-	printf("\r\nEnter 'help' to see available commands. Enter 'stop' to return to the main menu.\r\n");
+	//printf("\r\nEnter 'help' to see available commands. Enter 'stop' to return to the main menu.\r\n");
 
-	while (1)
-	{
 		printf("\r\n#prodline: ");
-		char *line = &linebuffer[0];
-	    xil_fgets(line, 128);
 
-	    char command[50];
-	    scanf(line, "%50s ", command);
+		//copy argv into arguments
 
-	    line = strchr(line, ' ');
+		//i = argc - 2;  //count is argc minus the command
 
-	    unsigned argumentsCount = 0;
-
-	    //char **arguments = malloc(sizeof(char *));
-
-
-	    while (1)
-	    {
-	        if (line && (scanf(++line, "%10s", targ) == 1))
-	        {
-	            //arguments[argumentsCount] = malloc(sizeof(char) * 50);
-	            strncpy(arguments[argumentsCount], targ, 50);
-
-	            argumentsCount++;
-
-	            //arguments = realloc(arguments, sizeof(char *) * argumentsCount + 1);
-	            line = strchr(line, ' ');
-	        }
-	        else {
-	            break;
-	        }
-	    }
-
-		if(strcmp("stop",&command[0]) == 0 )
-			break;
+		for(argcount=0;argcount<argc - 2; argcount++){
+			rsscanf(argv[argcount+2], "%s", targ);
+			strncpy(arguments[argcount], targ, 50);
+		}
 
 		//now scan the command list for the specified command
 		i=0;
 	    while(i<prod_cmd_no){
 			//printf("%s",prodline_cmd_list[i].name);
 			//printf(" %d\r\n",i);
-			//printf(" %s Command String\r\n",command);
-			if(strcmp(&command[0],prodline_cmd_list[i].name) == 0){
+			//printf(" %s Command String\r\n",argv[1]);
+			if(strcmp(argv[1],prodline_cmd_list[i].name) == 0){
 				printf("\r\n");
 				//execute the command if it was found.
-			    prodline_cmd_list[i].function(arguments, argumentsCount);
+			    prodline_cmd_list[i].function(arguments, argcount);
 			    break;
 			}
 			i++;
@@ -148,12 +128,11 @@ int prod_main(void)
 	    if(i >= prod_cmd_no)
 	    	printf("\r\nCommand not found.\r\n");
 
-	    for(i=i;i<50;i++){
-	    command[i] = '\0';}
+	    //for(i=i;i<50;i++){
+	    //command[i] = '\0';}
 
-	    for(i=i;i<128;i++){
-	    	    line[i] = '\0';}
-	}
+	    //for(i=i;i<128;i++){
+	    //	    line[i] = '\0';}
 
 	//adi_hw_reset();
 	printf("\r\n");

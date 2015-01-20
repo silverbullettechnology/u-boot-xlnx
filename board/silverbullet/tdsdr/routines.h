@@ -18,5 +18,6 @@ void adi_hw_reset(void);
 char *xil_fgets(char *buf, int bsize);
 float standard_deviation(float data[], int n);
 int rsscanf(char* input_string, const char* format, ...);
-#define scanf rsscanf
+#define sscanf rsscanf
+double sqrt(double val);
 #endif /* ROUTINES_H_ */

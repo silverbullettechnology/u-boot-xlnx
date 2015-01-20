@@ -91,11 +91,17 @@
 
 #include <config_cmd_default.h>
 
-/* Ethernet fron ZC70x */
+
+/* GPIO commands */
+#define CONFIG_XILINX_GPIO
+#define CONFIG_CMD_GPIO
+
+
+/* Ethernet from ZC70x */
 #define CONFIG_NET_MULTI
 #define CONFIG_ZYNQ_GEM
 #define CONFIG_ZYNQ_GEM0
-#define CONFIG_ZYNQ_GEM_PHY_ADDR0	7
+#define CONFIG_ZYNQ_GEM_PHY_ADDR0	3
 
 #define CONFIG_ZYNQ_SDHCI
 #define CONFIG_ZYNQ_SDHCI0

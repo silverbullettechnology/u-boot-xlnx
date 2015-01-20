@@ -1,4 +1,4 @@
-
+#include "xgpiops.h"
 
 #define RSSI_PAUSE 150000
 #define RSSI_AVG 40
@@ -20,6 +20,7 @@
 //put build definition here.  CUT2_BUILD for Cut 2, PPR_BUILD for PPR
 #define PPR_BUILD
 
+extern XGpioPs Gpio; //gpio instance
 extern char gpio_bank;
 extern char ss_pin;
 extern char mosi_pin;

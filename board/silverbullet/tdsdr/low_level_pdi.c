@@ -35,6 +35,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH
  * DAMAGE.
  */
+
+#include "definitions.h"
 #include "low_level_pdi.h"
 
 #include "xparameters.h"
@@ -104,14 +106,6 @@ int GpioPolledOutputExample(u16 DeviceId, u32 *DataRead);
  */
 XGpioPs Gpio;	/* The driver instance for GPIO Device. */
 
- char gpio_bank;
- char ss_pin;
- char mosi_pin;
- char miso_pin;
- char clk_pin;
- unsigned long port_mask;
- unsigned long miso_pin_mask;
- char miso_shift;
 /*****************************************************************************/
 
 void pdi_clock_pulse(void) {
@@ -121,7 +115,6 @@ void pdi_clock_pulse(void) {
   for (Delay = 0; Delay < PDI_DELAY; Delay++);
   XGpioPs_WritePin(&Gpio, PDI_CLOCK_pin, 0x0);
 }
-
 
 
 //need custom delays that keep the pdi clk running
