@@ -122,7 +122,6 @@
 					+ PHYS_DRAM_1_SIZE - (8 << 12))
 
 #define CONFIG_SYS_LOAD_ADDR		0x81000000	/* Default */
-#define CONFIG_SYS_HZ			1000		/* 1ms clock */
 
 #define CONFIG_OMAP_GPIO
 #define CONFIG_MMC
@@ -149,7 +148,6 @@
  */
 #define CONFIG_SYS_TIMERBASE		0x4802E000
 #define CONFIG_SYS_PTV			2	/* Divisor: 2^(PTV+1) => 8 */
-#define CONFIG_SYS_HZ			1000
 
 /* NS16550 Configuration */
 #define CONFIG_SYS_NS16550
@@ -170,7 +168,6 @@
 #define CONFIG_ENV_IS_NOWHERE
 
 /* Defines for SPL */
-#define CONFIG_SPL
 #define CONFIG_SPL_FRAMEWORK
 #define CONFIG_SPL_TEXT_BASE		0x40300000
 #define CONFIG_SPL_MAX_SIZE		((128 - 18) * 1024)
@@ -181,8 +178,8 @@
 
 #define CONFIG_SYS_MMCSD_RAW_MODE_U_BOOT_SECTOR 0x300 /* address 0x60000 */
 #define CONFIG_SYS_U_BOOT_MAX_SIZE_SECTORS      0x200 /* 256 KB */
-#define CONFIG_SYS_MMC_SD_FAT_BOOT_PARTITION    1
-#define CONFIG_SPL_FAT_LOAD_PAYLOAD_NAME        "u-boot.img"
+#define CONFIG_SYS_MMCSD_FS_BOOT_PARTITION     1
+#define CONFIG_SPL_FS_LOAD_PAYLOAD_NAME        "u-boot.img"
 #define CONFIG_SPL_MMC_SUPPORT
 #define CONFIG_SPL_FAT_SUPPORT
 
@@ -235,7 +232,6 @@
 #define CONFIG_NET_MULTI
 #define CONFIG_PHY_GIGE
 #define CONFIG_PHYLIB
-#define CONFIG_PHY_ADDR			1
 #define CONFIG_PHY_ET1011C
 #define CONFIG_PHY_ET1011C_TX_CLK_FIX
 

@@ -9,8 +9,8 @@
 #include <asm/arch/hardware.h>
 #include <asm/arch/sys_proto.h>
 #include <u-boot/md5.h>
-#include <rsa.h>
-#include <sha256.h>
+#include <u-boot/rsa.h>
+#include <u-boot/sha256.h>
 #include <spi_flash.h>
 #include <zynqpl.h>
 
@@ -136,7 +136,7 @@ static int zynq_get_partition_info(u32 image_base_addr)
 	parthdroffset  += image_base_addr;
 
 	memcpy(&part_hdr[0], (u32 *)parthdroffset,
-	       (sizeof(part_hdr)*ZYNQ_MAX_PARTITION_NUMBER));
+	       (sizeof(struct partition_hdr) * ZYNQ_MAX_PARTITION_NUMBER));
 
 	return 0;
 }

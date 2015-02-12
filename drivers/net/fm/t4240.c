@@ -49,6 +49,13 @@ void fman_disable_port(enum fm_port port)
 	setbits_be32(&gur->devdisr2, port_to_devdisr[port]);
 }
 
+void fman_enable_port(enum fm_port port)
+{
+	ccsr_gur_t *gur = (void __iomem *)(CONFIG_SYS_MPC85xx_GUTS_ADDR);
+
+	clrbits_be32(&gur->devdisr2, port_to_devdisr[port]);
+}
+
 phy_interface_t fman_port_enet_if(enum fm_port port)
 {
 	ccsr_gur_t *gur = (void __iomem *)(CONFIG_SYS_MPC85xx_GUTS_ADDR);
@@ -61,6 +68,11 @@ phy_interface_t fman_port_enet_if(enum fm_port port)
 	    ((is_serdes_configured(XAUI_FM1_MAC9))	||
 	     (is_serdes_configured(XAUI_FM1_MAC10))	||
 	     (is_serdes_configured(XFI_FM1_MAC9))	||
+	     (is_serdes_configured(XFI_FM1_MAC10))))
+		return PHY_INTERFACE_MODE_XGMII;
+
+	if ((port == FM1_DTSEC9 || port == FM1_DTSEC10) &&
+	    ((is_serdes_configured(XFI_FM1_MAC9)) ||
 	     (is_serdes_configured(XFI_FM1_MAC10))))
 		return PHY_INTERFACE_MODE_XGMII;
 

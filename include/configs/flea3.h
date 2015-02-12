@@ -16,7 +16,6 @@
 #include <asm/arch/imx-regs.h>
 
  /* High Level Configuration Options */
-#define CONFIG_ARM1136	/* This is an arm1136 CPU core */
 #define CONFIG_MX35
 
 #define CONFIG_SYS_DCACHE_OFF
@@ -50,11 +49,10 @@
 /*
  * Hardware drivers
  */
-#define CONFIG_HARD_I2C
-#define CONFIG_I2C_MXC
-#define CONFIG_SYS_I2C_BASE		I2C3_BASE_ADDR
-#define CONFIG_SYS_I2C_SPEED		100000
-#define CONFIG_SYS_I2C_SLAVE		0xfe
+#define CONFIG_SYS_I2C
+#define CONFIG_SYS_I2C_MXC
+#define CONFIG_SYS_SPD_BUS_NUM		2 /* I2C3 */
+#define CONFIG_SYS_MXC_I2C3_SLAVE	0xfe
 #define CONFIG_MXC_SPI
 #define CONFIG_MXC_GPIO
 
@@ -129,8 +127,6 @@
 #undef	CONFIG_SYS_CLKS_IN_HZ	/* everything, incl board info, in Hz */
 
 #define CONFIG_SYS_LOAD_ADDR		CONFIG_LOADADDR
-
-#define CONFIG_SYS_HZ				1000
 
 /*
  * Physical Memory Map

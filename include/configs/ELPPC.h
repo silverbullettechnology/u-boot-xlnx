@@ -75,7 +75,6 @@
  * Miscellaneous configurable options
  */
 #define CONFIG_SYS_LONGHELP                    /* undef to save memory */
-#define CONFIG_SYS_PROMPT              "=> "   /* Monitor Command Prompt */
 
 /*
  * choose between COM1 and COM2 as serial console
@@ -95,8 +94,6 @@
 #define CONFIG_SYS_MEMTEST_END         0x04000000  /* 0 ... 64 MB in DRAM    */
 
 #define CONFIG_SYS_LOAD_ADDR           0x1000000   /* default load address    */
-
-#define CONFIG_SYS_HZ                  1000        /* dec. freq: 1 ms ticks */
 
 #define CONFIG_SYS_BAUDRATE_TABLE      { 9600, 19200, 38400, 57600, 115200, 230400 }
 
@@ -237,8 +234,8 @@
 #define CONFIG_VIDEO
 #define CONFIG_CFB_CONSOLE
 #define VIDEO_KBD_INIT_FCT    (simple_strtol (getenv("console"), NULL, 10))
-#define VIDEO_TSTC_FCT        serial_tstc
-#define VIDEO_GETC_FCT        serial_getc
+#define VIDEO_TSTC_FCT		serial_stub_tstc
+#define VIDEO_GETC_FCT		serial_stub_getc
 
 #define CONFIG_VIDEO_SMI_LYNXEM
 #define CONFIG_VIDEO_LOGO

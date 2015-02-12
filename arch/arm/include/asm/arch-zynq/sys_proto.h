@@ -7,8 +7,6 @@
 #ifndef _SYS_PROTO_H_
 #define _SYS_PROTO_H_
 
-#include <nand.h>
-
 extern void zynq_slcr_lock(void);
 extern void zynq_slcr_unlock(void);
 extern void zynq_slcr_cpu_reset(void);
@@ -22,6 +20,9 @@ extern void zynq_ddrc_init(void);
 extern unsigned int zynq_get_silicon_version(void);
 
 /* Driver extern functions */
-extern int zynq_sdhci_init(u32 regbase);
+extern int zynq_sdhci_init(phys_addr_t regbase);
+extern int zynq_sdhci_of_init(const void *blob);
+
+extern void ps7_init(void);
 
 #endif /* _SYS_PROTO_H_ */

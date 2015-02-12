@@ -6,9 +6,9 @@
  */
 #include <common.h>
 #include <asm/io.h>
+#include <asm/arch/clk.h>
 #include <asm/arch/sys_proto.h>
 #include <asm/arch/hardware.h>
-#include <asm/arch/clk.h>
 
 #define ZYNQ_SILICON_VER_MASK	0xF0000000
 #define ZYNQ_SILICON_VER_SHIFT	28
@@ -16,7 +16,7 @@
 int arch_cpu_init(void)
 {
 	zynq_slcr_unlock();
-
+#ifndef CONFIG_SPL_BUILD
 	/* Device config APB, unlock the PCAP */
 	writel(0x757BDF0D, &devcfg_base->unlock);
 	writel(0xFFFFFFFF, &devcfg_base->rom_shadow);
@@ -34,7 +34,7 @@ int arch_cpu_init(void)
 	/* Urgent write, ports S2/S3 */
 	writel(0xC, &slcr_base->ddr_urgent);
 #endif
-
+#endif
 	zynq_clk_early_init();
 	zynq_slcr_lock();
 
@@ -61,7 +61,7 @@ void reset_cpu(ulong addr)
 #ifndef CONFIG_SYS_DCACHE_OFF
 void enable_caches(void)
 {
-        /* Enable D-cache. I-cache is already enabled in start.S */
-        dcache_enable();
+	/* Enable D-cache. I-cache is already enabled in start.S */
+	dcache_enable();
 }
 #endif

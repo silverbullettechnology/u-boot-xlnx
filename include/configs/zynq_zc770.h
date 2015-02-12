@@ -1,16 +1,16 @@
 /*
- * (C) Copyright 2012 Xilinx
+ * (C) Copyright 2013 Xilinx, Inc.
  *
  * Configuration settings for the Xilinx Zynq ZC770 board.
- * See zynq_common.h for Zynq common configs
+ * See zynq-common.h for Zynq common configs
  *
- * SPDX-License-Identifier:	GPL-2.0+
+ * SPDX-License-Identifier:     GPL-2.0+
  */
 
 #ifndef __CONFIG_ZYNQ_ZC770_H
 #define __CONFIG_ZYNQ_ZC770_H
 
-#define PHYS_SDRAM_1_SIZE (1024 * 1024 * 1024)
+#define CONFIG_SYS_SDRAM_SIZE		(1024 * 1024 * 1024)
 
 #define CONFIG_SYS_NO_FLASH
 
@@ -39,6 +39,6 @@
 # define CONFIG_ZYNQ_SERIAL_UART0
 #endif
 
-#include <configs/zynq_common.h>
+#include <configs/zynq-common.h>
 
 #endif /* __CONFIG_ZYNQ_ZC770_H */

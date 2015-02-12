@@ -14,7 +14,9 @@
  * Copyright (C) 2008 Nokia Corporation: drop_ffs() function by
  * Artem Bityutskiy <dedekind1@gmail.com> from mtd-utils
  *
- * SPDX-License-Identifier:	GPL-2.0+
+ * Copyright 2010 Freescale Semiconductor
+ *
+ * SPDX-License-Identifier:	GPL-2.0
  */
 
 #include <common.h>
@@ -89,6 +91,7 @@ int nand_erase_opts(nand_info_t *meminfo, const nand_erase_options_t *opts)
 			kfree(chip->bbt);
 		}
 		chip->bbt = NULL;
+		chip->options &= ~NAND_BBT_SCANNED;
 	}
 
 	for (erased_length = 0;
@@ -177,14 +180,14 @@ int nand_erase_opts(nand_info_t *meminfo, const nand_erase_options_t *opts)
 	if (!opts->quiet)
 		printf("\n");
 
-	if (opts->scrub)
-		chip->scan_bbt(meminfo);
-
 	return 0;
 }
 
 #ifdef CONFIG_CMD_NAND_LOCK_UNLOCK
 
+#define NAND_CMD_LOCK_TIGHT     0x2c
+#define NAND_CMD_LOCK_STATUS    0x7a
+ 
 /******************************************************************************
  * Support for locking / unlocking operations of some NAND devices
  *****************************************************************************/
@@ -313,7 +316,7 @@ int nand_unlock(struct mtd_info *mtd, loff_t start, size_t length,
 	int page;
 	struct nand_chip *chip = mtd->priv;
 
-	debug("nand_unlock%s: start: %08llx, length: %d!\n",
+	debug("nand_unlock%s: start: %08llx, length: %zd!\n",
 		allexcept ? " (allexcept)" : "", start, length);
 
 	/* select the NAND device */

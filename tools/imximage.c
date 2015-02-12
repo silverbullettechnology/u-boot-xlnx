@@ -9,7 +9,7 @@
  * SPDX-License-Identifier:	GPL-2.0+
  */
 
-#include "mkimage.h"
+#include "imagetool.h"
 #include <image.h>
 #include "imximage.h"
 
@@ -520,7 +520,7 @@ static int imximage_check_image_types(uint8_t type)
 }
 
 static int imximage_verify_header(unsigned char *ptr, int image_size,
-			struct mkimage_params *params)
+			struct image_tool_params *params)
 {
 	struct imx_header *imx_hdr = (struct imx_header *) ptr;
 
@@ -549,7 +549,7 @@ static void imximage_print_header(const void *ptr)
 }
 
 static void imximage_set_header(void *ptr, struct stat *sbuf, int ifd,
-				struct mkimage_params *params)
+				struct image_tool_params *params)
 {
 	struct imx_header *imxhdr = (struct imx_header *)ptr;
 	uint32_t dcd_len;
@@ -568,6 +568,13 @@ static void imximage_set_header(void *ptr, struct stat *sbuf, int ifd,
 	/* Parse dcd configuration file */
 	dcd_len = parse_cfg_file(imxhdr, params->imagename);
 
+	if (imximage_version == IMXIMAGE_V2) {
+		if (imximage_init_loadsize < imximage_ivt_offset +
+			sizeof(imx_header_v2_t))
+				imximage_init_loadsize = imximage_ivt_offset +
+					sizeof(imx_header_v2_t);
+	}
+
 	/* Set the imx header */
 	(*set_imx_hdr)(imxhdr, dcd_len, params->ep, imximage_ivt_offset);
 
@@ -580,7 +587,7 @@ static void imximage_set_header(void *ptr, struct stat *sbuf, int ifd,
 	 *
 	 * The remaining fraction of a block bytes would not be loaded!
 	 */
-	*header_size_ptr = ROUND(sbuf->st_size, 4096);
+	*header_size_ptr = ROUND((sbuf->st_size + imximage_ivt_offset), 4096);
 
 	if (csf_ptr && imximage_csf_size) {
 		*csf_ptr = params->ep - imximage_init_loadsize +
@@ -589,7 +596,7 @@ static void imximage_set_header(void *ptr, struct stat *sbuf, int ifd,
 	}
 }
 
-int imximage_check_params(struct mkimage_params *params)
+int imximage_check_params(struct image_tool_params *params)
 {
 	if (!params)
 		return CFG_INVALID;
@@ -611,7 +618,7 @@ int imximage_check_params(struct mkimage_params *params)
 		(params->xflag) || !(strlen(params->imagename));
 }
 
-static int imximage_generate(struct mkimage_params *params,
+static int imximage_generate(struct image_tool_params *params,
 	struct image_type_params *tparams)
 {
 	struct imx_header *imxhdr;
@@ -701,5 +708,5 @@ static struct image_type_params imximage_params = {
 
 void init_imx_image_type(void)
 {
-	mkimage_register(&imximage_params);
+	register_image_type(&imximage_params);
 }

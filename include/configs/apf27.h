@@ -18,8 +18,7 @@
 /*
  * SoC configurations
  */
-#define CONFIG_ARM926EJS		/* this is an ARM926EJS CPU */
-#define CONFIG_MX27			/* in a Freescale i.MX27 Chip */
+#define CONFIG_MX27			/* This is a Freescale i.MX27 Chip */
 #define CONFIG_MACH_TYPE	1698	/* APF27 */
 #define CONFIG_SYS_GENERIC_BOARD
 
@@ -37,7 +36,6 @@
 /*
  * SPL
  */
-#define CONFIG_SPL
 #define CONFIG_SPL_TARGET	"u-boot-with-spl.bin"
 #define CONFIG_SPL_LDSCRIPT	"arch/$(ARCH)/cpu/u-boot-spl.lds"
 #define CONFIG_SPL_MAX_SIZE	2048
@@ -321,11 +319,12 @@
  */
 
 #ifdef CONFIG_CMD_I2C
-#define CONFIG_HARD_I2C
-#define CONFIG_I2C_MXC
-#define CONFIG_SYS_I2C_BASE		IMX_I2C1_BASE
-#define CONFIG_SYS_I2C_SPEED		100000	/* 100 kHz */
-#define CONFIG_SYS_I2C_SLAVE		0x7F
+#define CONFIG_SYS_I2C
+#define CONFIG_SYS_I2C_MXC
+#define CONFIG_SYS_MXC_I2C1_SPEED	100000	/* 100 kHz */
+#define CONFIG_SYS_MXC_I2C1_SLAVE	0x7F
+#define CONFIG_SYS_MXC_I2C2_SPEED	100000	/* 100 kHz */
+#define CONFIG_SYS_MXC_I2C2_SLAVE	0x7F
 #define CONFIG_SYS_I2C_NOPROBES		{ }
 
 #ifdef CONFIG_CMD_EEPROM
@@ -353,11 +352,6 @@
 #define CONFIG_RTC_DS1374
 #define CONFIG_SYS_RTC_BUS_NUM		0
 #endif /* CONFIG_CMD_DATE */
-
-/*
- * Clocks
- */
-#define	CONFIG_SYS_HZ			1000	/* Ticks per second */
 
 /*
  * PLL

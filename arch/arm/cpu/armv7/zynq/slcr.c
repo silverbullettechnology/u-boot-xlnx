@@ -8,6 +8,7 @@
 #include <asm/io.h>
 #include <malloc.h>
 #include <asm/arch/hardware.h>
+#include <asm/arch/sys_proto.h>
 #include <asm/arch/clk.h>
 
 #define SLCR_LOCK_MAGIC		0x767B
@@ -17,6 +18,8 @@
 #define SLCR_QSPI_ENABLE_MASK		0x03
 #define SLCR_NAND_L2_SEL		0x10
 #define SLCR_NAND_L2_SEL_MASK		0x1F
+
+#define SLCR_USB_L1_SEL			0x04
 
 #define SLCR_IDCODE_MASK	0x1F000
 #define SLCR_IDCODE_SHIFT	12
@@ -50,12 +53,33 @@ static const int qspi1_pins[] = {
 	9, 10, 11, 12, 13
 };
 
+static const int qspi0_dio_pins[] = {
+	1, 2, 3, 6
+};
+
+static const int qspi1_cs_dio_pin[] = {
+	0
+};
+
+static const int qspi1_dio_pins[] = {
+	9, 10, 11
+};
+
+
 static const int nand8_pins[] = {
 	0, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13
 };
 
 static const int nand16_pins[] = {
 	16, 17, 18, 19, 20, 21, 22, 23
+};
+
+static const int usb0_pins[] = {
+	28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39
+};
+
+static const int usb1_pins[] = {
+	40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51
 };
 
 static const struct zynq_slcr_mio_get_status mio_periphs[] = {
@@ -81,6 +105,27 @@ static const struct zynq_slcr_mio_get_status mio_periphs[] = {
 		SLCR_QSPI_ENABLE,
 	},
 	{
+		"qspi0_dio",
+		qspi0_dio_pins,
+		ARRAY_SIZE(qspi0_dio_pins),
+		SLCR_QSPI_ENABLE_MASK,
+		SLCR_QSPI_ENABLE,
+	},
+	{
+		"qspi1_cs_dio",
+		qspi1_cs_dio_pin,
+		ARRAY_SIZE(qspi1_cs_dio_pin),
+		SLCR_QSPI_ENABLE_MASK,
+		SLCR_QSPI_ENABLE,
+	},
+	{
+		"qspi1_dio",
+		qspi1_dio_pins,
+		ARRAY_SIZE(qspi1_dio_pins),
+		SLCR_QSPI_ENABLE_MASK,
+		SLCR_QSPI_ENABLE,
+	},
+	{
 		"nand8",
 		nand8_pins,
 		ARRAY_SIZE(nand8_pins),
@@ -93,6 +138,20 @@ static const struct zynq_slcr_mio_get_status mio_periphs[] = {
 		ARRAY_SIZE(nand16_pins),
 		SLCR_NAND_L2_SEL_MASK,
 		SLCR_NAND_L2_SEL,
+	},
+	{
+		"usb0",
+		usb0_pins,
+		ARRAY_SIZE(usb0_pins),
+		SLCR_USB_L1_SEL,
+		SLCR_USB_L1_SEL,
+	},
+	{
+		"usb1",
+		usb1_pins,
+		ARRAY_SIZE(usb1_pins),
+		SLCR_USB_L1_SEL,
+		SLCR_USB_L1_SEL,
 	},
 };
 
@@ -166,8 +225,8 @@ void zynq_slcr_devcfg_disable(void)
 {
 	zynq_slcr_unlock();
 
-	/* Disable AXI interface */
-	writel(0xFFFFFFFF, &slcr_base->fpga_rst_ctrl);
+	/* Disable AXI interface by asserting FPGA resets */
+	writel(0xF, &slcr_base->fpga_rst_ctrl);
 
 	/* Set Level Shifters DT618760 */
 	writel(0xA, &slcr_base->lvl_shftr_en);
@@ -182,7 +241,7 @@ void zynq_slcr_devcfg_enable(void)
 	/* Set Level Shifters DT618760 */
 	writel(0xF, &slcr_base->lvl_shftr_en);
 
-	/* Disable AXI interface */
+	/* Enable AXI interface by de-asserting FPGA resets */
 	writel(0x0, &slcr_base->fpga_rst_ctrl);
 
 	zynq_slcr_lock();

@@ -195,6 +195,9 @@ pci_dev_t pci_find_devices(struct pci_device_id *ids, int index)
 			     bdf < PCI_BDF(bus + 1, 0, 0);
 #endif
 			     bdf += PCI_BDF(0, 0, 1)) {
+				if (pci_skip_dev(hose, bdf))
+					continue;
+
 				if (!PCI_FUNC(bdf)) {
 					pci_read_config_byte(bdf,
 							     PCI_HEADER_TYPE,
@@ -323,7 +326,7 @@ int __pci_hose_bus_to_phys(struct pci_controller *hose,
 			continue;
 
 		if (bus_addr >= res->bus_start &&
-			bus_addr < res->bus_start + res->size) {
+			(bus_addr - res->bus_start) < res->size) {
 			*pa = (bus_addr - res->bus_start + res->phys_start);
 			return 0;
 		}
@@ -363,9 +366,27 @@ phys_addr_t pci_hose_bus_to_phys(struct pci_controller* hose,
 	return phys_addr;
 }
 
-/*
- *
- */
+void pci_write_bar32(struct pci_controller *hose, pci_dev_t dev, int barnum,
+		     u32 addr_and_ctrl)
+{
+	int bar;
+
+	bar = PCI_BASE_ADDRESS_0 + barnum * 4;
+	pci_hose_write_config_dword(hose, dev, bar, addr_and_ctrl);
+}
+
+u32 pci_read_bar32(struct pci_controller *hose, pci_dev_t dev, int barnum)
+{
+	u32 addr;
+	int bar;
+
+	bar = PCI_BASE_ADDRESS_0 + barnum * 4;
+	pci_hose_read_config_dword(hose, dev, bar, &addr);
+	if (addr & PCI_BASE_ADDRESS_SPACE_IO)
+		return addr & PCI_BASE_ADDRESS_IO_MASK;
+	else
+		return addr & PCI_BASE_ADDRESS_MEM_MASK;
+}
 
 int pci_hose_config_device(struct pci_controller *hose,
 			   pci_dev_t dev,
@@ -572,7 +593,7 @@ const char * pci_class_str(u8 class)
 }
 #endif /* CONFIG_CMD_PCI || CONFIG_PCI_SCAN_SHOW */
 
-int __pci_skip_dev(struct pci_controller *hose, pci_dev_t dev)
+__weak int pci_skip_dev(struct pci_controller *hose, pci_dev_t dev)
 {
 	/*
 	 * Check if pci device should be skipped in configuration
@@ -591,19 +612,15 @@ int __pci_skip_dev(struct pci_controller *hose, pci_dev_t dev)
 
 	return 0;
 }
-int pci_skip_dev(struct pci_controller *hose, pci_dev_t dev)
-	__attribute__((weak, alias("__pci_skip_dev")));
 
 #ifdef CONFIG_PCI_SCAN_SHOW
-int __pci_print_dev(struct pci_controller *hose, pci_dev_t dev)
+__weak int pci_print_dev(struct pci_controller *hose, pci_dev_t dev)
 {
 	if (dev == PCI_BDF(hose->first_busno, 0, 0))
 		return 0;
 
 	return 1;
 }
-int pci_print_dev(struct pci_controller *hose, pci_dev_t dev)
-	__attribute__((weak, alias("__pci_print_dev")));
 #endif /* CONFIG_PCI_SCAN_SHOW */
 
 int pci_hose_scan_bus(struct pci_controller *hose, int bus)
@@ -648,6 +665,10 @@ int pci_hose_scan_bus(struct pci_controller *hose, int bus)
 		pci_hose_read_config_word(hose, dev, PCI_DEVICE_ID, &device);
 		pci_hose_read_config_word(hose, dev, PCI_CLASS_DEVICE, &class);
 
+#ifdef CONFIG_PCI_FIXUP_DEV
+		board_pci_fixup_dev(hose, dev, vendor, device, class);
+#endif
+
 #ifdef CONFIG_PCI_SCAN_SHOW
 		indent++;
 
@@ -662,13 +683,15 @@ int pci_hose_scan_bus(struct pci_controller *hose, int bus)
 #endif
 
 #ifdef CONFIG_PCI_PNP
-		sub_bus = max(pciauto_config_device(hose, dev), sub_bus);
+		sub_bus = max((unsigned int)pciauto_config_device(hose, dev),
+			      sub_bus);
 #else
 		cfg = pci_find_config(hose, class, vendor, device,
 				      PCI_BUS(dev), PCI_DEV(dev), PCI_FUNC(dev));
 		if (cfg) {
 			cfg->config_device(hose, dev, cfg);
-			sub_bus = max(sub_bus, hose->current_busno);
+			sub_bus = max(sub_bus,
+				      (unsigned int)hose->current_busno);
 		}
 #endif
 
@@ -721,4 +744,69 @@ void pci_init(void)
 
 	/* now call board specific pci_init()... */
 	pci_init_board();
+}
+
+/* Returns the address of the requested capability structure within the
+ * device's PCI configuration space or 0 in case the device does not
+ * support it.
+ * */
+int pci_hose_find_capability(struct pci_controller *hose, pci_dev_t dev,
+			     int cap)
+{
+	int pos;
+	u8 hdr_type;
+
+	pci_hose_read_config_byte(hose, dev, PCI_HEADER_TYPE, &hdr_type);
+
+	pos = pci_hose_find_cap_start(hose, dev, hdr_type & 0x7F);
+
+	if (pos)
+		pos = pci_find_cap(hose, dev, pos, cap);
+
+	return pos;
+}
+
+/* Find the header pointer to the Capabilities*/
+int pci_hose_find_cap_start(struct pci_controller *hose, pci_dev_t dev,
+			    u8 hdr_type)
+{
+	u16 status;
+
+	pci_hose_read_config_word(hose, dev, PCI_STATUS, &status);
+
+	if (!(status & PCI_STATUS_CAP_LIST))
+		return 0;
+
+	switch (hdr_type) {
+	case PCI_HEADER_TYPE_NORMAL:
+	case PCI_HEADER_TYPE_BRIDGE:
+		return PCI_CAPABILITY_LIST;
+	case PCI_HEADER_TYPE_CARDBUS:
+		return PCI_CB_CAPABILITY_LIST;
+	default:
+		return 0;
+	}
+}
+
+int pci_find_cap(struct pci_controller *hose, pci_dev_t dev, int pos, int cap)
+{
+	int ttl = PCI_FIND_CAP_TTL;
+	u8 id;
+	u8 next_pos;
+
+	while (ttl--) {
+		pci_hose_read_config_byte(hose, dev, pos, &next_pos);
+		if (next_pos < CAP_START_POS)
+			break;
+		next_pos &= ~3;
+		pos = (int) next_pos;
+		pci_hose_read_config_byte(hose, dev,
+					  pos + PCI_CAP_LIST_ID, &id);
+		if (id == 0xff)
+			break;
+		if (id == cap)
+			return pos;
+		pos += PCI_CAP_LIST_NEXT;
+	}
+	return 0;
 }

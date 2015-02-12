@@ -1,9 +1,6 @@
 #include <common.h>
 #include <exports.h>
-
-#ifndef GCC_VERSION
-#define GCC_VERSION (__GNUC__ * 1000 + __GNUC_MINOR__)
-#endif /* GCC_VERSION */
+#include <linux/compiler.h>
 
 #if defined(CONFIG_X86)
 /*
@@ -39,17 +36,32 @@ gd_t *global_data;
 "	bctr\n"				\
 	: : "i"(offsetof(gd_t, jt)), "i"(XF_ ## x * sizeof(void *)) : "r11");
 #elif defined(CONFIG_ARM)
+#ifdef CONFIG_ARM64
 /*
- * r8 holds the pointer to the global_data, ip is a call-clobbered
+ * x18 holds the pointer to the global_data, x9 is a call-clobbered
  * register
  */
 #define EXPORT_FUNC(x) \
 	asm volatile (			\
 "	.globl " #x "\n"		\
 #x ":\n"				\
-"	ldr	ip, [r8, %0]\n"		\
+"	ldr	x9, [x18, %0]\n"		\
+"	ldr	x9, [x9, %1]\n"		\
+"	br	x9\n"		\
+	: : "i"(offsetof(gd_t, jt)), "i"(XF_ ## x * sizeof(void *)) : "x9");
+#else
+/*
+ * r9 holds the pointer to the global_data, ip is a call-clobbered
+ * register
+ */
+#define EXPORT_FUNC(x) \
+	asm volatile (			\
+"	.globl " #x "\n"		\
+#x ":\n"				\
+"	ldr	ip, [r9, %0]\n"		\
 "	ldr	pc, [ip, %1]\n"		\
 	: : "i"(offsetof(gd_t, jt)), "i"(XF_ ## x * sizeof(void *)) : "ip");
+#endif
 #elif defined(CONFIG_MIPS)
 /*
  * k0 ($26) holds the pointer to the global_data; t9 ($25) is a call-
@@ -195,6 +207,19 @@ gd_t *global_data;
 "	l.jr	r13\n"		\
 "	l.nop\n"				\
 	: : "i"(offsetof(gd_t, jt)), "i"(XF_ ## x * sizeof(void *)) : "r13");
+#elif defined(CONFIG_ARC)
+/*
+ * r25 holds the pointer to the global_data. r10 is call clobbered.
+  */
+#define EXPORT_FUNC(x) \
+	asm volatile( \
+"	.align 4\n" \
+"	.globl " #x "\n" \
+#x ":\n" \
+"	ld	r10, [r25, %0]\n" \
+"	ld	r10, [r10, %1]\n" \
+"	j	[r10]\n" \
+	: : "i"(offsetof(gd_t, jt)), "i"(XF_ ## x * sizeof(void *)) : "r10");
 #else
 /*"	addi	$sp, $sp, -24\n"	\
 "	br	$r16\n"			\*/
@@ -209,7 +234,7 @@ gd_t *global_data;
  * implementation. On the other hand, asm() statements with
  * arguments can be used only inside the functions (gcc limitation)
  */
-#if GCC_VERSION < 3004
+#if GCC_VERSION < 30400
 static
 #endif /* GCC_VERSION */
 void __attribute__((unused)) dummy(void)

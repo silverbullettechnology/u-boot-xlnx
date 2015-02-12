@@ -11,7 +11,10 @@
 
 #include <common.h>
 #include <net.h>
+#include <netdev.h>
 #include <config.h>
+#include <fdtdec.h>
+#include <libfdt.h>
 #include <malloc.h>
 #include <asm/io.h>
 #include <phy.h>
@@ -356,7 +359,8 @@ static int zynq_gem_init(struct eth_device *dev, bd_t * bis)
 
 #ifdef CONFIG_PHYLIB
 	/* interface - look at tsec */
-	phydev = phy_connect(priv->bus, priv->phyaddr, dev, 0);
+	phydev = phy_connect(priv->bus, priv->phyaddr, dev,
+			     PHY_INTERFACE_MODE_MII);
 
 	phydev->supported = supported | ADVERTISED_Pause |
 			    ADVERTISED_Asym_Pause;
@@ -545,7 +549,8 @@ static int zynq_gem_miiphy_write(const char *devname, uchar addr,
 	return phywrite(dev, addr, reg, val);
 }
 
-int zynq_gem_initialize(bd_t *bis, int base_addr, int phy_addr, u32 emio)
+int zynq_gem_initialize(bd_t *bis, phys_addr_t base_addr,
+			int phy_addr, u32 emio)
 {
 	struct eth_device *dev;
 	struct zynq_gem_priv *priv;
@@ -577,7 +582,7 @@ int zynq_gem_initialize(bd_t *bis, int base_addr, int phy_addr, u32 emio)
 	priv->phyaddr = phy_addr;
 	priv->emio = emio;
 
-	sprintf(dev->name, "Gem.%x", base_addr);
+	sprintf(dev->name, "Gem.%lx", base_addr);
 
 	dev->iobase = base_addr;
 
@@ -596,3 +601,43 @@ int zynq_gem_initialize(bd_t *bis, int base_addr, int phy_addr, u32 emio)
 
 	return 1;
 }
+
+#ifdef CONFIG_OF_CONTROL
+int zynq_gem_of_init(const void *blob)
+{
+	int offset = 0;
+	u32 ret = 0;
+	u32 reg, phy_reg;
+
+	debug("ZYNQ GEM: Initialization\n");
+
+	do {
+		offset = fdt_node_offset_by_compatible(blob, offset,
+					"xlnx,ps7-ethernet-1.00.a");
+		if (offset != -1) {
+			reg = fdtdec_get_addr(blob, offset, "reg");
+			if (reg != FDT_ADDR_T_NONE) {
+				offset = fdtdec_lookup_phandle(blob, offset,
+							       "phy-handle");
+				if (offset != -1)
+					phy_reg = fdtdec_get_addr(blob, offset,
+								  "reg");
+				else
+					phy_reg = 0;
+
+				debug("ZYNQ GEM: addr %x, phyaddr %x\n",
+				      reg, phy_reg);
+
+				ret |= zynq_gem_initialize(NULL, reg,
+							   phy_reg, 0);
+
+			} else {
+				debug("ZYNQ GEM: Can't get base address\n");
+				return -1;
+			}
+		}
+	} while (offset != -1);
+
+	return ret;
+}
+#endif

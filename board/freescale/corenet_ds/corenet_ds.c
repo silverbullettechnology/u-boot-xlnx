@@ -101,7 +101,7 @@ int board_early_init_f(void)
 int board_early_init_r(void)
 {
 	const unsigned int flashbase = CONFIG_SYS_FLASH_BASE;
-	const u8 flash_esel = find_tlb_idx((void *)flashbase, 1);
+	int flash_esel = find_tlb_idx((void *)flashbase, 1);
 
 	/*
 	 * Remap Boot flash + PROMJET region to caching-inhibited
@@ -112,8 +112,14 @@ int board_early_init_r(void)
 	flush_dcache();
 	invalidate_icache();
 
-	/* invalidate existing TLB entry for flash + promjet */
-	disable_tlb(flash_esel);
+	if (flash_esel == -1) {
+		/* very unlikely unless something is messed up */
+		puts("Error: Could not find TLB for FLASH BASE\n");
+		flash_esel = 2;	/* give our best effort to continue */
+	} else {
+		/* invalidate existing TLB entry for flash + promjet */
+		disable_tlb(flash_esel);
+	}
 
 	set_tlb(1, flashbase, CONFIG_SYS_FLASH_BASE_PHYS,	/* tlb, epn, rpn */
 			MAS3_SX|MAS3_SW|MAS3_SR, MAS2_I|MAS2_G,	/* perms, wimge */
@@ -125,20 +131,6 @@ int board_early_init_r(void)
 #endif
 
 	return 0;
-}
-
-static const char *serdes_clock_to_string(u32 clock)
-{
-	switch(clock) {
-	case SRDS_PLLCR0_RFCK_SEL_100:
-		return "100";
-	case SRDS_PLLCR0_RFCK_SEL_125:
-		return "125";
-	case SRDS_PLLCR0_RFCK_SEL_156_25:
-		return "156.25";
-	default:
-		return "150";
-	}
 }
 
 #define NUM_SRDS_BANKS	3
@@ -198,7 +190,7 @@ int misc_init_r(void)
 	return 0;
 }
 
-void ft_board_setup(void *blob, bd_t *bd)
+int ft_board_setup(void *blob, bd_t *bd)
 {
 	phys_addr_t base;
 	phys_size_t size;
@@ -221,4 +213,6 @@ void ft_board_setup(void *blob, bd_t *bd)
 	fdt_fixup_fman_ethernet(blob);
 	fdt_fixup_board_enet(blob);
 #endif
+
+	return 0;
 }

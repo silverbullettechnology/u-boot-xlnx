@@ -1,98 +1,16 @@
 /*
- * Generic MTRR (Memory Type Range Register) ioctls.
- * Taken from the Linux kernel
+ * Copyright (c) 2014 Google, Inc
  *
- * (C) Copyright 2012
- * Graeme Russ, <graeme.russ@gmail.com>
- *
- * Copyright (C) 1997-1999  Richard Gooch <rgooch@atnf.csiro.au>
+ * From Coreboot file of the same name
  *
  * SPDX-License-Identifier:	GPL-2.0+
  */
 
-#ifndef _ASM_X86_MTRR_H
-#define _ASM_X86_MTRR_H
-
-#define MTRRphysBase_MSR(reg) (0x200 + 2 * (reg))
-#define MTRRphysMask_MSR(reg) (0x200 + 2 * (reg) + 1)
-
-#ifndef __ASSEMBLY__
-
-#include <linux/types.h>
-#include <linux/ioctl.h>
-#include <errno.h>
-
-#define	MTRR_IOCTL_BASE	'M'
-
-struct mtrr_sentry {
-	unsigned long base;	/*  Base address     */
-	unsigned int size;	/*  Size of region   */
-	unsigned int type;	/*  Type of region   */
-};
-
-/*
- * Warning: this structure has a different order from i386
- * on x86-64. The 32bit emulation code takes care of that.
- * But you need to use this for 64bit, otherwise your X server
- * will break.
- */
-
-#ifdef __i386__
-struct mtrr_gentry {
-	unsigned int regnum;	/*  Register number  */
-	unsigned long base;	/*  Base address     */
-	unsigned int size;	/*  Size of region   */
-	unsigned int type;	/*  Type of region   */
-};
-
-#else /* __i386__ */
-
-struct mtrr_gentry {
-	unsigned long base;	/*  Base address     */
-	unsigned int size;	/*  Size of region   */
-	unsigned int regnum;	/*  Register number  */
-	unsigned int type;	/*  Type of region   */
-};
-#endif /* !__i386__ */
-
-struct mtrr_var_range {
-	__u32 base_lo;
-	__u32 base_hi;
-	__u32 mask_lo;
-	__u32 mask_hi;
-};
-
-/*
- * In the Intel processor's MTRR interface, the MTRR type is always held in
- * an 8 bit field:
- */
-typedef __u8 mtrr_type;
-
-#define MTRR_NUM_FIXED_RANGES 88
-#define MTRR_MAX_VAR_RANGES 256
-
-struct mtrr_state_type {
-	struct mtrr_var_range var_ranges[MTRR_MAX_VAR_RANGES];
-	mtrr_type fixed_ranges[MTRR_NUM_FIXED_RANGES];
-	unsigned char enabled;
-	unsigned char have_fixed;
-	mtrr_type def_type;
-};
-
-/*  These are the various ioctls  */
-#define MTRRIOC_ADD_ENTRY        _IOW(MTRR_IOCTL_BASE,  0, struct mtrr_sentry)
-#define MTRRIOC_SET_ENTRY        _IOW(MTRR_IOCTL_BASE,  1, struct mtrr_sentry)
-#define MTRRIOC_DEL_ENTRY        _IOW(MTRR_IOCTL_BASE,  2, struct mtrr_sentry)
-#define MTRRIOC_GET_ENTRY        _IOWR(MTRR_IOCTL_BASE, 3, struct mtrr_gentry)
-#define MTRRIOC_KILL_ENTRY       _IOW(MTRR_IOCTL_BASE,  4, struct mtrr_sentry)
-#define MTRRIOC_ADD_PAGE_ENTRY   _IOW(MTRR_IOCTL_BASE,  5, struct mtrr_sentry)
-#define MTRRIOC_SET_PAGE_ENTRY   _IOW(MTRR_IOCTL_BASE,  6, struct mtrr_sentry)
-#define MTRRIOC_DEL_PAGE_ENTRY   _IOW(MTRR_IOCTL_BASE,  7, struct mtrr_sentry)
-#define MTRRIOC_GET_PAGE_ENTRY   _IOWR(MTRR_IOCTL_BASE, 8, struct mtrr_gentry)
-#define MTRRIOC_KILL_PAGE_ENTRY  _IOW(MTRR_IOCTL_BASE,  9, struct mtrr_sentry)
+#ifndef _ASM_MTRR_H
+#define _ASM_MTRR_H
 
 /*  These are the region types  */
-#define MTRR_TYPE_UNCACHABLE 0
+#define MTRR_TYPE_UNCACHEABLE 0
 #define MTRR_TYPE_WRCOMB     1
 /*#define MTRR_TYPE_         2*/
 /*#define MTRR_TYPE_         3*/
@@ -101,93 +19,103 @@ struct mtrr_state_type {
 #define MTRR_TYPE_WRBACK     6
 #define MTRR_NUM_TYPES       7
 
-#ifdef __KERNEL__
+#define MTRRcap_MSR     0x0fe
+#define MTRRdefType_MSR 0x2ff
 
-/*  The following functions are for use by other drivers  */
-# ifdef CONFIG_MTRR
-extern u8 mtrr_type_lookup(u64 addr, u64 end);
-extern void mtrr_save_fixed_ranges(void *);
-extern void mtrr_save_state(void);
-extern int mtrr_add(unsigned long base, unsigned long size,
-		    unsigned int type, bool increment);
-extern int mtrr_add_page(unsigned long base, unsigned long size,
-			 unsigned int type, bool increment);
-extern int mtrr_del(int reg, unsigned long base, unsigned long size);
-extern int mtrr_del_page(int reg, unsigned long base, unsigned long size);
-extern void mtrr_centaur_report_mcr(int mcr, u32 lo, u32 hi);
-extern void mtrr_ap_init(void);
-extern void mtrr_bp_init(void);
-extern void set_mtrr_aps_delayed_init(void);
-extern void mtrr_aps_init(void);
-extern void mtrr_bp_restore(void);
-extern int mtrr_trim_uncached_memory(unsigned long end_pfn);
-extern int amd_special_default_mtrr(void);
-#  else
-static inline u8 mtrr_type_lookup(u64 addr, u64 end)
-{
-	/*
-	 * Return no-MTRRs:
-	 */
-	return 0xff;
-}
-#define mtrr_save_fixed_ranges(arg) do {} while (0)
-#define mtrr_save_state() do {} while (0)
-static inline int mtrr_del(int reg, unsigned long base, unsigned long size)
-{
-	return -ENODEV;
-}
-static inline int mtrr_del_page(int reg, unsigned long base, unsigned long size)
-{
-	return -ENODEV;
-}
-static inline int mtrr_trim_uncached_memory(unsigned long end_pfn)
-{
-	return 0;
-}
-static inline void mtrr_centaur_report_mcr(int mcr, u32 lo, u32 hi)
-{
-}
+#define MTRRdefTypeEn		(1 << 11)
+#define MTRRdefTypeFixEn	(1 << 10)
 
-#define mtrr_ap_init() do {} while (0)
-#define mtrr_bp_init() do {} while (0)
-#define set_mtrr_aps_delayed_init() do {} while (0)
-#define mtrr_aps_init() do {} while (0)
-#define mtrr_bp_restore() do {} while (0)
-#  endif
+#define SMRRphysBase_MSR 0x1f2
+#define SMRRphysMask_MSR 0x1f3
 
-#ifdef CONFIG_COMPAT
-#include <linux/compat.h>
+#define MTRRphysBase_MSR(reg) (0x200 + 2 * (reg))
+#define MTRRphysMask_MSR(reg) (0x200 + 2 * (reg) + 1)
 
-struct mtrr_sentry32 {
-	compat_ulong_t base;	/*  Base address     */
-	compat_uint_t size;	/*  Size of region   */
-	compat_uint_t type;	/*  Type of region   */
-};
+#define MTRRphysMaskValid	(1 << 11)
 
-struct mtrr_gentry32 {
-	compat_ulong_t regnum;	/*  Register number  */
-	compat_uint_t base;	/*  Base address     */
-	compat_uint_t size;	/*  Size of region   */
-	compat_uint_t type;	/*  Type of region   */
-};
+#define NUM_FIXED_RANGES 88
+#define RANGES_PER_FIXED_MTRR 8
+#define MTRRfix64K_00000_MSR 0x250
+#define MTRRfix16K_80000_MSR 0x258
+#define MTRRfix16K_A0000_MSR 0x259
+#define MTRRfix4K_C0000_MSR 0x268
+#define MTRRfix4K_C8000_MSR 0x269
+#define MTRRfix4K_D0000_MSR 0x26a
+#define MTRRfix4K_D8000_MSR 0x26b
+#define MTRRfix4K_E0000_MSR 0x26c
+#define MTRRfix4K_E8000_MSR 0x26d
+#define MTRRfix4K_F0000_MSR 0x26e
+#define MTRRfix4K_F8000_MSR 0x26f
 
-#define MTRR_IOCTL_BASE 'M'
+#if !defined(__ASSEMBLER__)
 
-#define MTRRIOC32_ADD_ENTRY      _IOW(MTRR_IOCTL_BASE,  0, struct mtrr_sentry32)
-#define MTRRIOC32_SET_ENTRY      _IOW(MTRR_IOCTL_BASE,  1, struct mtrr_sentry32)
-#define MTRRIOC32_DEL_ENTRY      _IOW(MTRR_IOCTL_BASE,  2, struct mtrr_sentry32)
-#define MTRRIOC32_GET_ENTRY      _IOWR(MTRR_IOCTL_BASE, 3, struct mtrr_gentry32)
-#define MTRRIOC32_KILL_ENTRY     _IOW(MTRR_IOCTL_BASE,  4, struct mtrr_sentry32)
-#define MTRRIOC32_ADD_PAGE_ENTRY _IOW(MTRR_IOCTL_BASE,  5, struct mtrr_sentry32)
-#define MTRRIOC32_SET_PAGE_ENTRY _IOW(MTRR_IOCTL_BASE,  6, struct mtrr_sentry32)
-#define MTRRIOC32_DEL_PAGE_ENTRY _IOW(MTRR_IOCTL_BASE,  7, struct mtrr_sentry32)
-#define MTRRIOC32_GET_PAGE_ENTRY _IOWR(MTRR_IOCTL_BASE, 8, struct mtrr_gentry32)
-#define MTRRIOC32_KILL_PAGE_ENTRY		\
-				 _IOW(MTRR_IOCTL_BASE,  9, struct mtrr_sentry32)
-#endif /* CONFIG_COMPAT */
+/*
+ * The MTRR code has some side effects that the callers should be aware for.
+ * 1. The call sequence matters. x86_setup_mtrrs() calls
+ *    x86_setup_fixed_mtrrs_no_enable() then enable_fixed_mtrrs() (equivalent
+ *    of x86_setup_fixed_mtrrs()) then x86_setup_var_mtrrs(). If the callers
+ *    want to call the components of x86_setup_mtrrs() because of other
+ *    rquirements the ordering should still preserved.
+ * 2. enable_fixed_mtrr() will enable both variable and fixed MTRRs because
+ *    of the nature of the global MTRR enable flag. Therefore, all direct
+ *    or indirect callers of enable_fixed_mtrr() should ensure that the
+ *    variable MTRR MSRs do not contain bad ranges.
+ * 3. If CONFIG_CACHE_ROM is selected an MTRR is allocated for enabling
+ *    the caching of the ROM. However, it is set to uncacheable (UC). It
+ *    is the responsiblity of the caller to enable it by calling
+ *    x86_mtrr_enable_rom_caching().
+ */
+void x86_setup_mtrrs(void);
+/*
+ * x86_setup_var_mtrrs() parameters:
+ * address_bits - number of physical address bits supported by cpu
+ * above4gb - 2 means dynamically detect number of variable MTRRs available.
+ *            non-zero means handle memory ranges above 4GiB.
+ *            0 means ignore memory ranges above 4GiB
+ */
+void x86_setup_var_mtrrs(unsigned int address_bits, unsigned int above4gb);
+void enable_fixed_mtrr(void);
+void x86_setup_fixed_mtrrs(void);
+/* Set up fixed MTRRs but do not enable them. */
+void x86_setup_fixed_mtrrs_no_enable(void);
+int x86_mtrr_check(void);
+/* ROM caching can be used after variable MTRRs are set up. Beware that
+ * enabling CONFIG_CACHE_ROM will eat through quite a few MTRRs based on
+ * one's IO hole size and WRCOMB resources. Be sure to check the console
+ * log when enabling CONFIG_CACHE_ROM or adding WRCOMB resources. Beware that
+ * on CPUs with core-scoped MTRR registers such as hyperthreaded CPUs the
+ * rom caching will be disabled if all threads run the MTRR code. Therefore,
+ * one needs to call x86_mtrr_enable_rom_caching() after all threads of the
+ * same core have run the MTRR code. */
+#if CONFIG_CACHE_ROM
+void x86_mtrr_enable_rom_caching(void);
+void x86_mtrr_disable_rom_caching(void);
+/* Return the variable range MTRR index of the ROM cache. */
+long x86_mtrr_rom_cache_var_index(void);
+#else
+static inline void x86_mtrr_enable_rom_caching(void) {}
+static inline void x86_mtrr_disable_rom_caching(void) {}
+static inline long x86_mtrr_rom_cache_var_index(void) { return -1; }
+#endif /* CONFIG_CACHE_ROM */
 
-#endif /* __KERNEL__ */
+#endif
 
-#endif /* __ASSEMBLY__ */
+#if !defined(CONFIG_RAMTOP)
+# error "CONFIG_RAMTOP not defined"
+#endif
 
-#endif /* _ASM_X86_MTRR_H */
+#if ((CONFIG_XIP_ROM_SIZE & (CONFIG_XIP_ROM_SIZE - 1)) != 0)
+# error "CONFIG_XIP_ROM_SIZE is not a power of 2"
+#endif
+
+#if ((CONFIG_CACHE_ROM_SIZE & (CONFIG_CACHE_ROM_SIZE - 1)) != 0)
+# error "CONFIG_CACHE_ROM_SIZE is not a power of 2"
+#endif
+
+#define CACHE_ROM_BASE	(((1 << 20) - (CONFIG_CACHE_ROM_SIZE >> 12)) << 12)
+
+#if (CONFIG_RAMTOP & (CONFIG_RAMTOP - 1)) != 0
+# error "CONFIG_RAMTOP must be a power of 2"
+#endif
+
+#endif

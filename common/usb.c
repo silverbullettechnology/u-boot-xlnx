@@ -33,7 +33,7 @@
 #include <linux/ctype.h>
 #include <asm/byteorder.h>
 #include <asm/unaligned.h>
-
+#include <errno.h>
 #include <usb.h>
 #ifdef CONFIG_4xx
 #include <asm/4xx_pci.h>
@@ -59,6 +59,7 @@ int usb_init(void)
 	void *ctrl;
 	struct usb_device *dev;
 	int i, start_index = 0;
+	int ret;
 
 	dev_index = 0;
 	asynch_allowed = 1;
@@ -74,7 +75,13 @@ int usb_init(void)
 	for (i = 0; i < CONFIG_USB_MAX_CONTROLLER_COUNT; i++) {
 		/* init low_level USB */
 		printf("USB%d:   ", i);
-		if (usb_lowlevel_init(i, &ctrl)) {
+		ret = usb_lowlevel_init(i, USB_INIT_HOST, &ctrl);
+		if (ret == -ENODEV) {	/* No such device. */
+			puts("Port not available.\n");
+			continue;
+		}
+
+		if (ret) {		/* Other error. */
 			puts("lowlevel init failed\n");
 			continue;
 		}
@@ -855,6 +862,16 @@ void usb_free_device(void)
 }
 
 /*
+ * XHCI issues Enable Slot command and thereafter
+ * allocates device contexts. Provide a weak alias
+ * function for the purpose, so that XHCI overrides it
+ * and EHCI/OHCI just work out of the box.
+ */
+__weak int usb_alloc_device(struct usb_device *udev)
+{
+	return 0;
+}
+/*
  * By the time we get here, the device has gotten a new device ID
  * and is in the default state. We need to identify the thing and
  * get the ball rolling..
@@ -866,6 +883,17 @@ int usb_new_device(struct usb_device *dev)
 	int addr, err;
 	int tmp;
 	ALLOC_CACHE_ALIGN_BUFFER(unsigned char, tmpbuf, USB_BUFSIZ);
+
+	/*
+	 * Allocate usb 3.0 device context.
+	 * USB 3.0 (xHCI) protocol tries to allocate device slot
+	 * and related data structures first. This call does that.
+	 * Refer to sec 4.3.2 in xHCI spec rev1.0
+	 */
+	if (usb_alloc_device(dev)) {
+		printf("Cannot allocate device context to get SLOT_ID\n");
+		return -1;
+	}
 
 	/* We still haven't set the Address yet */
 	addr = dev->devnum;
@@ -897,8 +925,7 @@ int usb_new_device(struct usb_device *dev)
 	 * http://sourceforge.net/mailarchive/forum.php?
 	 * thread_id=5729457&forum_id=5398
 	 */
-	struct usb_device_descriptor *desc;
-	int port = -1;
+	__maybe_unused struct usb_device_descriptor *desc;
 	struct usb_device *parent = dev->parent;
 	unsigned short portstatus;
 
@@ -914,6 +941,13 @@ int usb_new_device(struct usb_device *dev)
 	dev->epmaxpacketin[0] = 64;
 	dev->epmaxpacketout[0] = 64;
 
+	/*
+	 * XHCI needs to issue a Address device command to setup
+	 * proper device context structures, before it can interact
+	 * with the device. So a get_descriptor will fail before any
+	 * of that is done for XHCI unlike EHCI.
+	 */
+#ifndef CONFIG_USB_XHCI
 	err = usb_get_descriptor(dev, USB_DT_DEVICE, 0, desc, 64);
 	if (err < 0) {
 		debug("usb_new_device: usb_get_descriptor() failed\n");
@@ -926,26 +960,13 @@ int usb_new_device(struct usb_device *dev)
 	 * to differentiate between HUB and DEVICE.
 	 */
 	dev->descriptor.bDeviceClass = desc->bDeviceClass;
+#endif
 
-	/* find the port number we're at */
 	if (parent) {
-		int j;
-
-		for (j = 0; j < parent->maxchild; j++) {
-			if (parent->children[j] == dev) {
-				port = j;
-				break;
-			}
-		}
-		if (port < 0) {
-			printf("usb_new_device:cannot locate device's port.\n");
-			return 1;
-		}
-
 		/* reset the port for the second time */
-		err = hub_port_reset(dev->parent, port, &portstatus);
+		err = hub_port_reset(dev->parent, dev->portnr - 1, &portstatus);
 		if (err < 0) {
-			printf("\n     Couldn't reset port %i\n", port);
+			printf("\n     Couldn't reset port %i\n", dev->portnr);
 			return 1;
 		}
 	}
@@ -1037,4 +1058,9 @@ int usb_new_device(struct usb_device *dev)
 	return 0;
 }
 
+__weak
+int board_usb_init(int index, enum usb_init_type init)
+{
+	return 0;
+}
 /* EOF */

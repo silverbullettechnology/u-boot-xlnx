@@ -10,6 +10,9 @@
 #ifndef __CONFIG_H
 #define __CONFIG_H
 
+#define CONFIG_SYS_GENERIC_BOARD
+#define CONFIG_DISPLAY_BOARDINFO
+
 #ifdef CONFIG_36BIT
 #define CONFIG_PHYS_64BIT
 #endif
@@ -77,6 +80,16 @@
 #define __SW_BOOT_NAND		0x44
 #define __SW_BOOT_PCIE		0x74
 #define CONFIG_SYS_L2_SIZE	(256 << 10)
+/*
+ * Dynamic MTD Partition support with mtdparts
+ */
+#define CONFIG_MTD_DEVICE
+#define CONFIG_MTD_PARTITIONS
+#define CONFIG_CMD_MTDPARTS
+#define CONFIG_FLASH_CFI_MTD
+#define MTDIDS_DEFAULT "nor0=ec000000.nor"
+#define MTDPARTS_DEFAULT "mtdparts=ec000000.nor:128k(dtb),6016k(kernel)," \
+			"57088k(fs),1m(vsc7385-firmware),1280k(u-boot)"
 #endif
 
 #if defined(CONFIG_P1021RDB)
@@ -95,6 +108,24 @@
 #define __SW_BOOT_NAND		0xec
 #define __SW_BOOT_PCIE		0x6c
 #define CONFIG_SYS_L2_SIZE	(256 << 10)
+/*
+ * Dynamic MTD Partition support with mtdparts
+ */
+#define CONFIG_MTD_DEVICE
+#define CONFIG_MTD_PARTITIONS
+#define CONFIG_CMD_MTDPARTS
+#define CONFIG_FLASH_CFI_MTD
+#ifdef CONFIG_PHYS_64BIT
+#define MTDIDS_DEFAULT "nor0=fef000000.nor"
+#define MTDPARTS_DEFAULT "mtdparts=fef000000.nor:256k(vsc7385-firmware)," \
+			"256k(dtb),4608k(kernel),9728k(fs)," \
+			"256k(qe-ucode-firmware),1280k(u-boot)"
+#else
+#define MTDIDS_DEFAULT "nor0=ef000000.nor"
+#define MTDPARTS_DEFAULT "mtdparts=ef000000.nor:256k(vsc7385-firmware)," \
+			"256k(dtb),4608k(kernel),9728k(fs)," \
+			"256k(qe-ucode-firmware),1280k(u-boot)"
+#endif
 #endif
 
 #if defined(CONFIG_P1024RDB)
@@ -142,67 +173,124 @@
 #define __SW_BOOT_NAND		0xe8
 #define __SW_BOOT_PCIE		0xa8
 #define CONFIG_SYS_L2_SIZE	(512 << 10)
+/*
+ * Dynamic MTD Partition support with mtdparts
+ */
+#define CONFIG_MTD_DEVICE
+#define CONFIG_MTD_PARTITIONS
+#define CONFIG_CMD_MTDPARTS
+#define CONFIG_FLASH_CFI_MTD
+#ifdef CONFIG_PHYS_64BIT
+#define MTDIDS_DEFAULT "nor0=fef000000.nor"
+#define MTDPARTS_DEFAULT "mtdparts=fef000000.nor:256k(vsc7385-firmware)," \
+			"256k(dtb),4608k(kernel),9984k(fs),1280k(u-boot)"
+#else
+#define MTDIDS_DEFAULT "nor0=ef000000.nor"
+#define MTDPARTS_DEFAULT "mtdparts=ef000000.nor:256k(vsc7385-firmware)," \
+			"256k(dtb),4608k(kernel),9984k(fs),1280k(u-boot)"
 #endif
-
-#if CONFIG_SYS_L2_SIZE >= (512 << 10)
-/* must be 32-bit */
-#define CONFIG_SYS_INIT_L2_ADDR	0xf8f80000
-#define CONFIG_SYS_INIT_L2_ADDR_PHYS CONFIG_SYS_INIT_L2_ADDR
-#define CONFIG_SYS_INIT_L2_END  (CONFIG_SYS_INIT_L2_ADDR + CONFIG_SYS_L2_SIZE)
 #endif
 
 #ifdef CONFIG_SDCARD
-#define CONFIG_RAMBOOT_SDCARD
-#define CONFIG_SYS_RAMBOOT
-#define CONFIG_SYS_EXTRA_ENV_RELOC
-#define CONFIG_SYS_TEXT_BASE		0x11000000
-#define CONFIG_RESET_VECTOR_ADDRESS	0x1107fffc
+#define CONFIG_SPL_MPC8XXX_INIT_DDR_SUPPORT
+#define CONFIG_SPL_ENV_SUPPORT
+#define CONFIG_SPL_SERIAL_SUPPORT
+#define CONFIG_SPL_MMC_SUPPORT
+#define CONFIG_SPL_MMC_MINIMAL
+#define CONFIG_SPL_FLUSH_IMAGE
+#define CONFIG_SPL_TARGET		"u-boot-with-spl.bin"
+#define CONFIG_SPL_LIBGENERIC_SUPPORT
+#define CONFIG_SPL_LIBCOMMON_SUPPORT
+#define CONFIG_SPL_I2C_SUPPORT
+#define CONFIG_FSL_LAW                 /* Use common FSL init code */
+#define CONFIG_SYS_TEXT_BASE		0x11001000
+#define CONFIG_SPL_TEXT_BASE		0xf8f81000
+#define CONFIG_SPL_PAD_TO		0x20000
+#define CONFIG_SPL_MAX_SIZE		(128 * 1024)
+#define CONFIG_SYS_MMC_U_BOOT_SIZE	(768 << 10)
+#define CONFIG_SYS_MMC_U_BOOT_DST	(0x11000000)
+#define CONFIG_SYS_MMC_U_BOOT_START	(0x11000000)
+#define CONFIG_SYS_MMC_U_BOOT_OFFS	(128 << 10)
+#define CONFIG_SYS_MPC85XX_NO_RESETVEC
+#define CONFIG_SYS_LDSCRIPT	"arch/powerpc/cpu/mpc85xx/u-boot.lds"
+#define CONFIG_SPL_MMC_BOOT
+#ifdef CONFIG_SPL_BUILD
+#define CONFIG_SPL_COMMON_INIT_DDR
+#endif
 #endif
 
 #ifdef CONFIG_SPIFLASH
-#define CONFIG_RAMBOOT_SPIFLASH
-#define CONFIG_SYS_RAMBOOT
-#define CONFIG_SYS_EXTRA_ENV_RELOC
-#define CONFIG_SYS_TEXT_BASE		0x11000000
-#define CONFIG_RESET_VECTOR_ADDRESS	0x1107fffc
+#define CONFIG_SPL_MPC8XXX_INIT_DDR_SUPPORT
+#define CONFIG_SPL_ENV_SUPPORT
+#define CONFIG_SPL_SERIAL_SUPPORT
+#define CONFIG_SPL_SPI_SUPPORT
+#define CONFIG_SPL_SPI_FLASH_SUPPORT
+#define CONFIG_SPL_SPI_FLASH_MINIMAL
+#define CONFIG_SPL_FLUSH_IMAGE
+#define CONFIG_SPL_TARGET		"u-boot-with-spl.bin"
+#define CONFIG_SPL_LIBGENERIC_SUPPORT
+#define CONFIG_SPL_LIBCOMMON_SUPPORT
+#define CONFIG_SPL_I2C_SUPPORT
+#define CONFIG_FSL_LAW         /* Use common FSL init code */
+#define CONFIG_SYS_TEXT_BASE		0x11001000
+#define CONFIG_SPL_TEXT_BASE		0xf8f81000
+#define CONFIG_SPL_PAD_TO		0x20000
+#define CONFIG_SPL_MAX_SIZE		(128 * 1024)
+#define CONFIG_SYS_SPI_FLASH_U_BOOT_SIZE	(768 << 10)
+#define CONFIG_SYS_SPI_FLASH_U_BOOT_DST		(0x11000000)
+#define CONFIG_SYS_SPI_FLASH_U_BOOT_START	(0x11000000)
+#define CONFIG_SYS_SPI_FLASH_U_BOOT_OFFS	(128 << 10)
+#define CONFIG_SYS_MPC85XX_NO_RESETVEC
+#define CONFIG_SYS_LDSCRIPT	"arch/powerpc/cpu/mpc85xx/u-boot.lds"
+#define CONFIG_SPL_SPI_BOOT
+#ifdef CONFIG_SPL_BUILD
+#define CONFIG_SPL_COMMON_INIT_DDR
+#endif
 #endif
 
 #ifdef CONFIG_NAND
-#define CONFIG_SPL
+#ifdef CONFIG_TPL_BUILD
+#define CONFIG_SPL_NAND_BOOT
+#define CONFIG_SPL_FLUSH_IMAGE
+#define CONFIG_SPL_ENV_SUPPORT
+#define CONFIG_SPL_NAND_INIT
+#define CONFIG_SPL_SERIAL_SUPPORT
+#define CONFIG_SPL_LIBGENERIC_SUPPORT
+#define CONFIG_SPL_LIBCOMMON_SUPPORT
+#define CONFIG_SPL_I2C_SUPPORT
+#define CONFIG_SPL_NAND_SUPPORT
+#define CONFIG_SPL_MPC8XXX_INIT_DDR_SUPPORT
+#define CONFIG_SPL_COMMON_INIT_DDR
+#define CONFIG_SPL_MAX_SIZE		(128 << 10)
+#define CONFIG_SPL_TEXT_BASE		0xf8f81000
+#define CONFIG_SYS_MPC85XX_NO_RESETVEC
+#define CONFIG_SYS_NAND_U_BOOT_SIZE	(832 << 10)
+#define CONFIG_SYS_NAND_U_BOOT_DST	(0x11000000)
+#define CONFIG_SYS_NAND_U_BOOT_START	(0x11000000)
+#define CONFIG_SYS_NAND_U_BOOT_OFFS	((128 + 128) << 10)
+#elif defined(CONFIG_SPL_BUILD)
 #define CONFIG_SPL_INIT_MINIMAL
 #define CONFIG_SPL_SERIAL_SUPPORT
 #define CONFIG_SPL_NAND_SUPPORT
 #define CONFIG_SPL_FLUSH_IMAGE
 #define CONFIG_SPL_TARGET		"u-boot-with-spl.bin"
-
-#define CONFIG_SPL_TEXT_BASE		0xfffff000
+#define CONFIG_SPL_TEXT_BASE		0xff800000
 #define CONFIG_SPL_MAX_SIZE		4096
+#define CONFIG_SYS_NAND_U_BOOT_SIZE	(128 << 10)
+#define CONFIG_SYS_NAND_U_BOOT_DST	0xf8f80000
+#define CONFIG_SYS_NAND_U_BOOT_START	0xf8f80000
+#define CONFIG_SYS_NAND_U_BOOT_OFFS	(128 << 10)
+#endif /* not CONFIG_TPL_BUILD */
 
-#ifdef CONFIG_SYS_INIT_L2_ADDR
-/* We multiply CONFIG_SPL_MAX_SIZE by two to leave some room for BSS. */
-#define CONFIG_SYS_TEXT_BASE		0xf8f82000
-#define CONFIG_SPL_RELOC_TEXT_BASE	\
-	(CONFIG_SYS_INIT_L2_END - CONFIG_SPL_MAX_SIZE * 2)
-#define CONFIG_SPL_RELOC_STACK		\
-	(CONFIG_SYS_INIT_L2_END - CONFIG_SPL_MAX_SIZE * 2)
-#define CONFIG_SYS_NAND_U_BOOT_DST	(CONFIG_SYS_INIT_L2_ADDR)
-#define CONFIG_SYS_NAND_U_BOOT_START	\
-	(CONFIG_SYS_INIT_L2_ADDR + CONFIG_SPL_MAX_SIZE)
-#else
-#define CONFIG_SYS_TEXT_BASE		0x00201000
-#define CONFIG_SPL_RELOC_TEXT_BASE	0x00100000
-#define CONFIG_SPL_RELOC_STACK		0x00100000
-#define CONFIG_SYS_NAND_U_BOOT_DST	(0x00200000 - CONFIG_SPL_MAX_SIZE)
-#define CONFIG_SYS_NAND_U_BOOT_START	0x00200000
-#endif
-
-#define CONFIG_SYS_NAND_U_BOOT_SIZE	((512 << 10) - 0x2000)
-#define CONFIG_SYS_NAND_U_BOOT_OFFS	0
-#define CONFIG_SYS_LDSCRIPT		"arch/powerpc/cpu/mpc85xx/u-boot-nand.lds"
+#define CONFIG_SPL_PAD_TO		0x20000
+#define CONFIG_TPL_PAD_TO		0x20000
+#define CONFIG_SPL_TARGET		"u-boot-with-spl.bin"
+#define CONFIG_SYS_TEXT_BASE		0x11001000
+#define CONFIG_SYS_LDSCRIPT	"arch/powerpc/cpu/mpc85xx/u-boot-nand.lds"
 #endif
 
 #ifndef CONFIG_SYS_TEXT_BASE
-#define CONFIG_SYS_TEXT_BASE		0xeff80000
+#define CONFIG_SYS_TEXT_BASE		0xeff40000
 #endif
 
 #ifndef CONFIG_RESET_VECTOR_ADDRESS
@@ -220,7 +308,6 @@
 /* High Level Configuration Options */
 #define CONFIG_BOOKE
 #define CONFIG_E500
-#define CONFIG_MPC85xx
 
 #define CONFIG_MP
 
@@ -280,7 +367,7 @@
 #endif
 
 /* DDR Setup */
-#define CONFIG_FSL_DDR3
+#define CONFIG_SYS_FSL_DDR3
 #define CONFIG_SYS_DDR_RAW_TIMING
 #define CONFIG_DDR_SPD
 #define CONFIG_SYS_SPD_BUS_NUM 1
@@ -464,7 +551,7 @@
 					GENERATED_GBL_DATA_SIZE)
 #define CONFIG_SYS_INIT_SP_OFFSET	CONFIG_SYS_GBL_DATA_OFFSET
 
-#define CONFIG_SYS_MONITOR_LEN	(256 * 1024)/* Reserve 256 kB for Mon */
+#define CONFIG_SYS_MONITOR_LEN	(768 * 1024)
 #define CONFIG_SYS_MALLOC_LEN	(1024 * 1024)/* Reserved for malloc */
 
 #define CONFIG_SYS_CPLD_BASE	0xffa00000
@@ -526,6 +613,44 @@
 #define CONFIG_VSC7385_IMAGE_SIZE	8192
 #endif
 
+/*
+ * Config the L2 Cache as L2 SRAM
+*/
+#if defined(CONFIG_SPL_BUILD)
+#if defined(CONFIG_SDCARD) || defined(CONFIG_SPIFLASH)
+#define CONFIG_SYS_INIT_L2_ADDR		0xf8f80000
+#define CONFIG_SYS_INIT_L2_ADDR_PHYS	CONFIG_SYS_INIT_L2_ADDR
+#define CONFIG_SYS_INIT_L2_END	(CONFIG_SYS_INIT_L2_ADDR + CONFIG_SYS_L2_SIZE)
+#define CONFIG_SPL_RELOC_TEXT_BASE	0xf8f81000
+#define CONFIG_SPL_GD_ADDR		(CONFIG_SYS_INIT_L2_ADDR + 112 * 1024)
+#define CONFIG_SPL_RELOC_STACK		(CONFIG_SYS_INIT_L2_ADDR + 116 * 1024)
+#define CONFIG_SPL_RELOC_STACK_SIZE	(32 << 10)
+#define CONFIG_SPL_RELOC_MALLOC_ADDR	(CONFIG_SYS_INIT_L2_ADDR + 148 * 1024)
+#if defined(CONFIG_P2020RDB)
+#define CONFIG_SPL_RELOC_MALLOC_SIZE	(364 << 10)
+#else
+#define CONFIG_SPL_RELOC_MALLOC_SIZE	(108 << 10)
+#endif
+#elif defined(CONFIG_NAND)
+#ifdef CONFIG_TPL_BUILD
+#define CONFIG_SYS_INIT_L2_ADDR		0xf8f80000
+#define CONFIG_SYS_INIT_L2_ADDR_PHYS	CONFIG_SYS_INIT_L2_ADDR
+#define CONFIG_SYS_INIT_L2_END	(CONFIG_SYS_INIT_L2_ADDR + CONFIG_SYS_L2_SIZE)
+#define CONFIG_SPL_RELOC_TEXT_BASE	0xf8f81000
+#define CONFIG_SPL_RELOC_STACK		(CONFIG_SYS_INIT_L2_ADDR + 192 * 1024)
+#define CONFIG_SPL_RELOC_MALLOC_ADDR	(CONFIG_SYS_INIT_L2_ADDR + 208 * 1024)
+#define CONFIG_SPL_RELOC_MALLOC_SIZE	(48 << 10)
+#define CONFIG_SPL_GD_ADDR		(CONFIG_SYS_INIT_L2_ADDR + 176 * 1024)
+#else
+#define CONFIG_SYS_INIT_L2_ADDR		0xf8f80000
+#define CONFIG_SYS_INIT_L2_ADDR_PHYS	CONFIG_SYS_INIT_L2_ADDR
+#define CONFIG_SYS_INIT_L2_END	(CONFIG_SYS_INIT_L2_ADDR + CONFIG_SYS_L2_SIZE)
+#define CONFIG_SPL_RELOC_TEXT_BASE	(CONFIG_SYS_INIT_L2_END - 0x2000)
+#define CONFIG_SPL_RELOC_STACK		((CONFIG_SYS_INIT_L2_END - 1) & ~0xF)
+#endif /* CONFIG_TPL_BUILD */
+#endif
+#endif
+
 /* Serial Port - controlled on board with jumper J8
  * open - index 2
  * shorted - index 1
@@ -536,7 +661,7 @@
 #define CONFIG_SYS_NS16550_SERIAL
 #define CONFIG_SYS_NS16550_REG_SIZE	1
 #define CONFIG_SYS_NS16550_CLK		get_bus_freq(0)
-#ifdef CONFIG_SPL_BUILD
+#if defined(CONFIG_SPL_BUILD) && defined(CONFIG_SPL_INIT_MINIMAL)
 #define CONFIG_NS16550_MIN_FUNCTIONS
 #endif
 
@@ -690,7 +815,7 @@
 #ifdef CONFIG_QE
 /* QE microcode/firmware address */
 #define CONFIG_SYS_QE_FMAN_FW_IN_NOR
-#define CONFIG_SYS_QE_FMAN_FW_ADDR	0xefec0000
+#define CONFIG_SYS_QE_FW_ADDR	0xefec0000
 #define CONFIG_SYS_QE_FMAN_FW_LENGTH	0x10000
 #endif /* CONFIG_QE */
 
@@ -733,7 +858,7 @@
 /*
  * Environment
  */
-#ifdef CONFIG_RAMBOOT_SPIFLASH
+#ifdef CONFIG_SPIFLASH
 #define CONFIG_ENV_IS_IN_SPI_FLASH
 #define CONFIG_ENV_SPI_BUS	0
 #define CONFIG_ENV_SPI_CS	0
@@ -742,15 +867,20 @@
 #define CONFIG_ENV_SIZE		0x2000	/* 8KB */
 #define CONFIG_ENV_OFFSET	0x100000	/* 1MB */
 #define CONFIG_ENV_SECT_SIZE	0x10000
-#elif defined(CONFIG_RAMBOOT_SDCARD)
+#elif defined(CONFIG_SDCARD)
 #define CONFIG_ENV_IS_IN_MMC
 #define CONFIG_FSL_FIXED_MMC_LOCATION
 #define CONFIG_ENV_SIZE		0x2000
 #define CONFIG_SYS_MMC_ENV_DEV	0
 #elif defined(CONFIG_NAND)
-#define CONFIG_ENV_IS_IN_NAND
+#ifdef CONFIG_TPL_BUILD
+#define CONFIG_ENV_SIZE		0x2000
+#define CONFIG_ENV_ADDR		(CONFIG_SYS_INIT_L2_ADDR + (160 << 10))
+#else
 #define CONFIG_ENV_SIZE		CONFIG_SYS_NAND_BLOCK_SIZE
-#define CONFIG_ENV_OFFSET	((512 * 1024) + CONFIG_SYS_NAND_BLOCK_SIZE)
+#endif
+#define CONFIG_ENV_IS_IN_NAND
+#define CONFIG_ENV_OFFSET	(1024 * 1024)
 #define CONFIG_ENV_RANGE	(3 * CONFIG_ENV_SIZE)
 #elif defined(CONFIG_SYS_RAMBOOT)
 #define CONFIG_ENV_IS_NOWHERE	/* Store ENV in memory only */
@@ -758,11 +888,7 @@
 #define CONFIG_ENV_SIZE		0x2000
 #else
 #define CONFIG_ENV_IS_IN_FLASH
-#if CONFIG_SYS_MONITOR_BASE > 0xfff80000
-#define CONFIG_ENV_ADDR	0xfff80000
-#else
 #define CONFIG_ENV_ADDR	(CONFIG_SYS_MONITOR_BASE - CONFIG_ENV_SECT_SIZE)
-#endif
 #define CONFIG_ENV_SIZE		0x2000
 #define CONFIG_ENV_SECT_SIZE	0x20000 /* 128K (one sector) */
 #endif
@@ -800,6 +926,10 @@
 #endif
 #endif
 
+#if defined(CONFIG_P1020RDB_PD)
+#define CONFIG_USB_MAX_CONTROLLER_COUNT	1
+#endif
+
 #define CONFIG_MMC
 
 #ifdef CONFIG_MMC
@@ -824,7 +954,6 @@
 #define CONFIG_SYS_LONGHELP			/* undef to save memory */
 #define CONFIG_CMDLINE_EDITING			/* Command-line editing */
 #define CONFIG_SYS_LOAD_ADDR	0x2000000	/* default load address */
-#define CONFIG_SYS_PROMPT	"=> "		/* Monitor Command Prompt */
 #if defined(CONFIG_CMD_KGDB)
 #define CONFIG_SYS_CBSIZE	1024		/* Console I/O Buffer Size */
 #else
@@ -834,7 +963,6 @@
 	/* Print Buffer Size */
 #define CONFIG_SYS_MAXARGS	16	/* max number of command args */
 #define CONFIG_SYS_BARGSIZE	CONFIG_SYS_CBSIZE/* Boot Argument Buffer Size */
-#define CONFIG_SYS_HZ		1000	/* decrementer freq: 1ms tick */
 
 /*
  * For booting Linux, the board info and command line data
@@ -846,7 +974,6 @@
 
 #if defined(CONFIG_CMD_KGDB)
 #define CONFIG_KGDB_BAUDRATE	230400	/* speed to run kgdb serial port */
-#define CONFIG_KGDB_SER_INDEX	2	/* which serial port to use */
 #endif
 
 /*

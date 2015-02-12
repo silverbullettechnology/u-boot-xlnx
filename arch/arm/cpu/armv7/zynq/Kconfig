@@ -1,0 +1,58 @@
+if ZYNQ
+
+choice
+	prompt "Xilinx Zynq board select"
+
+config TARGET_ZYNQ_SDRDC
+	bool "Zynq SDRDC Board"
+
+config TARGET_ZYNQ_TDSDR
+	bool "Zynq TDSDR Board"
+
+config TARGET_ZYNQ_ZED
+	bool "Zynq ZedBoard"
+
+config TARGET_ZYNQ_MICROZED
+	bool "Zynq MicroZed"
+
+config TARGET_ZYNQ_ZC70X
+	bool "Zynq ZC702/ZC706 Board"
+
+config TARGET_ZYNQ_ZC770
+	bool "Zynq ZC770 Board"
+
+config TARGET_ZYNQ_ZYBO
+	bool "Zynq Zybo Board"
+
+config TARGET_ZYNQ_AFX
+	bool "Zynq AFX Board"
+
+config TARGET_ZYNQ_CSE
+	bool "Zynq CSE Board"
+
+endchoice
+
+config SYS_BOARD
+	default "zynq"
+	default "sdrdc" if TARGET_ZYNQ_SDRDC
+	default "tdsdr" if TARGET_ZYNQ_TDSDR
+
+config SYS_VENDOR
+	default "xilinx"
+	default "silverbullet" if TARGET_ZYNQ_SDRDC || TARGET_ZYNQ_TDSDR
+
+config SYS_SOC
+	default "zynq"
+
+config SYS_CONFIG_NAME
+	default "zynq_sdrdc" if TARGET_ZYNQ_SDRDC
+	default "zynq_tdsdr" if TARGET_ZYNQ_TDSDR
+	default "zynq_zed" if TARGET_ZYNQ_ZED
+	default "zynq_microzed" if TARGET_ZYNQ_MICROZED
+	default "zynq_zc70x" if TARGET_ZYNQ_ZC70X
+	default "zynq_zc770" if TARGET_ZYNQ_ZC770
+	default "zynq_zybo" if TARGET_ZYNQ_ZYBO
+	default "zynq_cse" if TARGET_ZYNQ_CSE
+	default "zynq_afx" if TARGET_ZYNQ_AFX
+
+endif

@@ -10,6 +10,8 @@
 #ifndef __SYS_PROTO_H__
 #define __SYS_PROTO_H__
 
+#include <asm/imx-common/regs-common.h>
+
 int mxs_reset_block(struct mxs_register_32 *reg);
 int mxs_wait_mask_set(struct mxs_register_32 *reg,
 		       uint32_t mask,
@@ -46,6 +48,7 @@ static const struct mxs_pair mxs_boot_modes[] = {
 	{ 0x02, 0x1f, "SSP SPI #1, master, NOR" },
 	{ 0x03, 0x1f, "SSP SPI #2, master, NOR" },
 	{ 0x04, 0x1f, "NAND" },
+	{ 0x06, 0x1f, "JTAG" },
 	{ 0x08, 0x1f, "SSP SPI #3, master, EEPROM" },
 	{ 0x09, 0x1f, "SSP SD/MMC #0" },
 	{ 0x0a, 0x1f, "SSP SD/MMC #1" },
@@ -60,6 +63,7 @@ static const struct mxs_pair mxs_boot_modes[] = {
 	{ 0x13, 0x1f, "SSP SPI #3, master, 1V8 NOR" },
 	{ 0x04, 0x1f, "NAND, 3V3" },
 	{ 0x14, 0x1f, "NAND, 1V8" },
+	{ 0x06, 0x1f, "JTAG" },
 	{ 0x08, 0x1f, "SSP SPI #3, master, 3V3 EEPROM" },
 	{ 0x18, 0x1f, "SSP SPI #3, master, 1V8 EEPROM" },
 	{ 0x09, 0x1f, "SSP SD/MMC #0, 3V3" },

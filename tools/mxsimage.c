@@ -17,8 +17,9 @@
 
 #include <openssl/evp.h>
 
-#include "mkimage.h"
+#include "imagetool.h"
 #include "mxsimage.h"
+#include "pbl_crc32.h"
 #include <image.h>
 
 
@@ -124,7 +125,7 @@ struct sb_image_ctx {
 	unsigned int			in_section:1;
 	unsigned int			in_dcd:1;
 	/* Image configuration */
-	unsigned int			verbose_boot:1;
+	unsigned int			display_progress:1;
 	unsigned int			silent_dump:1;
 	char				*input_filename;
 	char				*output_filename;
@@ -228,29 +229,6 @@ static int sb_aes_reinit(struct sb_image_ctx *ictx, int enc)
 	if (!ret)
 		return ret;
 	return sb_aes_init(ictx, iv, enc);
-}
-
-/*
- * CRC32
- */
-static uint32_t crc32(uint8_t *data, uint32_t len)
-{
-	const uint32_t poly = 0x04c11db7;
-	uint32_t crc32 = 0xffffffff;
-	unsigned int byte, bit;
-
-	for (byte = 0; byte < len; byte++) {
-		crc32 ^= data[byte] << 24;
-
-		for (bit = 8; bit > 0; bit--) {
-			if (crc32 & (1UL << 31))
-				crc32 = (crc32 << 1) ^ poly;
-			else
-				crc32 = (crc32 << 1);
-		}
-	}
-
-	return crc32;
 }
 
 /*
@@ -502,6 +480,7 @@ static int sb_token_to_long(char *tok, uint32_t *rid)
 
 	tok += 2;
 
+	errno = 0;
 	id = strtoul(tok, &endptr, 16);
 	if ((errno == ERANGE && id == ULONG_MAX) || (errno != 0 && id == 0)) {
 		fprintf(stderr, "ERR: Value can't be decoded!\n");
@@ -997,7 +976,9 @@ static int sb_build_command_load(struct sb_image_ctx *ictx,
 
 	ccmd->load.address	= dest;
 	ccmd->load.count	= cctx->length;
-	ccmd->load.crc32	= crc32(cctx->data, cctx->length);
+	ccmd->load.crc32	= pbl_crc32(0,
+					    (const char *)cctx->data,
+					    cctx->length);
 
 	cctx->size = sizeof(*ccmd) + cctx->length;
 
@@ -1327,8 +1308,8 @@ static int sb_prefill_image_header(struct sb_image_ctx *ictx)
 		sizeof(struct sb_sections_header) / SB_BLOCK_SIZE;
 	hdr->timestamp_us = sb_get_timestamp() * 1000000;
 
-	/* FIXME -- add proper config option */
-	hdr->flags = ictx->verbose_boot ? SB_IMAGE_FLAG_VERBOSE : 0,
+	hdr->flags = ictx->display_progress ?
+		SB_IMAGE_FLAG_DISPLAY_PROGRESS : 0;
 
 	/* FIXME -- We support only default key */
 	hdr->key_count = 1;
@@ -1435,7 +1416,7 @@ static int sb_parse_line(struct sb_image_ctx *ictx, struct sb_cmd_list *cmd)
 {
 	char *tok;
 	char *line = cmd->cmd;
-	char *rptr;
+	char *rptr = NULL;
 	int ret;
 
 	/* Analyze the identifier on this line first. */
@@ -1446,6 +1427,12 @@ static int sb_parse_line(struct sb_image_ctx *ictx, struct sb_cmd_list *cmd)
 	}
 
 	cmd->cmd = rptr;
+
+	/* set DISPLAY_PROGRESS flag */
+	if (!strcmp(tok, "DISPLAYPROGRESS")) {
+		ictx->display_progress = 1;
+		return 0;
+	}
 
 	/* DCD */
 	if (!strcmp(tok, "DCD")) {
@@ -1700,10 +1687,11 @@ static int sb_verify_image_header(struct sb_image_ctx *ictx,
 		 ntohs(hdr->component_version.minor),
 		 ntohs(hdr->component_version.revision));
 
-	if (hdr->flags & ~SB_IMAGE_FLAG_VERBOSE)
+	if (hdr->flags & ~SB_IMAGE_FLAGS_MASK)
 		ret = -EINVAL;
 	soprintf(ictx, "%s Image flags:                  %s\n", stat[!!ret],
-		 hdr->flags & SB_IMAGE_FLAG_VERBOSE ? "Verbose_boot" : "");
+		 hdr->flags & SB_IMAGE_FLAG_DISPLAY_PROGRESS ?
+		 "Display_progress" : "");
 	if (ret)
 		return ret;
 
@@ -1833,7 +1821,9 @@ static int sb_verify_command(struct sb_image_ctx *ictx,
 		EVP_DigestUpdate(&ictx->md_ctx, cctx->data, asize);
 		sb_aes_crypt(ictx, cctx->data, cctx->data, asize);
 
-		if (ccmd->load.crc32 != crc32(cctx->data, asize)) {
+		if (ccmd->load.crc32 != pbl_crc32(0,
+						  (const char *)cctx->data,
+						  asize)) {
 			fprintf(stderr,
 				"ERR: SB LOAD command payload CRC32 invalid!\n");
 			return -EINVAL;
@@ -2148,11 +2138,11 @@ static int mxsimage_check_image_types(uint8_t type)
 }
 
 static void mxsimage_set_header(void *ptr, struct stat *sbuf, int ifd,
-				struct mkimage_params *params)
+				struct image_tool_params *params)
 {
 }
 
-int mxsimage_check_params(struct mkimage_params *params)
+int mxsimage_check_params(struct image_tool_params *params)
 {
 	if (!params)
 		return -1;
@@ -2193,7 +2183,7 @@ static int mxsimage_verify_print_header(char *file, int silent)
 
 char *imagefile;
 static int mxsimage_verify_header(unsigned char *ptr, int image_size,
-			struct mkimage_params *params)
+			struct image_tool_params *params)
 {
 	struct sb_boot_image_header *hdr;
 
@@ -2291,7 +2281,7 @@ static int sb_build_image(struct sb_image_ctx *ictx,
 	return 0;
 }
 
-static int mxsimage_generate(struct mkimage_params *params,
+static int mxsimage_generate(struct image_tool_params *params,
 	struct image_type_params *tparams)
 {
 	int ret;
@@ -2304,7 +2294,6 @@ static int mxsimage_generate(struct mkimage_params *params,
 
 	ctx.cfg_filename = params->imagename;
 	ctx.output_filename = params->imagefile;
-	ctx.verbose_boot = 1;
 
 	ret = sb_build_tree_from_cfg(&ctx);
 	if (ret)
@@ -2337,7 +2326,7 @@ static struct image_type_params mxsimage_params = {
 
 void init_mxs_image_type(void)
 {
-	mkimage_register(&mxsimage_params);
+	register_image_type(&mxsimage_params);
 }
 
 #else
