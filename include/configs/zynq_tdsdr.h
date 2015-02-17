@@ -28,7 +28,7 @@
 /* No I2C, other periphs same as ZC702 */
 #define CONFIG_ZYNQ_SERIAL_UART1
 #define CONFIG_ZYNQ_GEM0
-#define CONFIG_ZYNQ_GEM_PHY_ADDR0	7
+#define CONFIG_ZYNQ_GEM_PHY_ADDR0	3
 #define CONFIG_SYS_NO_FLASH
 
 #define CONFIG_ZYNQ_SDHCI0
