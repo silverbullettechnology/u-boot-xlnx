@@ -1,5 +1,6 @@
 make clean
-make tdsdr
+make zynq_sdrdc_defconfig
+make all
 rm u-boot.elf
 cp u-boot u-boot.elf
 rm boot.bin

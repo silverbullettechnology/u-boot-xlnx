@@ -21,7 +21,7 @@ static int do_bootm_standalone(int flag, int argc, char * const argv[],
 	char *s;
 	standalone_entry_t appl;
 
-	if ( images.ep == 0 ) {
+	if ( images->ep == 0 ) {
 		printf("No entry point, not starting\n");
 		return 0;
 	}
@@ -32,7 +32,7 @@ static int do_bootm_standalone(int flag, int argc, char * const argv[],
 		setenv_hex("filesize", images->os.image_len);
 		return 0;
 	}
-	appl = (standalone_entry_t)images.ep;
+	appl = (standalone_entry_t)images->ep;
 	return appl (argc-1, &argv[1]);
 }
 
