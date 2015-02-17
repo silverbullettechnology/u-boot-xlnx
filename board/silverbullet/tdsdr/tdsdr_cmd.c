@@ -38,6 +38,7 @@ static int do_bist(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]);
      printf(" q    Quit\n");
      printf(" i    Initiate PDI firmware programming\n");
      printf(" p    print loaded image to screen\n");
+     //printf(" l    Spin LEDs\n");
      printf("-- enter cmd: ");
      char c = getc();
      switch (c)
@@ -45,16 +46,14 @@ static int do_bist(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]);
        case 'q':
          printf("exiting\n");
          return 0;
-       case 'a':
-         printf("doing 'a'!\n");
+       case 'l':
+         printf("doing 'l'!\n");
 	 //hello_led();
          break;
        case 'i':
-	 pdi_main(image,size);
-         break;
-       case 'c':
-	 //fixture_write_read();
-         printf("doing 'c'!\n");
+	 rcode = pdi_main(image,size);
+	 if(rcode != 0)
+		return rcode;
          break;
 	case 'p':
          printf("Printing Image:\n\n");

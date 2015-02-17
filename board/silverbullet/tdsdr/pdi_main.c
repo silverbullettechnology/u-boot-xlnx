@@ -38,29 +38,31 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH
  * DAMAGE.
  */
+#include <common.h>
+
 #include "config.h"
 #include "low_level_pdi.h"
 #include "atxmega128a1_nvm_regs.h"
 #include "xmega_pdi_nvm.h"
 #include "status_codes.h"
+#include "routines.h"
 
-/* PDI driver includes */
-#include "atxmega128a1_nvm_regs.h"
-#include "xmega_pdi_nvm.h"
-
-#include "status_codes.h"
+#include "xparameters.h"
+#include "xgpiops.h"
+#include "xstatus.h"
+#include "xuartps_hw.h"
 
 /* Static strings */
 /* Test program defined in this file */
-#include "test_prg.h"
-static uint8_t hello_world_buf[11] = "hello world";
+//#include "test_prg.h"
+//static char hello_world_buf[11] = "hello world";
 
 /* A buffer for storing read flash page data */
-uint8_t page_buffer[PAGE_SIZE];
+char page_buffer[PAGE_SIZE];
 
-uint8_t fuses[6];
-uint8_t lock_bit = 0xFF;
-uint8_t dev_id[3];
+char fuses[6];
+char lock_bit = 0xFF;
+char dev_id[3];
 
 
 #define FLASH_PAGES 544
@@ -69,30 +71,30 @@ typedef struct S_record
     {
         int s_type;
         int byte_count;
-        uint32_t address;
-        uint8_t data[48];
-        uint8_t checksum[3];
+        unsigned int address;
+        char data[48];
+        char checksum[3];
     }S_record;
 
 typedef struct Flash_page_buffer
     {
-        uint32_t address;
-        uint8_t data[PAGE_SIZE];
+        unsigned int address;
+        char data[PAGE_SIZE];
         int byte_count;
     }Flash_page_buffer;
 
 typedef struct Atmel_application
     {
-        uint16_t used_buffers;
+        unsigned int used_buffers;
         Flash_page_buffer application_data[FLASH_PAGES];
     }Atmel_application;
 
-S_record parse_srec_line (uint8_t * line);
-int add_srec_to_app (S_record rec, Atmel_application *app);
+static S_record parse_srec_line (char * line);
+static int add_srec_to_app (S_record rec, Atmel_application *app);
 void print_application (Atmel_application * app);
 void print_srecord (S_record rec);
 void print_flash_page_buffer (Flash_page_buffer buf);
-int compare_mem(uint8_t * write, uint8_t * read, int length);
+int compare_mem(char * write, char * read, int length);
 
 /*
  * \brief Main function for PDI driver test
@@ -100,20 +102,25 @@ int compare_mem(uint8_t * write, uint8_t * read, int length);
  * This function run different programming possibilities
  * inputs are a pointer to the firmware image and the size of the image, passed from uboot.
  */
-int pdi_main (uint8_t *buffer, uint16_t size)
+int pdi_main (char *buffer, unsigned int size)
 {
 
   S_record srec;
   Atmel_application flash_data;
   int num_srec;
-  uint8_t line_buf[64];
-  uint8_t *image;
+  char line_buf[64];
+  char *image;
   int i,j;
-  uint8_t * bol;
-  uint8_t * eol;
+  char * bol;
+  char * eol;
   int line_counter;
-  uint32_t addr;
+  unsigned int addr;
   int equ;
+
+uint8_t cmd_buffer[20];
+enum status_code retval;
+uint8_t initialized = 0;
+char c;
 
   image = buffer;
   eol = image;
@@ -123,23 +130,30 @@ int pdi_main (uint8_t *buffer, uint16_t size)
   flash_data.application_data[0].address = 0;
   flash_data.application_data[0].byte_count = 0;
 
+
+  printf("\r\nStart of parsing\r\n");
   //parse the srecord file passed from uboot
 
     num_srec = 0;
     while(strchr(bol,'\n')){
+        //printf("\r\nSet loop variables\r\n");
         eol = strchr(bol, '\n');
         i=0;
+	//printf("\r\nenter subloop\r\n");
         while(bol<=eol){
             line_buf[i] = *bol;
             i++;
             bol++;
         }
         line_buf[i] = '\0';
-
+	
+	//printf("parse Record: %d\r\n\r\n",num_srec);
         srec = parse_srec_line(line_buf);
+	//if (srec == 0)
+		//return 0;
         //print_srecord(srec);
-        //printf("parsed Record: %d\r\n\r\n",num_srec);
-
+        
+	//printf("add srec to app\r\n",num_srec);
         //only add type 2 records to the program
         if(srec.s_type == 2)
             add_srec_to_app(srec, &flash_data);
@@ -149,14 +163,115 @@ int pdi_main (uint8_t *buffer, uint16_t size)
 
     printf("\r\nend of parsing\r\n");
     //print_application(&flash_data);
+/*
+     printf("\n--------------\n");
+     printf(" q    Quit\n");
+     printf(" i    Initiate PDI firmware programming\n");
+     printf(" p    print loaded image to screen\n");
+     //printf(" l    Spin LEDs\n");
+     printf("-- enter cmd: ");
+	pdi_init();
 
+   for (;;)
+     {
+	while(1){	
+		pdi_mdelay(1);
+		if(XUartPs_IsReceiveData(STDIN_BASEADDRESS)){
+			c = inbyte();
+			printf("%c",c);
+			break;}
+	}
+
+     switch (c)
+       {
+       case 'q':
+         printf("exiting\n");
+         return 0;
+       case 'l':
+         printf("doing 'l'!\n");
+	 hello_led();
+         break;
+       case 'i':
+         printf("init PDI\n");
+	 pdi_init();
+         break;
+       case 'a':
+	 //fixture_write_read();
+         printf("Put in reset\n");
+		//Put the device in reset mode
+		xnvm_put_dev_in_reset();
+
+                cmd_buffer[0] = 0xc2;
+		cmd_buffer[1] = 0x02;
+                pdi_write(cmd_buffer, 2);
+         break;
+       case 'b':
+	 //fixture_write_read();
+         printf("Send Magic\n");
+		//Create the key command
+		cmd_buffer[0] = XNVM_PDI_KEY_INSTR;
+		cmd_buffer[1] = NVM_KEY_BYTE0;
+		cmd_buffer[2] = NVM_KEY_BYTE1;
+		cmd_buffer[3] = NVM_KEY_BYTE2;
+		cmd_buffer[4] = NVM_KEY_BYTE3;
+		cmd_buffer[5] = NVM_KEY_BYTE4;
+		cmd_buffer[6] = NVM_KEY_BYTE5;
+		cmd_buffer[7] = NVM_KEY_BYTE6;
+		cmd_buffer[8] = NVM_KEY_BYTE7;
+
+		pdi_write(cmd_buffer, 9);
+
+
+                //pdi_mdelay(200);
+
+
+		//xnvm_ctrl_wait_nvmbusy(WAIT_RETRIES_NUM);
+         break;
+       case 'c':
+	 //fixture_write_read();
+         printf("Read ID\n");
+  pdi_mdelay(10);
+  xnvm_read_memory(XNVM_DATA_BASE + NVM_MCU_CONTROL, dev_id, 3);
+  pdi_mdelay(50);
+
+  printf("\r\nDev ID: %02X ", dev_id[0]);
+  printf("%2X ", dev_id[1]);
+  printf("%2X \r\n", dev_id[2]);
+  printf("\r\nUsed Pages: %d\r\n",flash_data.used_buffers+1);
+         break;
+       case 'd':
+	 //fixture_write_read();
+         printf("deinit PDI\n");
+  xnvm_deinit();
+         break;
+       case 'e':
+	 //fixture_write_read();
+         printf("erase chip\n");
+  xnvm_chip_erase();
+  pdi_mdelay(100);
+         break;
+	case 'p':
+         printf("Printing Image:\n\n");
+	 for(i=0;i<size;i++){
+	 	printf("%c",*(image+i));
+	 }
+	 printf("\r\n**END**\r\n");	
+         break;
+       case '\r':
+         break;
+       default:
+         printf("Invalid command: '%c'\n", c);
+         break;
+       }
+     }
 
   /* Initialize the PDI interface */
-  //printf("initializing\r\n");
+  printf("initializing\r\n");
   xnvm_init();
 
   /* Read device ID */
-  pdi_mdelay(100);
+  
+  pdi_mdelay(10);
   xnvm_read_memory(XNVM_DATA_BASE + NVM_MCU_CONTROL, dev_id, 3);
   pdi_mdelay(50);
 
@@ -168,8 +283,9 @@ int pdi_main (uint8_t *buffer, uint16_t size)
   xnvm_init();
 
   /* Erase the target device */
-  pdi_mdelay(100);
+  
   xnvm_chip_erase();
+  pdi_mdelay(100);
 
   /* Verify that the device is erased, at least the first page */
   /*xnvm_read_memory(XNVM_FLASH_BASE, page_buffer, 128);
@@ -190,12 +306,14 @@ for(i=0;i<=flash_data.used_buffers;i++){
   //Read back the flash contents to a buffer on the device
   addr =  XNVM_FLASH_BASE+flash_data.application_data[i].address;
   xnvm_read_memory(addr, page_buffer, PAGE_SIZE);
-  pdi_mdelay(10);
 
   equ = compare_mem(flash_data.application_data[i].data, page_buffer, flash_data.application_data[i].byte_count);
   if(equ){
     printf(".");
+    pdi_mdelay(10);
   } else {
+    xnvm_chip_erase();
+    pdi_mdelay(100);
     printf("\r\nProgramming error:\r\n");
             
             print_flash_page_buffer(flash_data.application_data[i]);
@@ -215,6 +333,7 @@ for(i=0;i<=flash_data.used_buffers;i++){
 	printf("\r\n");
  	xnvm_deinit();
   	xnvm_init();
+	break;
   }	
 }
 
@@ -251,12 +370,13 @@ for(i=0;i<=flash_data.used_buffers;i++){
   //xnvm_read_memory(XNVM_FUSE_BASE + NVM_LOCKBIT_ADDR, &lock_bit, 1);
 
   //disconnect the PDI interface and reset the device.
-  xnvm_deinit();
+  //xnvm_deinit();
   xnvm_init();
+  xnvm_pull_dev_out_of_reset();
   xnvm_deinit();
 }
 
-int compare_mem(uint8_t * write, uint8_t * read, int length){
+int compare_mem(char * write, char * read, int length){
   int i;
   for(i=0;i<length;i++){
     if(write[i] != read[i])
@@ -267,8 +387,8 @@ int compare_mem(uint8_t * write, uint8_t * read, int length){
 
 void print_flash_page_buffer (Flash_page_buffer buf){
 
-  uint32_t addr = buf.address;
-  uint8_t pointer[PAGE_SIZE];
+  unsigned int addr = buf.address;
+  char pointer[PAGE_SIZE];
   int cnt = buf.byte_count;
   int line_counter;
   int i;
@@ -288,7 +408,7 @@ printf("Flash byte count: %d\r\n",cnt);
 }
 
 int add_srec_to_app(S_record rec, Atmel_application *app){
-    uint32_t next_page_address, s_address;
+    unsigned int next_page_address, s_address;
     int page_byte_count, s_byte_count, i;
 
     s_byte_count = rec.byte_count;
@@ -381,15 +501,16 @@ int bytecount;
 }
 
 //function returns a S_record struct after parsing a null terminated string
-S_record parse_srec_line (uint8_t * line){
+S_record parse_srec_line (char * line){
     S_record srec;
-    uint8_t tmp[8];
-    uint8_t temp;
-    uint8_t * bof;
-    uint8_t * eof;
+    char tmp[8];
+    char temp;
+    char * bof;
+    char * eof;
     int bytecount,bytes;
     int i;
 
+	//printf("\r\nget record type\r\n");
     bof = line;
     //get record type
     eof = bof+2;
@@ -398,6 +519,7 @@ S_record parse_srec_line (uint8_t * line){
     srec.s_type = hexToInt(tmp);
     bof = eof;
 
+	//printf("\r\nget byte count\r\n");
     //get byte count
     eof = bof+2;
     i=0;
@@ -407,10 +529,12 @@ S_record parse_srec_line (uint8_t * line){
     bof++;
     }
     tmp[i+1] = '\0';
+	//printf("\r\nconvert byte count to int\r\n");
     //convert byte count to integer
     srec.byte_count = hexToInt(tmp)-4;
     bytecount = srec.byte_count;
 
+	//printf("\r\nget address\r\n");
     //get address
     eof = bof+6;
     i=0;
@@ -422,6 +546,7 @@ S_record parse_srec_line (uint8_t * line){
     tmp[i+1] = '\0';
     srec.address = hexToInt(tmp);
 
+	//printf("\r\nget data\r\n");
     //get data
     eof = bof+(bytecount*2);
     bytes = 0;
@@ -435,6 +560,7 @@ S_record parse_srec_line (uint8_t * line){
     bytes++;
     }
 
+	//printf("\r\nget checksum\r\n");
     //get checksum
     eof = bof+2;
     i=0;
@@ -444,6 +570,12 @@ S_record parse_srec_line (uint8_t * line){
     bof++;
     }
     srec.checksum[2] = '\0';
+
+    //calculate the checksum of the srecord and return 0 if it is wrong.
+
+	//printf("\r\nDone Srecord\r\n");
+	
+//print_srecord(srec);
 
     return srec;
 }
