@@ -2,7 +2,7 @@
  * Configuration for the Silver Bullet Technologies SDRDC board, common
  * Adapted from Xilinx ZC70x configs
  *
- * (C) Copyright 2013 Silver Bullet Technologies
+ * (C) Copyright 2015 Silver Bullet Technologies
  * (C) Copyright 2012 Xilinx
  *
  * This program is free software; you can redistribute it and/or
