@@ -36,6 +36,7 @@
  * DAMAGE.
  */
 #include "xmega_pdi_nvm.h"
+#include "low_level_pdi.h"
 
 uint8_t cmd_buffer[20];
 enum status_code retval;

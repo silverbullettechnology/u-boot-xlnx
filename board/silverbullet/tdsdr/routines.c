@@ -137,7 +137,7 @@ u16 read_ascii_hex_u16(){
 
 			if(input_counter+1 > MAX_LEN){
 				printf("\r\ntoo many characters, try again\r\n");
-				for(i=0;i<10;i++){
+				for(i=0;i<MAX_LEN;i++){
 					input_buffer[i] = '\0';
 				}
 				input_counter = 0;

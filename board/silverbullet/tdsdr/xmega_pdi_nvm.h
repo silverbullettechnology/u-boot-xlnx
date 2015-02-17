@@ -40,7 +40,6 @@
 
 #include "config.h"
 #include "status_codes.h"
-#include "low_level_pdi.h"
 #include "atxmega128a1_nvm_regs.h"
 
 

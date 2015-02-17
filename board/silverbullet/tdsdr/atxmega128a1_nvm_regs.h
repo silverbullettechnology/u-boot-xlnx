@@ -70,7 +70,7 @@
 #define NVM_MCU_CONTROL   0x90                    //!< MCU Control base address.
 
 #define NVM_COMMAND_BUFFER_SIZE 20                //!< NVM Command buffer size.
-#define WAIT_RETRIES_NUM 1000                     //!< Retry Number.
+#define WAIT_RETRIES_NUM 100                     //!< Retry Number.
 #define DUMMY_BYTE 0x55                           //!< Dummy byte for Dummy writing.
 
 #endif

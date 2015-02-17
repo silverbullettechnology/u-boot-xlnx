@@ -39,8 +39,6 @@
 
 #include "status_codes.h"
 
-#include "config.h"
-
 //#include "stdio.h"
 
 #define PDI_BAUD_RATE 1000000UL               //!< PDI Baud rate.
