@@ -25,7 +25,7 @@ static int do_bist(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]);
 	buf_loc = hexToInt(argv[1]);
 	size = atoint (argv[2]);	
 	
-	image = buf_loc;
+	image = (char*)buf_loc;
 
    printf("\n\nTD-SDRDC MMC Firmware Programmer\n\n");
 

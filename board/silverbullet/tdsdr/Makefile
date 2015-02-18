@@ -21,6 +21,7 @@
 # MA 02111-1307 USA
 #
 
+ccflags-y=-I$(srctree)/$(src)/bist_bsp/ps7_cortexa9_0/include/
 
 obj-y	:= board.o tdsdr_cmd.o routines.o low_level_pdi.o pdi_main.o stream.o xmega_pdi_nvm.o soft_spi_routines.o fixture_spi_test.o stream.o prodline.o prodline_command.o
 
