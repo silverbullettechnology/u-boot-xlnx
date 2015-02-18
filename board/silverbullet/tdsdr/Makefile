@@ -22,45 +22,14 @@
 #
 
 
+obj-y	:= board.o tdsdr_cmd.o routines.o low_level_pdi.o pdi_main.o stream.o xmega_pdi_nvm.o soft_spi_routines.o fixture_spi_test.o stream.o prodline.o prodline_command.o
 
-include $(TOPDIR)/config.mk
-ifneq ($(OBJTREE),$(SRCTREE))
-$(shell mkdir -p $(obj)../common)
-endif
+# Please copy ps7_init_gpl.c/h from hw project to this directory
+obj-$(CONFIG_SPL_BUILD) += \
+		$(if $(wildcard $(srctree)/$(src)/ps7_init_gpl.c), ps7_init_gpl.o, \
+			$(if $(wildcard $(srctree)/$(src)/ps7_init.c), ps7_init.o legacy.o))
 
-LIB	= $(obj)lib$(BOARD).o
+# Suppress "warning: function declaration isn't a prototype"
+CFLAGS_REMOVE_ps7_init_gpl.o := -Wstrict-prototypes
+CFLAGS_REMOVE_ps7_init.o := -Wstrict-prototypes
 
-COBJS-y	:= board.o # ../../xilinx/zynq/libzynq.o
-
-
-LIB_DIR = /home/andrew/Silver-Bullet/tdsdr-uboot/bist_bsp/ps7_cortexa9_0/lib/
-INCL_DIR = /home/andrew/Silver-Bullet/tdsdr-uboot/bist_bsp/ps7_cortexa9_0/include/
-
-
-#LDFLAGS += -L$(LIB_DIR) -static
-LDFLAGS += -L$(LIB_DIR) -static
-LDFLAGS += -I$(INCL_DIR)
-INFLAGS := -I$(INCL_DIR)
-CFLAGS += -I$(INCL_DIR)
-
-LIBFLAG += -lxil
-COBJS-y += tdsdr_cmd.o routines.o low_level_pdi.o pdi_main.o stream.o xmega_pdi_nvm.o soft_spi_routines.o fixture_spi_test.o stream.o prodline.o prodline_command.o
-
-
-COBJS	:= $(sort $(COBJS-y))
-
-SRCS	:= $(COBJS:.o=.c)
-OBJS	:= $(addprefix $(obj),$(COBJS))
-
-$(LIB):	$(obj).depend $(OBJS)
-	$(call cmd_link_o_target, $(OBJS)) $(LIBFLAG)
-	
-
-#########################################################################
-
-# defines $(obj).depend target
-include $(SRCTREE)/rules.mk
-
-sinclude $(obj).depend
-
-#########################################################################
