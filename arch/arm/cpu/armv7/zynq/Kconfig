@@ -33,13 +33,13 @@ config TARGET_ZYNQ_CSE
 endchoice
 
 config SYS_BOARD
-	default "zynq"
 	default "sdrdc" if TARGET_ZYNQ_SDRDC
 	default "tdsdr" if TARGET_ZYNQ_TDSDR
+	default "zynq"
 
 config SYS_VENDOR
-	default "xilinx"
 	default "silverbullet" if TARGET_ZYNQ_SDRDC || TARGET_ZYNQ_TDSDR
+	default "xilinx"
 
 config SYS_SOC
 	default "zynq"

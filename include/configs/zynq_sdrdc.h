@@ -31,6 +31,7 @@
 #define CONFIG_SYS_NO_FLASH
 
 #define CONFIG_ZYNQ_SDHCI0
+#define CONFIG_ZYNQ_SDHCI1
 #define CONFIG_ZYNQ_USB
 #define CONFIG_ZYNQ_QSPI
 #define CONFIG_ZYNQ_EEPROM
@@ -75,7 +76,7 @@
 	"mmc_loadbit=echo Loading bitstream from SD/MMC/eMMC to RAM.. && " \
 		"mmcinfo && " \
 		"load mmc ${sdio_dev} ${loadbit_addr} ${bitstream_image} && " \
-		"fpga load 0 ${loadbit_addr} ${filesize}\0" \
+		"fpga loadb 0 ${loadbit_addr} ${filesize}\0" \
 	"qspiboot=echo Copying Linux from QSPI flash to RAM... && " \
 		"sf probe 0 0 0 && " \
 		"sf read ${kernel_load_address} 0x100000 ${kernel_size} && " \
@@ -132,7 +133,7 @@
 		"mmcinfo && " \
 		"load mmc ${sdio_dev} ${loadbit_addr} ${bitstream_image} && " \
 		"fpga load 0 ${loadbit_addr} ${filesize}\0" \
-	"sdiofpga=run mmc_loadbit"               \
+	"sdiofpga=run mmc_loadbit\0"               \
 	"sdio_to_qspi="                                                     \
 		"mmcinfo && sf probe 0 0 0 && "                                 \
 		"fatload mmc ${sdio_dev} ${loadbit_addr} ${bitstream_image} && "         \
@@ -179,13 +180,5 @@
 		"run testqspi\0 "												\
 	DFU_ALT_INFO
 
-
-
-
-/* Temporary - ARCH_ZYNQ in newer Linux (3.12 at least) requires multi-arch support, which
- * requires a valid machine ID.  While we get one registered we'll use the generic "Xilinx
- * Zynq" entry's ID.
- */
-#define CONFIG_MACH_TYPE 3378
 
 #endif /* __CONFIG_ZYNQ_SDRDC_H */
