@@ -5,8 +5,9 @@
 extern "C" {
 #endif
 
-#include <linux/ctype.h>
-#include <linux/string.h>
+#include <ctype.h>
+#include <string.h>
+#include <stdarg.h>
 #include "xparameters.h"
 #include "xil_types.h"
 

@@ -1,10 +1,10 @@
-make clean
-make zynq_sdrdc_defconfig
-make all
-rm u-boot.elf
-cp u-boot u-boot.elf
-rm boot.bin
-bootgen -image boot.bif -o i boot.bin -w
+#make clean
+make zynq_tdsdr_defconfig V=1
+make V=1
+#rm u-boot.elf
+#cp u-boot u-boot.elf
+#rm boot.bin
+#bootgen -image boot.bif -o i boot.bin -w
 #rm ./images/bist_app.bin
 #arm-xilinx-linux-gnueabi-objcopy -O binary boot.elf ./images/bist_app.bin
 #gzip < ./images/bist_app.bin > images/bist.bin.gz
@@ -18,5 +18,5 @@ bootgen -image boot.bif -o i boot.bin -w
 #	-n "BIST" \
 #	-d images/bist.bin.gz \
 #	-v bist.img
-#echo "done!"
+echo "done!"
 

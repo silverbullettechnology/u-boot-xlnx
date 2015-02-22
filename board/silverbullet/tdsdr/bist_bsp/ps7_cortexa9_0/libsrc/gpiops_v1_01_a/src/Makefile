@@ -17,13 +17,5 @@ INCLUDEFILES:=*.h
 libs:	$(LIBSOURCES)
 	echo "Compiling gpiops"
 	$(COMPILER) $(COMPILER_FLAGS) $(EXTRA_COMPILER_FLAGS) $(INCLUDES) $(LIBSOURCES)
-	$(ARCHIVER) -r ${RELEASEDIR}/${LIB} ${OUTS}
-	make clean
 
-.PHONY: include
-include: 
-	${CP} $(INCLUDEFILES) $(INCLUDEDIR)
-
-clean:
-	rm -rf ${OUTS}
 
