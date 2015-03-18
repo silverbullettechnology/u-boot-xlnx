@@ -1,6 +1,0 @@
-the_ROM_image:
-{
-	[bootloader]zynq_fsbl_gem1_en_01281734.elf
-	[checksum=md5]system_top_01191719.bit
-	u-boot.elf
-}
