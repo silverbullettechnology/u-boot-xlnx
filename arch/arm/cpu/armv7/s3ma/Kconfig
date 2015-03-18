@@ -1,0 +1,34 @@
+if S3MA
+
+choice
+	prompt "CLASS Spiral 3 ASIC board select"
+
+config TARGET_CLASS_SP3_DEVEL
+	bool "CLASS SP3 Development Board"
+
+config TARGET_CLASS_SP3_BASE
+	bool "CLASS SP3 Base Station Board"
+
+config TARGET_CLASS_SP3_MOBILE
+	bool "CLASS SP3 Mobile Station Board"
+	
+endchoice
+
+config SYS_BOARD
+	default "sp3dev" if TARGET_CLASS_SP3_DEVEL
+	default "sp3base" if TARGET_CLASS_SP3_BASE
+	default "sp3mobile" if TARGET_CLASS_SP3_MOBILE
+
+
+config SYS_VENDOR
+	default "exelis"
+
+config SYS_SOC
+	default "s3ma"
+
+config SYS_CONFIG_NAME
+	default "s3ma_sp3dev" if TARGET_CLASS_SP3_DEVEL
+	default "s3ma_sp3dtc" if TARGET_CLASS_SP3_BASE
+	default "d3ma_sp3mbl" if TARGET_CLASS_SP3_MOBILE
+
+endif

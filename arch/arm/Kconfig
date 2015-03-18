@@ -716,6 +716,10 @@ config TARGET_XILINX_ZYNQMP
 	bool "Support Xilinx ZynqMP Platform"
 	select ARM64
 
+config S3MA
+	bool "Exelis S3MA SoC"
+	select CPU_V7
+
 config TEGRA
 	bool "NVIDIA Tegra"
 	select SUPPORT_SPL
@@ -840,6 +844,8 @@ source "arch/arm/cpu/armv7/uniphier/Kconfig"
 source "arch/arm/cpu/arm926ejs/versatile/Kconfig"
 
 source "arch/arm/cpu/armv7/zynq/Kconfig"
+
+source "arch/arm/cpu/armv7/s3ma/Kconfig"
 
 source "arch/arm/cpu/armv7/Kconfig"
 

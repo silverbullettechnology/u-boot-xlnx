@@ -63,3 +63,4 @@ obj-$(CONFIG_U8500) += u8500/
 obj-$(CONFIG_ARCH_UNIPHIER) += uniphier/
 obj-$(CONFIG_VF610) += vf610/
 obj-$(CONFIG_ZYNQ) += zynq/
+obj-$(CONFIG_S3MA) += s3ma/
