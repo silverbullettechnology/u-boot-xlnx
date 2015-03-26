@@ -11,9 +11,10 @@
 #define __CONFIG_H
 
 /* Custom build options for debugging  */
-#define DEBUG
+//#define DEBUG
 //#define CONFIG_DEBUG_BUILD
 //#define CONFIG_RUN_ON_QEMU
+#define CONFIG_MMC_TRACE
 
 /* Simulation in RTL */
 //#define CONFIG_RTL_SIMULATION
@@ -21,12 +22,9 @@
 #define CONFIG_PALLADIUM
 
 /* Cache settings */
-#define CONFIG_SYS_ICACHE_OFF
-#define CONFIG_SYS_DCACHE_OFF
-#define CONFIG_SYS_L2CACHE_OFF
-
-/* No SPI or NOR flash */
-#define CONFIG_SYS_NO_FLASH
+//#define CONFIG_SYS_ICACHE_OFF
+//#define CONFIG_SYS_DCACHE_OFF
+//#define CONFIG_SYS_L2CACHE_OFF
 
 /* Enable peripheral options */
 
@@ -41,6 +39,10 @@
 //#define CONFIG_S3MA_AD9361
 
 #define CONFIG_AD9361_MAX_DEVICE 4
+
+/* Max sectors on one flash chip */
+#define CONFIG_SYS_MAX_FLASH_SECT      512
+#define CONFIG_SYS_MAX_FLASH_BANKS     1
 
 /* Size the DRAM */
 #ifdef CONFIG_PALLADIUM

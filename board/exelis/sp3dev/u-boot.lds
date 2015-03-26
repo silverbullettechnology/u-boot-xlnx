@@ -24,11 +24,11 @@ SECTIONS
  */
 	
 	
-	/* Hardware config (PLL etc.) 1K config data goes into this space */ 
+		/* Hardware config (PLL etc.) 1K config data goes into this space */ 
 		. = 8K;
 		*(.por_config*)
 
-	/* Rest of the text section */
+		/* Rest of the text section */
 		*(.text*)
 	
 	}	

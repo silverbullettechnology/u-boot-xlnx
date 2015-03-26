@@ -24,8 +24,12 @@
 #ifndef CONFIG_DM_SERIAL
 
 static volatile unsigned char *const port[] = CONFIG_PL01x_PORTS;
-static enum pl01x_type pl01x_type __attribute__ ((section(".data")));
-static struct pl01x_regs *base_regs __attribute__ ((section(".data")));
+#define base_regs ((struct pl01x_regs *)port[CONFIG_CONS_INDEX])
+#if defined(CONFIG_PL010_SERIAL)
+static const enum pl01x_type pl01x_type = TYPE_PL010;
+#elif defined(CONFIG_PL011_SERIAL)
+static const enum pl01x_type pl01x_type = TYPE_PL011;
+#endif
 #define NUM_PORTS (sizeof(port)/sizeof(port[0]))
 
 DECLARE_GLOBAL_DATA_PTR;
@@ -196,14 +200,9 @@ static void pl01x_serial_init_baud(int baudrate)
 {
 	int clock = 0;
 
-#if defined(CONFIG_PL010_SERIAL)
-	pl01x_type = TYPE_PL010;
-#elif defined(CONFIG_PL011_SERIAL)
-	pl01x_type = TYPE_PL011;
+#if defined(CONFIG_PL011_SERIAL)
 	clock = CONFIG_PL011_CLOCK;
 #endif
-	base_regs = (struct pl01x_regs *)port[CONFIG_CONS_INDEX];
-
 	pl01x_generic_serial_init(base_regs, pl01x_type);
 	pl01x_generic_setbrg(base_regs, pl01x_type, clock, baudrate);
 }

@@ -116,9 +116,11 @@
  * Cache
  */
 #ifndef CONFIG_SYS_L2CACHE_OFF
+#define CONFIG_CMD_CACHE
 #define CONFIG_SYS_CACHELINE_SIZE 32
 #define CONFIG_SYS_L2_PL310
-#define CONFIG_SYS_PL310_BASE	PL310_L2_ABSOLUTE_BASE
+//#define CONFIG_SYS_PL310_BASE	PL310_L2_ABSOLUTE_BASE
+#define CONFIG_SYS_PL310_BASE	0x080D1000
 #endif
 
 /*This one has to be defined by
@@ -171,7 +173,10 @@
 # define CONFIG_CONS_INDEX	0
 
 #ifdef CONFIG_PALLADIUM
-# define CONFIG_BAUDRATE			2064227
+/* 907 KHz */
+# define CONFIG_BAUDRATE			2034437
+/* 1.4MHz */
+//# define CONFIG_BAUDRATE			1268547
 #else
 # define CONFIG_BAUDRATE			115200
 #endif
@@ -186,7 +191,8 @@
 # define CONFIG_SYS_I2C
 # define CONFIG_SYS_I2C_DW
 # define CONFIG_SYS_I2C_SPEED		100000
-# define CONFIG_SYS_I2C_BASE		I2C_APB_ABSOLUTE_BASE
+//# define CONFIG_SYS_I2C_BASE		(I2C_APB_ABSOLUTE_BASE)
+# define CONFIG_SYS_I2C_BASE		0x080A0000
 # define CONFIG_SYS_I2C_SLAVE		0x90
 #endif
 
@@ -194,6 +200,7 @@
  * MMC/SD
  */
 #ifdef CONFIG_S3MA_SDHCI0
+# define CONFIG_ENV_IS_IN_MMC
 # define CONFIG_SDHCI
 # define CONFIG_MMC
 # define CONFIG_CMD_MMC
@@ -335,12 +342,14 @@
 
 
 /* FLASH and environment organization */
-#define CONFIG_SYS_NO_FLASH
-
-#define CONFIG_CMD_SF
-#define CONFIG_CMD_SF_TEST
-#define CONFIG_SPI_FLASH
-#define CONFIG_SPI_FLASH_SST
+# define CONFIG_SYS_NO_FLASH
+#ifdef CONFIG_CMD_SPI
+# define CONFIG_CMD_SF
+# define CONFIG_CMD_SF_TEST
+# define CONFIG_SPI_FLASH
+# define CONFIG_SPI_FLASH_SST
+//# define CONFIG_ENV_IS_IN_SPI_FLASH
+#endif
 
 /* SPI flash settings for boot */
 #define CONFIG_SF_DEFAULT_BUS		(4)
@@ -348,18 +357,12 @@
 #define CONFIG_SF_DEFAULT_MODE		SPI_MODE_0
 #define CONFIG_SF_DEFAULT_SPEED	(1000000)
 
-#if defined(CONFIG_RUN_ON_QEMU) || defined(CONFIG_PALLADIUM)
-# define CONFIG_ENV_IS_IN_MMC
-# define CONFIG_ENV_SIZE			(16 * 1024)
-#else
-# define CONFIG_ENV_IS_IN_SPI_FLASH
-# define CONFIG_ENV_SIZE			(16 * 1024)
-#endif
-
 #if defined(CONFIG_ENV_IS_IN_MMC)
+# define CONFIG_ENV_SIZE		(16 * 1024)
 # define CONFIG_ENV_OFFSET		(6 * 64 * 1024)
 # define CONFIG_SYS_MMC_ENV_DEV		0
 #elif defined(CONFIG_ENV_IS_IN_SPI_FLASH)
+# define CONFIG_ENV_SIZE		(16 * 1024)
 # define CONFIG_ENV_OFFSET		(0)
 # define CONFIG_ENV_SECT_SIZE	(16 * 1024)
 # define CONFIG_ENV_SPI_BUS		(CONFIG_SF_DEFAULT_BUS)
