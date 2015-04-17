@@ -14,7 +14,7 @@
 //#define DEBUG
 //#define CONFIG_DEBUG_BUILD
 //#define CONFIG_RUN_ON_QEMU
-#define CONFIG_MMC_TRACE
+//#define CONFIG_MMC_TRACE
 
 /* Simulation in RTL */
 //#define CONFIG_RTL_SIMULATION
@@ -22,20 +22,20 @@
 #define CONFIG_PALLADIUM
 
 /* Cache settings */
-//#define CONFIG_SYS_ICACHE_OFF
-//#define CONFIG_SYS_DCACHE_OFF
-//#define CONFIG_SYS_L2CACHE_OFF
+#define CONFIG_SYS_ICACHE_OFF
+#define CONFIG_SYS_DCACHE_OFF
+#define CONFIG_SYS_L2CACHE_OFF
 
 /* Enable peripheral options */
 
 #define CONFIG_S3MA_GPIO
-#define CONFIG_S3MA_SDHCI0
+//#define CONFIG_S3MA_SDHCI0
 //#define CONFIG_S3MA_FUSE
 #define CONFIG_S3MA_SERIAL_UART0
 #define CONFIG_S3MA_I2C
 #define CONFIG_S3MA_SPI
-//#define CONFIG_S3MA_USB
-//#define CONFIG_CMD_DFU /* firmware download gadget */
+#define CONFIG_S3MA_USB
+#define CONFIG_CMD_DFU /* firmware download gadget */
 //#define CONFIG_S3MA_AD9361
 
 #define CONFIG_AD9361_MAX_DEVICE 4
