@@ -88,6 +88,14 @@
 #define CONFIG_BOOTP_MAY_FAIL
 #define CONFIG_BOOTP_SERVERIP
 
+/* SPI */
+#ifdef CONFIG_ZYNQ_SPI
+# define CONFIG_SPI_FLASH
+# define CONFIG_SPI_FLASH_SST
+# define CONFIG_CMD_SPI
+# define CONFIG_CMD_SF
+#endif
+
 #ifdef CONFIG_ZYNQMP_QSPI
 # define CONFIG_SPI_GENERIC
 # define CONFIG_SF_DEFAULT_SPEED	30000000
@@ -146,8 +154,8 @@
 	"qspiboot=sf probe 0 0 0 && sf read $fdt_addr 100000 40000 && " \
 		  "sf read $kernel_addr 140000 1800000 && " \
 		  "booti $kernel_addr - $fdt_addr\0" \
-	"sdboot=mmcinfo && load mmc 0:auto $fdt_addr system.dtb && " \
-		"load mmc 0:auto $kernel_addr Image && " \
+	"sdboot=mmcinfo && load mmc 0:$partid $fdt_addr system.dtb && " \
+		"load mmc 0:$partid $kernel_addr Image && " \
 		"booti $kernel_addr - $fdt_addr\0" \
 	"nandboot=nand info && nand read $fdt_addr 100000 40000 && " \
 		  "nand read $kernel_addr 140000 1800000 && " \

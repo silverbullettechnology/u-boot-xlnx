@@ -31,6 +31,9 @@
 #define CONFIG_SYS_BAUDRATE_TABLE  \
 	{300, 600, 1200, 2400, 4800, 9600, 19200, 38400, 57600, 115200, 230400}
 
+#define CONFIG_ZYNQ_GPIO
+#define CONFIG_CMD_GPIO
+
 /* DCC driver */
 #if defined(CONFIG_ZYNQ_DCC)
 # define CONFIG_ARM_DCC
@@ -239,6 +242,7 @@
 #endif
 
 /* Default environment */
+#define CONFIG_PREBOOT
 #define CONFIG_EXTRA_ENV_SETTINGS	\
 	"ethaddr=00:0a:35:00:01:22\0"	\
 	"kernel_image=uImage\0"	\
@@ -261,6 +265,12 @@
 	"loadbootenv=load mmc 0 ${loadbootenv_addr} ${bootenv}\0" \
 	"importbootenv=echo Importing environment from SD ...; " \
 		"env import -t ${loadbootenv_addr} $filesize\0" \
+	"sd_uEnvtxt_existence_test=test -e mmc 0 /uEnv.txt\0" \
+	"preboot=if test $modeboot = sdboot && env run sd_uEnvtxt_existence_test; " \
+			"then if env run loadbootenv; " \
+				"then env run importbootenv; " \
+			"fi; " \
+		"fi; \0" \
 	"mmc_loadbit=echo Loading bitstream from SD/MMC/eMMC to RAM.. && " \
 		"mmcinfo && " \
 		"load mmc 0 ${loadbit_addr} ${bitstream_image} && " \

@@ -38,3 +38,4 @@ obj-$(CONFIG_TCA642X)		+= tca642x.o
 oby-$(CONFIG_SX151X)		+= sx151x.o
 obj-$(CONFIG_SUNXI_GPIO)	+= sunxi_gpio.o
 obj-$(CONFIG_PL061_GPIO)        += pl061_gpio.o
+obj-$(CONFIG_ZYNQ_GPIO)		+= zynq_gpio.o
