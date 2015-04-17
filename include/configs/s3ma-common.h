@@ -26,11 +26,11 @@
 #define CONFIG_CPU_CLK_HZ			768000000
 #define CONFIG_PERIPHCLK_HZ			(CONFIG_CPU_CLK_HZ/4)
 
-//#define CONFIG_ARM_ERRATA_742230
-//#define CONFIG_ARM_ERRATA_743622
-//#define CONFIG_ARM_ERRATA_751472
+//#define CONFIG_ARM_ERRATA_742230 // Not present on S3MA
+//#define CONFIG_ARM_ERRATA_743622 // Not present on S3MA
+//#define CONFIG_ARM_ERRATA_751472 // Not present on S3MA
 #define CONFIG_ARM_ERRATA_794072
-//#define CONFIG_ARM_ERRATA_761320
+//#define CONFIG_ARM_ERRATA_761320 // Not present on S3MA
 
 /*
  * High level configuration
@@ -174,9 +174,11 @@
 
 #ifdef CONFIG_PALLADIUM
 /* 907 KHz */
-# define CONFIG_BAUDRATE			2034437
-/* 1.4MHz */
-//# define CONFIG_BAUDRATE			1268547
+//# define CONFIG_BAUDRATE			2034437
+/* 1.5MHz */
+//# define CONFIG_BAUDRATE			1209448  /* 1524KHz current baudrate*/
+/* 1.7MHz */
+# define CONFIG_BAUDRATE			2123502  /* 1736KHz current baudrate*/
 #else
 # define CONFIG_BAUDRATE			115200
 #endif
@@ -205,7 +207,7 @@
 # define CONFIG_MMC
 # define CONFIG_CMD_MMC
 # define CONFIG_GENERIC_MMC
-# define CONFIG_MMC_SDMA
+//# define CONFIG_MMC_SDMA
 # define CONFIG_BOUNCE_BUFFER
 # define CONFIG_CMD_EXT2
 # define CONFIG_CMD_FAT
