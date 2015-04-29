@@ -61,8 +61,8 @@ int atmel_write_read(void)
 
 	volatile int Delay;
 	#define write_array_size 128
-	char write_buffer[write_array_size];
-	char read_buffer[write_array_size];
+	char write_buffer[write_array_size*2];
+	char read_buffer[write_array_size*2];
 
 	char *write_buffer_p = &write_buffer[0];
 	char *read_buffer_p = &read_buffer[0];
@@ -86,20 +86,19 @@ while(1){
 
 	//read the input
 
-    	xil_fgets(write_buffer, write_array_size-3);
+    	xil_fgets(write_buffer, write_array_size-1);
 
-    	size = strlen(write_buffer);
+    	size = strlen(write_buffer)-1;
 
    	printf("\r\nsize: %d\r\n",size);
 
-	for(i = size; i > 0; i--){
-        	write_buffer[i] = write_buffer[i-1];
-    	}
-    	write_buffer[0] = 0x02;
-    	write_buffer[size] = 0x03;
-    	size++;
     	write_buffer[size] = '\n';
 	size++;
+
+	/*for (i = 0; i < 0; i++){
+		size++;
+		write_buffer[size] = ' ';
+	}*/
 
 	printf("\r\n");
 	printf("%s",write_buffer);
@@ -127,12 +126,16 @@ while(1){
 	mosi_pin = SPI0_MOSI_PIN;
 	miso_pin = SPI0_MISO_PIN;
 	clk_pin = SPI0_CLK_PIN;
-	port_mask = SPI0_PORT_MASK;
-	miso_pin_mask = SPI0_MISO_MASK;
-	miso_shift = SPI0_MISO_SHIFT;
+	
+	XGpioPs_SetDirectionPin(&Gpio, mosi_pin, 1);
+	XGpioPs_SetDirectionPin(&Gpio, clk_pin, 1);
+	XGpioPs_SetDirectionPin(&Gpio, ss_pin, 1);
+	XGpioPs_SetDirectionPin(&Gpio, miso_pin, 0);
 
-	XGpioPs_SetDirection(&Gpio, gpio_bank, port_mask);
-	XGpioPs_SetOutputEnable(&Gpio, gpio_bank, port_mask);
+	XGpioPs_SetOutputEnablePin(&Gpio, mosi_pin, 1);
+	XGpioPs_SetOutputEnablePin(&Gpio, clk_pin, 1);
+	XGpioPs_SetOutputEnablePin(&Gpio, ss_pin, 1);
+	XGpioPs_SetOutputEnablePin(&Gpio, miso_pin, 0);
 
 	/*
 	 * Set the chip select, must use GPIO due to Zynq errata?
@@ -176,6 +179,95 @@ while(1){
 }
 printf("back to menu.\r\n");
 }
+
+/******************************************************************************/
+int program_lmk(char *image)
+{
+	#define REGISTER_BUFFER_SIZE 26
+	#define REGISTER_FILE_LENGTH 412 //length is always the same
+	
+	XGpioPs_Config *ConfigPtr;	
+	int Status;
+	int i, j;
+
+	char invert;
+	unsigned int active_reg;
+	int size;
+	
+	volatile int Delay;
+
+	unsigned char buffer[412];
+	unsigned char line_buf[64];
+	unsigned char int_buf[8];
+	unsigned char * bol;
+	unsigned char * eol;
+	unsigned int val;
+
+	unsigned int lmk_register_buffer[REGISTER_BUFFER_SIZE];
+
+	eol = image;
+	bol = image;
+
+		
+	
+	j=0;
+    	while(strchr(bol,'\n')){
+		eol = strchr(bol, '\n');
+		i=0;
+		while(bol<=eol){
+		    line_buf[i] = *bol;
+		    i++;
+		    bol++;
+		}
+		line_buf[i] = '\0';
+
+		val = hexToInt(&line_buf[i-10]);
+		lmk_register_buffer[j] = val;
+		j++;
+	
+    	}
+
+	ConfigPtr = XGpioPs_LookupConfig(GPIO_DEVICE_ID);
+	Status = XGpioPs_CfgInitialize(&Gpio, ConfigPtr,
+					ConfigPtr->BaseAddr);
+	if (Status != XST_SUCCESS) {
+		return XST_FAILURE;
+	}
+
+	gpio_bank = SPI0_GPIO_BANK;
+
+	ss_pin = SPI0_SS2_PIN;
+
+	mosi_pin = SPI0_MOSI_PIN;
+	miso_pin = SPI0_MISO_PIN;
+	clk_pin = SPI0_CLK_PIN;
+	
+	XGpioPs_SetDirectionPin(&Gpio, mosi_pin, 1);
+	XGpioPs_SetDirectionPin(&Gpio, clk_pin, 1);
+	XGpioPs_SetDirectionPin(&Gpio, ss_pin, 1);
+	XGpioPs_SetDirectionPin(&Gpio, miso_pin, 0);
+
+	XGpioPs_SetOutputEnablePin(&Gpio, mosi_pin, 1);
+	XGpioPs_SetOutputEnablePin(&Gpio, clk_pin, 1);
+	XGpioPs_SetOutputEnablePin(&Gpio, ss_pin, 1);
+	XGpioPs_SetOutputEnablePin(&Gpio, miso_pin, 0);
+
+	XGpioPs_WritePin(&Gpio, ss_pin, 0x1);
+
+	printf("Programming LMK registers.\r\n");
+	//start a uwire transfer
+
+	//iterate through the register array
+	for(i=0;i<REGISTER_BUFFER_SIZE;i++){
+		
+		active_reg = lmk_register_buffer[i];
+		printf("Register %2d: 0x%08X\n",i,active_reg);
+		uwire_program_register(&Gpio, active_reg);
+	}
+
+	printf("Back to menu.\r\n");
+}
+
 
 /*****************************************************************************/
 int ADI_read_reg(u16 SpiDeviceId, u16 SlaveSelectVar)
@@ -586,9 +678,15 @@ int ADI_write_reg(u16 SpiDeviceId, u16 SlaveSelectVar)
 	mosi_pin = SPI1_MOSI_PIN;
 	miso_pin = SPI1_MISO_PIN;
 	clk_pin = SPI1_CLK_PIN;
-	port_mask = SPI1_PORT_MASK;
-	miso_pin_mask = SPI1_MISO_MASK;
-	miso_shift = SPI1_MISO_SHIFT;
+	XGpioPs_SetDirectionPin(&Gpio, mosi_pin, 1);
+	XGpioPs_SetDirectionPin(&Gpio, clk_pin, 1);
+	XGpioPs_SetDirectionPin(&Gpio, ss_pin, 1);
+	XGpioPs_SetDirectionPin(&Gpio, miso_pin, 0);
+
+	XGpioPs_SetOutputEnablePin(&Gpio, mosi_pin, 1);
+	XGpioPs_SetOutputEnablePin(&Gpio, clk_pin, 1);
+	XGpioPs_SetOutputEnablePin(&Gpio, ss_pin, 1);
+	XGpioPs_SetOutputEnablePin(&Gpio, miso_pin, 0);
 	printf("Setting Master mode, manual start, manual chip select\r\n");
 	/*XSpiPs_SetOptions(SpiInstancePtr, XSPIPS_MANUAL_START_OPTION | \
 			XSPIPS_MASTER_OPTION | XSPIPS_CLK_PHASE_1_OPTION| XSPIPS_FORCE_SSELECT_OPTION);*/
@@ -714,9 +812,15 @@ int ADI_write_register(unsigned char SlaveSelectVar, u16 reg, unsigned char val)
 	mosi_pin = SPI1_MOSI_PIN;
 	miso_pin = SPI1_MISO_PIN;
 	clk_pin = SPI1_CLK_PIN;
-	port_mask = SPI1_PORT_MASK;
-	miso_pin_mask = SPI1_MISO_MASK;
-	miso_shift = SPI1_MISO_SHIFT;
+	XGpioPs_SetDirectionPin(&Gpio, mosi_pin, 1);
+	XGpioPs_SetDirectionPin(&Gpio, clk_pin, 1);
+	XGpioPs_SetDirectionPin(&Gpio, ss_pin, 1);
+	XGpioPs_SetDirectionPin(&Gpio, miso_pin, 0);
+
+	XGpioPs_SetOutputEnablePin(&Gpio, mosi_pin, 1);
+	XGpioPs_SetOutputEnablePin(&Gpio, clk_pin, 1);
+	XGpioPs_SetOutputEnablePin(&Gpio, ss_pin, 1);
+	XGpioPs_SetOutputEnablePin(&Gpio, miso_pin, 0);
 
 	/*
 	 * Set the chip select, must use GPIO due to Zynq errata?
@@ -805,17 +909,21 @@ int ADI_read_register(unsigned char SlaveSelectVar, u16 reg_address, unsigned ch
 	mosi_pin = SPI1_MOSI_PIN;
 	miso_pin = SPI1_MISO_PIN;
 	clk_pin = SPI1_CLK_PIN;
-	port_mask = SPI1_PORT_MASK;
-	miso_pin_mask = SPI1_MISO_MASK;
-	miso_shift = SPI1_MISO_SHIFT;
 
 	/*
 	 * Set the SPI device as a master with manual start and manual
 	 * chip select mode options
 	 */
 
-	XGpioPs_SetDirection(&Gpio, gpio_bank, port_mask);
-	XGpioPs_SetOutputEnable(&Gpio, gpio_bank, port_mask);
+	XGpioPs_SetDirectionPin(&Gpio, mosi_pin, 1);
+	XGpioPs_SetDirectionPin(&Gpio, clk_pin, 1);
+	XGpioPs_SetDirectionPin(&Gpio, ss_pin, 1);
+	XGpioPs_SetDirectionPin(&Gpio, miso_pin, 0);
+
+	XGpioPs_SetOutputEnablePin(&Gpio, mosi_pin, 1);
+	XGpioPs_SetOutputEnablePin(&Gpio, clk_pin, 1);
+	XGpioPs_SetOutputEnablePin(&Gpio, ss_pin, 1);
+	XGpioPs_SetOutputEnablePin(&Gpio, miso_pin, 0);
 
 	/*
 	 * Set the chip select, must use GPIO due to Zynq errata?

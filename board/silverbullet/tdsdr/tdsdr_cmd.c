@@ -12,8 +12,10 @@ static int atoint(const char *str);
 static int hexToInt(char s[]);
 static int do_pdi(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]);
 static int do_bist(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]);
+static int do_amc(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]);
 
- static int do_pdi(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+
+static int do_pdi(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
    {
    int rcode = 0;
 
@@ -27,7 +29,7 @@ static int do_bist(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]);
 	
 	image = (char*)buf_loc;
 
-   printf("\n\nTD-SDRDC MMC Firmware Programmer\n\n");
+   printf("\n\nTD-SDR MMC Firmware Programmer\n\n");
 
    printf("location: 0x%X\r\n",buf_loc);
    printf("    size: %d\r\v",size);
@@ -97,7 +99,28 @@ static int do_bist(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]);
  //        name,#parms, isrepeatable?, cmd list, help text
  U_BOOT_CMD(bist, 10, 1, do_bist, "initiate the bist interface", "");
 
+
+/*****************************************************************************/
+
+ static int do_amc(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+   {
+   int rcode = 0;
+
+   printf("\n\nTD-SDRD AMC Management Function\n\n");
+
+   amc_main(argc, argv);
+ 
+   printf("exiting. rcode=%d\n\n", rcode);
+   return rcode;
+   }
+ 
  /***************************************************/
+ //        name,#parms, isrepeatable?, cmd list, help text
+ U_BOOT_CMD(amc, 10, 1, do_amc, "AMC Management Functions", "");
+
+
+ /***************************************************/
+
 static int hexToInt(char s[]) {
 
     #define YES 1
@@ -133,7 +156,7 @@ static int hexToInt(char s[]) {
     return n;
 }
 
-/*****************************************************************************/
+ /***************************************************/
 
 static int atoint(const char *str)
 {

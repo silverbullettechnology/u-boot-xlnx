@@ -155,6 +155,9 @@
 	"bist="                                                             \
 		"run loadbist && "                                              \
 		"go 0x100000 \0"                                                \
+	"loadbin="                                                         \
+		"tftpboot 0x100000 boot.bin && "                            \
+		"fatwrite mmc ${sdio_dev} 0x100000 boot.bin ${filesize} \0"                         \
 	"testmmc="                                                          \
 		"mmc dev 1 && "                                                 \
 		"if mmc rescan; then "                                          \

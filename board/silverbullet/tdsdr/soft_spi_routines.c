@@ -246,3 +246,51 @@ void soft_spi_transfer_invert(XGpioPs *InstancePtr, char *SendBufPtr,char *RecvB
 
 }
 
+/*****************************************************************************/
+/**
+*
+
+Copied from atmel firmware
+*
+******************************************************************************/
+
+void uwire_program_register(XGpioPs *InstancePtr, uint32_t regval){
+//program a register, MSB first, 4 address bits last.
+#define SPI_DELAY 1000
+		volatile int Delay;
+		int i;
+		unsigned int active_tx_bit;
+			
+		//off(PIN_LMK_LE);
+		XGpioPs_WritePin(&Gpio, ss_pin, 0);
+		
+		//for (Delay = 0; Delay < 100; Delay++);
+		for(i=31;i>=0;i--){
+			
+			active_tx_bit = regval>>i&0x1;
+			
+			/*if(active_tx_bit)
+				on(PIN_LMK_DATA);
+			else
+				off(PIN_LMK_DATA);*/
+			
+			XGpioPs_WritePin(&Gpio, mosi_pin, active_tx_bit);
+			
+			for (Delay = 0; Delay < SPI_DELAY; Delay++);
+			
+			//on(PIN_LMK_CLK);
+			XGpioPs_WritePin(&Gpio, clk_pin, 1);
+			
+			for (Delay = 0; Delay < SPI_DELAY; Delay++);
+
+			//off(PIN_LMK_CLK);
+			XGpioPs_WritePin(&Gpio, clk_pin, 0);
+		}
+		for (Delay = 0; Delay < SPI_DELAY; Delay++);
+		//on(PIN_LMK_LE);
+		XGpioPs_WritePin(&Gpio, ss_pin, 1);
+		for (Delay = 0; Delay < SPI_DELAY; Delay++);
+		//off(PIN_LMK_LE);
+		XGpioPs_WritePin(&Gpio, ss_pin, 0);
+}
+

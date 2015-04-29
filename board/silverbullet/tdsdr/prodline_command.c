@@ -57,7 +57,7 @@
 /******************************************************************************/
 prod_command prodline_cmd_list[] = {
 	{"help", "Displays all available commands.", "", prod_get_help},
-	{"adapt_usb_test", "Runs the ADAPT connector USB test. Initializes the peripheral as a USB storage device.", "", adapt_usb_test},
+	{"adi_basic_test", "Runs the basic ADI functional test.", "", adi_basic_test},
 	{"adi_loopback", "Runs the internal BIST loopback test.", "", adi_loopback_test},
 	{"adi_temperature", "Outputs the temperature readings from the ADI chips.", "", adi_temperature},
 	{"adi_init", "Re-initializes the AD9361 devices.", "", adi_init},
@@ -69,6 +69,13 @@ prod_command prodline_cmd_list[] = {
 	{"distortion_test", "Runs a distortion loopback test.", "", rftest},
 };
 const char prod_cmd_no = (sizeof(prodline_cmd_list) / sizeof(prod_command));
+
+prod_command amc_cmd_list[] = {
+	{"help", "Displays all available commands.", "", amc_get_help},
+	{"spi_test", "Runs the spi test interface for the Atmel MCU", "", amc_spi_test},
+	{"lmk_prog", "Programs the clock module from the registers located at an address in memory", "", lmk_prog},
+};
+const char amc_cmd_no = (sizeof(amc_cmd_list) / sizeof(prod_command));
 
 /************************** Variable Definitions *****************************/
 
@@ -89,14 +96,14 @@ void prod_get_help(char (*param)[50], char param_no){
 
 }
 
-void adapt_usb_test(char (*param)[50], char param_no){
+void adi_basic_test(char (*param)[50], char param_no){
 	int i;
-	printf("Running ADAPT USB test.\r\n");
+	printf("Running ADI basic test.\r\n");
 	for (i = 0; i < param_no; i++) {
         printf("Argument %i is: %s\n", i, param[i]);
     }
 
-	//usb_main();
+	adi_xcvr_test();
 }
 
 
@@ -129,7 +136,7 @@ void memory_test(char (*param)[50], char param_no){
         printf("Argument %i is: %s\n", i, param[i]);
     }
 
-	//hello_mem();
+	hello_mem();
 
 }
 
@@ -190,7 +197,7 @@ void xadc_temperature(char (*param)[50], char param_no){
 	for (i = 0; i < param_no; i++) {
         printf("Argument %i is: %s\n", i, param[i]);
     }
-	//xadc_main();
+	xadc_main();
 
 }
 
@@ -228,4 +235,48 @@ void rftest(char (*param)[50], char param_no){
 	}else{
 		printf("\r\nInvalid number of arguments.  Enter the desired AD9361 to test, 0:ADI1, 1:ADI2, 2:both.\r\n");}
 
+}
+
+/************************** AMC Function Definitions *****************************/
+void amc_get_help(char (*param)[50], char param_no){
+	int i;
+	printf("Running Help Command.\r\n");
+	for (i = 0; i < param_no; i++) {
+        printf("Argument %i is: %s\n", i, param[i]);
+    }
+
+	printf("available commands:\r\n");
+
+	for(i=0;i<amc_cmd_no;i++){
+		printf("'%s' %s\r\n",amc_cmd_list[i].name, amc_cmd_list[i].description);
+	}
+
+}
+
+void amc_spi_test(char (*param)[50], char param_no){
+	int i;
+	printf("Running AMC MMC SPI test.\r\n");
+	for (i = 0; i < param_no; i++) {
+        printf("Argument %i is: %s\n", i, param[i]);
+    	}
+
+	atmel_write_read();
+}
+
+void lmk_prog(char (*param)[50], char param_no){
+	int i;
+
+	uint32_t buf_loc;
+	char *image;
+	unsigned int size;
+
+	printf("LMK Programming Utility.\r\n");
+	for (i = 0; i < param_no; i++) {
+        printf("Argument %i is: %s\n", i, param[i]);
+    	}
+	
+	buf_loc = hexToInt(param[0]);
+	image = (char*)buf_loc;	
+
+	program_lmk(image);
 }

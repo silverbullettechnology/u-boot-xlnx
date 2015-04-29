@@ -217,7 +217,7 @@ char *xil_fgets(char *buf, int bsize){
 
 	while(1){
 		if(XUartPs_IsReceiveData(STDIN_BASEADDRESS)){
-			input = inbyte();
+			input = XUartPs_RecvByte(STDIN_BASEADDRESS);
 
 			if(input == '\r' || input == '\n'){
 				printf("%c",input);

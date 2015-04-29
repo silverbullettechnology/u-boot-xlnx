@@ -90,21 +90,22 @@
 
 #define SPI_EMIO_BANK		XGPIOPS_BANK2
 
-#define SPI0_SS0_PIN		74 //ASFE
-#define SPI0_SS1_PIN		76 //Atmel
-#define SPI0_MOSI_PIN		101
-#define SPI0_MISO_PIN		100
-#define SPI0_CLK_PIN		102
+#define SPI0_SS0_PIN		92 //ASFE
+#define SPI0_SS1_PIN		74 //Atmel
+#define SPI0_SS2_PIN		76 //LMK04906
+#define SPI0_MOSI_PIN		90
+#define SPI0_MISO_PIN		89
+#define SPI0_CLK_PIN		91
 #define SPI0_PORT_MASK		0xF0
-//#define SPI0_PORT_MASK		0x3F0000  //loopback mask
+#define SPI0_PORT_MASK		0x3F0000  //loopback mask
 #define SPI0_MISO_MASK		0x8
 #define SPI0_MISO_SHIFT		3
 
-#define SPI1_SS0_PIN		79 //ADI1
-#define SPI1_SS1_PIN		80 //ADI2
-#define SPI1_MOSI_PIN		104 //11 swapped
-#define SPI1_MISO_PIN		103 //10 swapped
-#define SPI1_CLK_PIN		105
+#define SPI1_SS0_PIN		77 //ADI1
+#define SPI1_SS1_PIN		78 //ADI2
+#define SPI1_MOSI_PIN		72 //11 swapped
+#define SPI1_MISO_PIN		71 //10 swapped
+#define SPI1_CLK_PIN		73
 #define SPI1_PORT_MASK		0x1E00
 #define SPI1_MISO_MASK		0x100
 #define SPI1_MISO_SHIFT		8
@@ -126,7 +127,7 @@
 //#define Slave_Select_Var	0x00
 #define SS_DELAY		1000000
 
-#define LED_DELAY		100000
+#define LED_DELAY		10000
 
 #define PRODUCT_ID                      0x037
 
@@ -143,3 +144,4 @@ int SpiPs_read_sensor(u16 SpiDeviceId);
 
 void soft_spi_transfer(XGpioPs *InstancePtr, char *SendBufPtr,char *RecvBufPtr, unsigned char ByteCount);
 void soft_spi_transfer_invert(XGpioPs *InstancePtr, char *SendBufPtr,char *RecvBufPtr, unsigned char ByteCount);
+void uwire_program_register(XGpioPs *InstancePtr, uint32_t regval);

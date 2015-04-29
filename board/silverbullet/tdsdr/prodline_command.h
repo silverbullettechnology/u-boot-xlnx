@@ -65,7 +65,7 @@ typedef struct
 
 /* Displays all available commands. */
 void prod_get_help(char (*param)[50], char param_no);
-void adapt_usb_test(char (*param)[50], char param_no);
+void adi_basic_test(char (*param)[50], char param_no);
 void rf_loopback_test(char (*param)[50], char param_no);
 void memory_test(char (*param)[50], char param_no);
 void adi_loopback_test(char (*param)[50], char param_no);
@@ -76,6 +76,12 @@ void led_test(char (*param)[50], char param_no);
 void rfinit(char (*param)[50], char param_no);
 void xadc_temperature(char (*param)[50], char param_no);
 void rftest(char (*param)[50], char param_no);
+
+/***************************************************************************/
+void amc_get_help(char (*param)[50], char param_no);
+void amc_spi_test(char (*param)[50], char param_no);
+void lmk_prog(char (*param)[50], char param_no);
+
 /************************** Variable Definitions ****************************/
 
 
