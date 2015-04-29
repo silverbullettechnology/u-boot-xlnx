@@ -32,10 +32,14 @@ obj-y	+= bist_bsp/ps7_cortexa9_0/libsrc/gpiops_v1_01_a/src/xgpiops.o \
 	   bist_bsp/ps7_cortexa9_0/libsrc/gpiops_v1_01_a/src/xgpiops_g.o \
 	   bist_bsp/ps7_cortexa9_0/libsrc/standalone_v3_10_a/src/xil_assert.o \
 	   bist_bsp/ps7_cortexa9_0/libsrc/standalone_v3_10_a/src/xil_io.o \
+	   bist_bsp/ps7_cortexa9_0/libsrc/standalone_v3_10_a/src/xil_cache.o \
+	   bist_bsp/ps7_cortexa9_0/libsrc/standalone_v3_10_a/src/xil_testmem.o \
 	   bist_bsp/ps7_cortexa9_0/libsrc/scugic_v1_04_a/src/xscugic.o \
-	   bist_bsp/ps7_cortexa9_0/libsrc/gpiops_v1_01_a/src/xgpiops_intr.o
+	   bist_bsp/ps7_cortexa9_0/libsrc/gpiops_v1_01_a/src/xgpiops_intr.o \
+	   bist_bsp/ps7_cortexa9_0/libsrc/xadcps_v1_01_a/src/xadcps.o \
+	   bist_bsp/ps7_cortexa9_0/libsrc/uartps_v1_04_a/src/xuartps_hw.o
 
-obj-y	+= board.o tdsdr_cmd.o routines.o low_level_pdi.o pdi_main.o stream.o xmega_pdi_nvm.o soft_spi_routines.o fixture_spi_test.o stream.o prodline.o prodline_command.o
+obj-y	+= board.o tdsdr_cmd.o routines.o low_level_pdi.o pdi_main.o stream.o xmega_pdi_nvm.o soft_spi_routines.o fixture_spi_test.o stream.o prodline.o prodline_command.o memorytest.o xadc_example.o
 
 
 # Please copy ps7_init_gpl.c/h from hw project to this directory
