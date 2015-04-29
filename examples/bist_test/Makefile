@@ -1,0 +1,92 @@
+#
+# (C) Copyright 2000-2006
+# Wolfgang Denk, DENX Software Engineering, wd@denx.de.
+#
+# SPDX-License-Identifier:	GPL-2.0+
+#
+
+ccflags-y=-I$(srctree)/$(src)/bist_bsp/ps7_cortexa9_0/include/
+ccflags-y+=-I$(srctree)/include/linux/
+
+extra-y        := hello_world
+extra-$(CONFIG_SMC91111)           += smc91111_eeprom
+extra-$(CONFIG_SMC911X)            += smc911x_eeprom
+extra-$(CONFIG_SPI_FLASH_ATMEL)    += atmel_df_pow2
+extra-$(CONFIG_MPC5xxx)            += interrupt
+extra-$(CONFIG_8xx)                += test_burst timer
+extra-$(CONFIG_MPC8260)            += mem_to_mem_idma2intr
+extra-$(CONFIG_PPC)                += sched
+
+#
+# Some versions of make do not handle trailing white spaces properly;
+# leading to build failures. The problem was found with GNU Make 3.80.
+# Using 'strip' as a workaround for the problem.
+#
+ELF := $(strip $(extra-y))
+
+extra-y += $(addsuffix .srec,$(extra-y)) $(addsuffix .bin,$(extra-y))
+clean-files  := *.srec *.bin
+
+COBJS	:= $(ELF:=.o)
+
+SOBJS	:= dac_core.o adc_core.o ad9361.o ad9361_api.o rxtest.o srio_mod.o spi.o util.o platform.o adi_main.o
+
+SOBJS	+= bist_bsp/ps7_cortexa9_0/libsrc/gpiops_v2_1/src/xgpiops.o \
+	   bist_bsp/ps7_cortexa9_0/libsrc/gpiops_v2_1/src/xgpiops_sinit.o \
+	   bist_bsp/ps7_cortexa9_0/libsrc/gpiops_v2_1/src/xgpiops_g.o \
+	   bist_bsp/ps7_cortexa9_0/libsrc/standalone_v4_1/src/xil_assert.o \
+	   bist_bsp/ps7_cortexa9_0/libsrc/standalone_v4_1/src/xil_io.o \
+	   bist_bsp/ps7_cortexa9_0/libsrc/standalone_v3_10_a/src/xil_cache.o \
+	   bist_bsp/ps7_cortexa9_0/libsrc/standalone_v4_1/src/sleep.o \
+	   bist_bsp/ps7_cortexa9_0/libsrc/standalone_v4_1/src/xtime_l.o \
+	   bist_bsp/ps7_cortexa9_0/libsrc/scugic_v2_1/src/xscugic.o \
+	   bist_bsp/ps7_cortexa9_0/libsrc/gpiops_v2_1/src/xgpiops_intr.o \
+	   bist_bsp/ps7_cortexa9_0/libsrc/xadcps_v2_0/src/xadcps.o \
+	   bist_bsp/ps7_cortexa9_0/libsrc/uartps_v2_1/src/xuartps_hw.o \
+	   bist_bsp/ps7_cortexa9_0/libsrc/axidma_v8_0/src/xaxidma.o \
+	   bist_bsp/ps7_cortexa9_0/libsrc/axidma_v8_0/src/xaxidma_bdring.o \
+	   bist_bsp/ps7_cortexa9_0/libsrc/emacps_v2_0/src/xemacps_bdring.o \
+	   bist_bsp/ps7_cortexa9_0/libsrc/llfifo_v4_0/src/xllfifo_sinit.o \
+	   bist_bsp/ps7_cortexa9_0/libsrc/llfifo_v4_0/src/xllfifo.o \
+	   bist_bsp/ps7_cortexa9_0/libsrc/llfifo_v4_0/src/xllfifo_g.o 
+
+UOBJS	:= 
+
+LIB	= $(obj)/libstubs.o
+
+LIBOBJS-y += stubs.o 
+
+.SECONDARY: $(call objectify,$(COBJS))
+targets += $(patsubst $(obj)/%,%,$(LIB)) $(COBJS) $(LIBOBJS-y)
+
+LIBOBJS	:= $(addprefix $(obj)/,$(LIBOBJS-y))
+ELF	:= $(addprefix $(obj)/,$(ELF))
+SOBJS	:= $(addprefix $(obj)/,$(SOBJS))
+
+# We don't want gcc reordering functions if possible.  This ensures that an
+# application's entry point will be the first function in the application's
+# source file.
+ccflags-y += $(call cc-option,-fno-toplevel-reorder)
+
+#########################################################################
+
+quiet_cmd_link_lib = LD      $@
+      cmd_link_lib = $(LD) $(ld_flags) -r -o $@ $(filter $(LIBOBJS), $^)
+
+$(LIB):	$(SOBJS) $(LIBOBJS) FORCE
+	$(call if_changed,link_lib)
+
+quiet_cmd_link_elf = LD      $@
+      cmd_link_elf = $(LD) $(LDFLAGS) -g -Ttext $(CONFIG_STANDALONE_LOAD_ADDR) \
+		     -o $@ -e $(SYM_PREFIX)$(@F) $< $(LIB) $(UOBJS) $(SOBJS) $(PLATFORM_LIBGCC)
+
+$(ELF): $(obj)/%: $(obj)/%.o $(LIB) FORCE
+	$(call if_changed,link_elf)
+
+$(obj)/%.srec: OBJCOPYFLAGS := -O srec
+$(obj)/%.srec: $(obj)/% FORCE
+	$(call if_changed,objcopy)
+
+$(obj)/%.bin: OBJCOPYFLAGS := -O binary
+$(obj)/%.bin: $(obj)/% FORCE
+	$(call if_changed,objcopy)
