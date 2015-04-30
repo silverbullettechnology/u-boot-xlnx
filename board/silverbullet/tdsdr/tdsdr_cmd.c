@@ -87,7 +87,7 @@ static int do_pdi(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
    {
    int rcode = 0;
 
-   printf("\n\nTD-SDRDC BIST\n\n");
+   //printf("\n\nTD-SDRDC BIST\n\n");
 
 	prod_main(argc, argv);
  
@@ -106,7 +106,7 @@ static int do_pdi(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
    {
    int rcode = 0;
 
-   printf("\n\nTD-SDRD AMC Management Function\n\n");
+   //printf("\n\nTD-SDRD AMC Management Function\n\n");
 
    amc_main(argc, argv);
  

@@ -93,7 +93,7 @@ while(1){
 
 
 
-void txrxtest_main(struct ad9361_rf_phy *phy)
+int txrxtest_main(struct ad9361_rf_phy *phy)
 {
 	u8 			rx_clk_delay;
 	u8 			tx_clk_delay;
@@ -152,7 +152,7 @@ void txrxtest_main(struct ad9361_rf_phy *phy)
 		//ShowRxData();
 		errors = CheckRxData_DMA(1);
 
-		printf ("Byte ERROR: %d / %d  \n\r", errors, WordsToRx/4 );
+		printf ("\r\nByte ERROR: %d / %d  \n\r", errors, WordsToRx/4 );
 
 //		main_xadcps();
 //		printf ("ADI temperature: Raw: %d Corrected: %d Centigrade \n\r",ad9361_spi_read (phy->spi, REG_TEMPERATURE), ad9361_get_temp(phy));
@@ -198,7 +198,7 @@ void txrxtest_main(struct ad9361_rf_phy *phy)
 		//console_get_command(received_cmd);
 
 //	}
-
+		return errors;
 }
 
 u8 reverse (u8 in)

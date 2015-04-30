@@ -6,7 +6,7 @@
 #include "parameters.h"
 
 void rxtest_main  (struct ad9361_rf_phy *phy);
-void txrxtest_main(struct ad9361_rf_phy *phy);
+int txrxtest_main(struct ad9361_rf_phy *phy);
 
 int  get_eye_rx(struct ad9361_rf_phy *phy, u8 *delay_vec);
 void set_eye_rx(struct ad9361_rf_phy *phy, u8 *delay_vec);

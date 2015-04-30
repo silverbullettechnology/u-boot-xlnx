@@ -186,17 +186,16 @@ static int GpioOutputExample(void)
 	 * Set the Mode as Normal Mode, set the direction for all signals to be
 	 * outputs and Enable the Output enable for the LED Pins.
 	 */
-	XGpioPs_SetDirection(&Gpio, OUTPUT_BANK, 0xFFFFFFFF);
-	XGpioPs_SetOutputEnable(&Gpio, OUTPUT_BANK, 0xFFFFFFFF);
 
-	XGpioPs_SetDirection(&Gpio, EMIO_BANK, 0xFFFFFFFF);
-	XGpioPs_SetOutputEnable(&Gpio, EMIO_BANK, 0xFFFFFFFF);
+  	XGpioPs_SetDirectionPin(&Gpio, LED0_pin, 1);
+  	XGpioPs_SetDirectionPin(&Gpio, LED1_pin, 1);
+	XGpioPs_SetDirectionPin(&Gpio, LED2_pin, 1);
+  	XGpioPs_SetDirectionPin(&Gpio, LED3_pin, 1);
 
-  	XGpioPs_SetDirectionPin(&Gpio, PDI_DATA_pin, 1);
-  	XGpioPs_SetDirectionPin(&Gpio, PDI_CLOCK_pin, 1);
-
-	XGpioPs_SetOutputEnablePin(&Gpio, PDI_DATA_pin, 1);
-	XGpioPs_SetOutputEnablePin(&Gpio, PDI_CLOCK_pin, 1);	
+	XGpioPs_SetOutputEnablePin(&Gpio, LED0_pin, 1);
+	XGpioPs_SetOutputEnablePin(&Gpio, LED1_pin, 1);	
+	XGpioPs_SetOutputEnablePin(&Gpio, LED2_pin, 1);
+	XGpioPs_SetOutputEnablePin(&Gpio, LED3_pin, 1);
 
 
 	for (LedBit = 10; LedBit < OUTPUT_BANK_WIDTH + 10; LedBit++) {
@@ -212,8 +211,8 @@ static int GpioOutputExample(void)
 			XGpioPs_WritePin(&Gpio, LED1_pin, 0x0);
 			XGpioPs_WritePin(&Gpio, LED2_pin, 0x0);
 			XGpioPs_WritePin(&Gpio, LED3_pin, 0x0);
-			XGpioPs_WritePin(&Gpio, PDI_CLOCK_pin, !PDI_CLOCK_Value);
-			XGpioPs_WritePin(&Gpio, PDI_DATA_pin, 0x0);
+			//XGpioPs_WritePin(&Gpio, PDI_CLOCK_pin, !PDI_CLOCK_Value);
+			//XGpioPs_WritePin(&Gpio, PDI_DATA_pin, 0x0);
 
 			/*for(i=60;i<=70;i++){
 				XGpioPs_WritePin(&Gpio, i, 0);
@@ -234,8 +233,8 @@ static int GpioOutputExample(void)
 			XGpioPs_WritePin(&Gpio, LED1_pin, 0x1);
 			XGpioPs_WritePin(&Gpio, LED2_pin, 0x1);
 			XGpioPs_WritePin(&Gpio, LED3_pin, 0x1);
-			XGpioPs_WritePin(&Gpio, PDI_CLOCK_pin, PDI_CLOCK_Value);
-			XGpioPs_WritePin(&Gpio, PDI_DATA_pin, 0x1);
+			//XGpioPs_WritePin(&Gpio, PDI_CLOCK_pin, PDI_CLOCK_Value);
+			//XGpioPs_WritePin(&Gpio, PDI_DATA_pin, 0x1);
 
 			/*for(i=60;i<=70;i++){
 				XGpioPs_WritePin(&Gpio, i, 1);

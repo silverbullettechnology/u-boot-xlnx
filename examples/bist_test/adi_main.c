@@ -347,16 +347,16 @@ extern XSpiPs			spi_instance;
 /***************************************************************************//**
  * @brief main
 *******************************************************************************/
-int adi_main(int argc, char * const argv[])
+int adi_main(int adi_to_test)
 {
 	int temp;
 	int adi_num;
+	int errors;
 	struct ad9361_rf_phy *adi_phy;
 
 	uint8_t  delay_vec[16];
 
-	/* Print the ABI version */
-
+	printf("Testing ADI %d\r\n", adi_to_test);
 
 	Xil_ICacheEnable();
 	Xil_DCacheEnable();
@@ -429,13 +429,13 @@ int adi_main(int argc, char * const argv[])
 	gpio_data(AD0_reset_pin, 1);
 	gpio_data(AD1_reset_pin, 1);
 
-	sleep(1);
+	udelay(10000);
 
 	gpio_data(LED0_pin, 0);
 	gpio_data(AD0_reset_pin, 0);
 	gpio_data(AD1_reset_pin, 0);
 
-	sleep(1);
+	udelay(10000);
 
 	gpio_data(LED0_pin, 1);
 	gpio_data(AD0_reset_pin, 1);
@@ -544,16 +544,16 @@ int adi_main(int argc, char * const argv[])
     //while(1);
 #endif
 
-/*
+
 
     // SRIO TESTS
-    printf("\n\r--- SRIO TESTS ---\n\r");
+/*    printf("\n\r--- SRIO TESTS ---\n\r");
 	temp = console_get_num(received_cmd);
 
     resp_test();
     msg_test();
     swrite_tozynq_test();
-    swrite_toadi_test();
+    //swrite_toadi_test();
    	printf("\n\r--- SRIO TEST COMPLETE ---\n\r");
 	temp = console_get_num(received_cmd);
 */
@@ -564,8 +564,8 @@ int adi_main(int argc, char * const argv[])
 	printf("9361_0 SAMP CLK RATE: %d \n\r", temp);
 
 	printf ("Select ADI device to use (0 or 1):\r\n");
-	temp = console_get_num(received_cmd);
-	//temp = 0;
+	//temp = console_get_num(received_cmd);
+	temp = adi_to_test;
 
 
 	if (temp==0)
@@ -594,27 +594,28 @@ int adi_main(int argc, char * const argv[])
 	ad9361_get_rx_sampling_freq (adi_phy, (uint32_t*)&temp);
 	printf("9361_%d SAMP CLK RATE: %d \n\r", adi_num, temp);
 
-	while (get_eye_rx (adi_phy, delay_vec) == 0);
-	set_eye_rx (adi_phy, delay_vec);
+//	while (get_eye_rx (adi_phy, delay_vec) == 0);
+//	set_eye_rx (adi_phy, delay_vec);
 	//set_eye_rx (adi_phy, 0x0f);
 
 
 	printf ("\n\r");
 	printf (" ***** Calculate 9361_%d TX eye\r\n", adi_num);
-	printf ("Enter to start test:");
+//	printf ("Enter to start test:");
 	//temp = console_get_num(received_cmd);
 
 
 //while(1){
-	if (get_eye_tx (adi_phy, delay_vec))
-		set_eye_tx (adi_phy, delay_vec);
-	else
-		ad9361_spi_write(adi_phy->spi, REG_TX_CLOCK_DATA_DELAY, 0x40);
+//	if (get_eye_tx (adi_phy, delay_vec))
+//		set_eye_tx (adi_phy, delay_vec);
+//	else
+		ad9361_spi_write(adi_phy->spi, REG_TX_CLOCK_DATA_DELAY, 0xA0);
+		ad9361_spi_write(adi_phy->spi, REG_RX_CLOCK_DATA_DELAY, 0x0A);
 //}
 
 	printf ("Enter to start test:");
 	//temp = console_get_num(received_cmd);
-	txrxtest_main(adi_phy);
+	errors = txrxtest_main(adi_phy);
 
 
 // VITA 49 TESTS
@@ -699,6 +700,27 @@ while(1);
 #endif
 
 #endif
+//end by resetting the adis.
+	gpio_data(LED0_pin, 1);
+	gpio_data(AD0_reset_pin, 1);
+	gpio_data(AD1_reset_pin, 1);
+
+	udelay(10000);
+
+	gpio_data(LED0_pin, 0);
+	gpio_data(AD0_reset_pin, 0);
+	gpio_data(AD1_reset_pin, 0);
+
+	udelay(10000);
+
+	gpio_data(LED0_pin, 1);
+	gpio_data(AD0_reset_pin, 1);
+	gpio_data(AD1_reset_pin, 1);
+
+	if (errors)
+		printf("\r\n***  ADI %d failure with %d errors!  ***\r\n",(adi_to_test+1), errors);
+	else
+		printf("\r\nADI %d internal loopback test PASS!\r\n", (adi_to_test+1));
 
 #ifdef XILINX_PLATFORM
 	Xil_DCacheDisable();
@@ -707,3 +729,284 @@ while(1);
 
 	return 0;
 }
+
+/***************************************************************************//**
+ * @brief ADI init functions
+*******************************************************************************/
+
+int adi_transceiver_init()
+{
+	int temp;
+	int adi_num;
+	struct ad9361_rf_phy *adi_phy;
+
+	uint8_t  delay_vec[16];
+
+
+	Xil_ICacheEnable();
+	Xil_DCacheEnable();
+
+
+	printf("************ TOGGLE LED *********************\n\r");
+
+
+	// NOTE: The user has to choose the GPIO numbers according to desired
+	// carrier board.
+	default_init_param.gpio_resetb = GPIO_RESET_PIN;
+	default_init_param.gpio_sync = -1;
+	default_init_param.gpio_cal_sw1 = -1;
+	default_init_param.gpio_cal_sw2 = -1;
+	gpio_init(GPIO_DEVICE_ID);
+//	gpio_direction(default_init_param.gpio_resetb, 1);
+
+
+	for (temp=54; temp<(54+54); temp++)
+	{
+		gpio_direction(temp, 0);
+	}
+
+	printf("************ TOGGLE LED *********************\n\r");
+
+	adi_hw_reset();
+
+
+	printf("************ SPI INIT *********************\n\r");
+//#ifdef SW_SPI
+	HAL_SPIInit();
+//#else
+	//adi_spi_init(SPI_DEVICE_ID, 1, 0);
+//#endif
+
+
+	printf("************ SPI SS TEST *********************\n\r");
+	sleep(1);
+
+	set_spi_ss(0); printf ("9361_chip_0 initial  %x \n\r", ad9361_spi_read(ad9361_phy_0->spi,REG_CTRL_OUTPUT_ENABLE));
+	set_spi_ss(1); printf ("9361_chip_1 initial  %x \n\r", ad9361_spi_read(ad9361_phy_1->spi,REG_CTRL_OUTPUT_ENABLE));
+	set_spi_ss(0); ad9361_spi_write(ad9361_phy_0->spi,REG_CTRL_OUTPUT_ENABLE, 0xaa);
+	set_spi_ss(1); ad9361_spi_write(ad9361_phy_1->spi,REG_CTRL_OUTPUT_ENABLE, 0x55);
+	set_spi_ss(0); printf ("9361_chip_0 after  %x \n\r", ad9361_spi_read(ad9361_phy_0->spi,REG_CTRL_OUTPUT_ENABLE));
+	set_spi_ss(1); printf ("9361_chip_1 after  %x \n\r", ad9361_spi_read(ad9361_phy_1->spi,REG_CTRL_OUTPUT_ENABLE));
+
+
+
+//	printf("************ DAC INIT *********************\n\r");
+//	dac_init(DATA_SEL_DDS);
+
+
+	printf("************ 9361 INIT_0 *********************\n\r");
+
+	set_spi_ss(0);
+	ad9361_phy_0 = ad9361_init(&default_init_param, AD0_reset_pin, 0);
+	ad9361_set_tx_fir_config(ad9361_phy_0, tx_fir_config);
+	ad9361_set_rx_fir_config(ad9361_phy_0, rx_fir_config);
+	ad9361_set_en_state_machine_mode(ad9361_phy_0,ENSM_STATE_ALERT);
+	ad9361_set_en_state_machine_mode(ad9361_phy_0,ENSM_STATE_FDD);
+
+
+	printf("************ 9361 INIT_1 *********************\n\r");
+	set_spi_ss(1);
+	ad9361_phy_1 = ad9361_init(&default_init_param, AD1_reset_pin, 1);
+	ad9361_set_tx_fir_config(ad9361_phy_1, tx_fir_config);
+	ad9361_set_rx_fir_config(ad9361_phy_1, rx_fir_config);
+	ad9361_set_en_state_machine_mode(ad9361_phy_1,ENSM_STATE_ALERT);
+	ad9361_set_en_state_machine_mode(ad9361_phy_1,ENSM_STATE_FDD);
+
+	printf("************ ADC INIT *********************\n\r");
+	adc_init(ad9361_phy_0);
+	adc_init(ad9361_phy_1);
+
+	return 0;
+}
+
+/***************************************************************************//**
+ * @brief SRIO Tests
+*******************************************************************************/
+int srio_test()
+{
+	int temp;
+	int adi_num;
+	struct ad9361_rf_phy *adi_phy;
+
+	uint8_t  delay_vec[16];
+
+	printf("Testing SRIO\r\n");
+
+	Xil_ICacheEnable();
+	Xil_DCacheEnable();
+
+
+
+	// make sure that PL clocks are set correctly
+//	printf ("SLCR_LOCKSTA (%08x): %08x\r\n", 0xf800000C, Xil_In32(0xf800000C));
+	Xil_Out32(0xf8000008, 0xdf0d); // unlock System Level Control Registers
+//	printf ("SLCR_LOCKSTA (%08x): %08x\r\n", 0xf800000C, Xil_In32(0xf800000C));
+	Xil_Out32(0xf8000170, 0x00100A00);
+	Xil_Out32(0xf8000180, 0x00100500);
+	Xil_Out32(0xf8000190, 0x00100400);
+	Xil_Out32(0xf8000004, 0x767B); // lock System Level Control Registers
+//	printf ("SLCR_LOCKSTA (%08x): %08x\r\n", 0xf800000C, Xil_In32(0xf800000C));
+
+	printf (" ***** Checking PL Clocks\r\n");
+	printf ("IO_PLL_CTRL (%08x): %08x\r\n", 0xf8000108, Xil_In32(0xf8000108));
+	printf ("PLL_STATUS (%08x):  %08x\r\n",  0xf800010c, Xil_In32(0xf800010c));
+	printf ("IO_PLL_CFG (%08x):  %08x\r\n",  0xf8000118, Xil_In32(0xf8000118));
+	printf ("FPGA0_CLK_CTRL (%08x): %08x\r\n", 0xf8000170, Xil_In32(0xf8000170));
+	printf ("FPGA1_CLK_CTRL (%08x): %08x\r\n", 0xf8000180, Xil_In32(0xf8000180));
+	printf ("FPGA2_CLK_CTRL (%08x): %08x\r\n", 0xf8000190, Xil_In32(0xf8000190));
+
+
+
+	printf ("Enter to continue:");
+	//temp = console_get_num(received_cmd);
+
+	printf("************ TOGGLE LED *********************\n\r");
+
+
+	// NOTE: The user has to choose the GPIO numbers according to desired
+	// carrier board.
+	default_init_param.gpio_resetb = GPIO_RESET_PIN;
+	default_init_param.gpio_sync = -1;
+	default_init_param.gpio_cal_sw1 = -1;
+	default_init_param.gpio_cal_sw2 = -1;
+	gpio_init(GPIO_DEVICE_ID);
+//	gpio_direction(default_init_param.gpio_resetb, 1);
+
+
+	for (temp=54; temp<(54+54); temp++)
+	{
+		gpio_direction(temp, 0);
+	}
+
+	printf("************ TOGGLE LED *********************\n\r");
+
+	// SDRDC pins
+	gpio_direction(LED0_pin, 1);   //
+	gpio_direction(LED1_pin, 1);   //
+	gpio_direction(LED2_pin, 1);   //
+	gpio_direction(LED3_pin, 1);   //
+	gpio_direction(AD0_reset_pin, 1);   //
+	gpio_direction(AD1_reset_pin, 1);   //
+	gpio_direction(SRIO_PCIE_SEL_pin, 1);   //
+
+	gpio_direction(AD0_enable_pin, 1);   //
+	gpio_direction(AD0_txnrx_pin, 1);   //
+	gpio_direction(AD1_enable_pin, 1);   //
+	gpio_direction(AD1_txnrx_pin, 1);   //
+
+	gpio_data(AD0_enable_pin, 1);   //
+	gpio_data(AD0_txnrx_pin, 1);   //
+	gpio_data(AD1_enable_pin, 1);   //
+	gpio_data(AD1_txnrx_pin, 1);   //
+
+	gpio_data(LED0_pin, 1);
+	gpio_data(AD0_reset_pin, 1);
+	gpio_data(AD1_reset_pin, 1);
+
+	udelay(10000);
+
+	gpio_data(LED0_pin, 0);
+	gpio_data(AD0_reset_pin, 0);
+	gpio_data(AD1_reset_pin, 0);
+
+	udelay(10000);
+
+	gpio_data(LED0_pin, 1);
+	gpio_data(AD0_reset_pin, 1);
+	gpio_data(AD1_reset_pin, 1);
+
+
+	printf("************ SPI INIT *********************\n\r");
+//#ifdef SW_SPI
+	HAL_SPIInit();
+//#else
+	//adi_spi_init(SPI_DEVICE_ID, 1, 0);
+//#endif
+
+
+
+//#ifdef NO_VITA_INIT
+	// INITIALIZE VITA MODULES
+	reset_vita_modules();
+	pass_vita_modules();
+	set_vita_clk (0xdead2020);
+//#endif
+
+
+	// INITIALIZE SRIO MODULES
+	init_srio_fifo();
+	reset_srio();
+	gpio_data (SRIO_PCIE_SEL_pin, 1);   // SRIO / PCIE SELECT
+
+	set_srio_rxlpmen (0);
+	set_srio_loopback (0);  //
+	set_srio_diffctl (0xf);
+	set_srio_txprecursor (0);
+	set_srio_txpostcursor (0);
+
+	sleep(2);
+	print_srio_stat();
+
+
+
+#if defined XILINX_PLATFORM || defined LINUX_PLATFORM
+#ifdef DAC_DMA
+	//dac_init( ad9361_phy_0, DATA_SEL_DMA);
+	//dac_init( ad9361_phy_1, DATA_SEL_DMA);
+#else
+//	dac_init(DATA_SEL_DDS, ad9361_phy_0);
+//	dac_init(DATA_SEL_DDS, ad9361_phy_1);
+#endif
+
+#endif
+
+#if defined XILINX_PLATFORM && defined CAPTURE_SCRIPT
+    // NOTE: To prevent unwanted data loss, it's recommended to invalidate
+    // cache after each adc_capture() call, keeping in mind that the
+    // size of the capture and the start address must be alinged to the size
+    // of the cache line.
+    //adc_capture(16384, ADC_DDR_BASEADDR);
+    //Xil_DCacheInvalidateRange(ADC_DDR_BASEADDR, 16384);
+    //while(1);
+#endif
+
+
+
+    // SRIO TESTS
+    printf("\n\r--- SRIO TESTS ---\n\r");
+	//temp = console_get_num(received_cmd);
+
+    resp_test();
+    msg_test();
+    swrite_tozynq_test();
+    //swrite_toadi_test();
+   	printf("\n\r--- SRIO TEST COMPLETE ---\n\r");
+	//temp = console_get_num(received_cmd);
+
+
+
+//end by resetting the adis.
+	gpio_data(LED0_pin, 1);
+	gpio_data(AD0_reset_pin, 1);
+	gpio_data(AD1_reset_pin, 1);
+
+	udelay(10000);
+
+	gpio_data(LED0_pin, 0);
+	gpio_data(AD0_reset_pin, 0);
+	gpio_data(AD1_reset_pin, 0);
+
+	udelay(10000);
+
+	gpio_data(LED0_pin, 1);
+	gpio_data(AD0_reset_pin, 1);
+	gpio_data(AD1_reset_pin, 1);
+
+#ifdef XILINX_PLATFORM
+	Xil_DCacheDisable();
+	Xil_ICacheDisable();
+#endif
+
+	return 0;
+}
+

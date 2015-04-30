@@ -151,7 +151,7 @@
 		"sf write ${ramdisk_load_address} ${ramdisk_qspi_offset} ${filesize}\0"    \
 	"loadbist="                                                         \
 		"mmc dev ${sdio_dev} && "                                                 \
-		"fatload mmc ${sdio_dev} 0x100000 bist_app.bin\0"                         \
+		"fatload mmc ${sdio_dev} 0xc100000 tdsdr_bist_app.bin\0"                         \
 	"bist="                                                             \
 		"run loadbist && "                                              \
 		"go 0x100000 \0"                                                \

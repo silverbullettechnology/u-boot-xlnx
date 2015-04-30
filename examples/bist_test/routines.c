@@ -13,7 +13,7 @@
 #include "routines.h"
 
 #include "xparameters.h"
-#include "xgpiops.h"
+//#include "xgpiops.h"
 #include "xstatus.h"
 #include "xuartps_hw.h"
 
@@ -23,7 +23,7 @@
 
 #define SCAN_BUF_SIZE		100
 
-extern XGpioPs Gpio; //gpio instance
+//extern XGpioPs Gpio; //gpio instance
 
 
 int hexToInt(char s[]) {
@@ -152,62 +152,6 @@ u16 read_ascii_hex_u16(){
 	return ret;
 }
 
-void adi_hw_reset(){
-
-    //need to enable ADI reset pins
-
-	XGpioPs_Config *ConfigPtr;
-	volatile int Delay;
-	u32 Status = XST_SUCCESS;
-
-	/*
-	 * Initialize the GPIO driver.
-	 */
-	ConfigPtr = XGpioPs_LookupConfig(GPIO_DEVICE_ID);
-	XGpioPs_CfgInitialize(&Gpio, ConfigPtr,
-					ConfigPtr->BaseAddr);
-	if (Status != XST_SUCCESS) {
-		return XST_FAILURE;
-	}
-
-	XGpioPs_SetDirection(&Gpio, EMIO_BANK, 0xFFFF);
-	XGpioPs_SetOutputEnable(&Gpio, EMIO_BANK, 0xFFFF);
-
-	//ADI Pins
-	XGpioPs_WritePin(&Gpio, 58, 0x1);
-	XGpioPs_WritePin(&Gpio, 59, 0x1);
-	//XGpioPs_WritePin(&Gpio, 70, 0x1);
-
-	//LEDs
-	XGpioPs_WritePin(&Gpio, 54, 0x1);
-	XGpioPs_WritePin(&Gpio, 55, 0x1);
-	XGpioPs_WritePin(&Gpio, 56, 0x1);
-	XGpioPs_WritePin(&Gpio, 57, 0x1);
-
-	for (Delay = 0; Delay < LED_DELAY; Delay++);
-
-	XGpioPs_WritePin(&Gpio, 58, 0x0);
-	XGpioPs_WritePin(&Gpio, 59, 0x0);
-	//XGpioPs_WritePin(&Gpio, 70, 0x0);
-
-	XGpioPs_WritePin(&Gpio, 54, 0x0);
-	XGpioPs_WritePin(&Gpio, 55, 0x0);
-	XGpioPs_WritePin(&Gpio, 56, 0x0);
-	XGpioPs_WritePin(&Gpio, 57, 0x0);
-
-
-	for (Delay = 0; Delay < LED_DELAY; Delay++);
-
-	XGpioPs_WritePin(&Gpio, 58, 0x1);
-	XGpioPs_WritePin(&Gpio, 59, 0x1);
-	//XGpioPs_WritePin(&Gpio, 70, 0x1);
-
-	XGpioPs_WritePin(&Gpio, 54, 0x1);
-	XGpioPs_WritePin(&Gpio, 55, 0x1);
-	XGpioPs_WritePin(&Gpio, 56, 0x1);
-	XGpioPs_WritePin(&Gpio, 57, 0x1);
-
-}
 //reads the serial port input until enter is pressed.  Handles backspace?
 char *xil_fgets(char *buf, int bsize){
 	int input_counter = 0;
@@ -254,9 +198,9 @@ char *xil_fgets(char *buf, int bsize){
 }
 
 
-float standard_deviation(float data[], int n)
+int standard_deviation(int data[], int n)
 {
-    float mean=0.0, sum_deviation=0.0;
+    int mean=0, sum_deviation=0;
     int i;
     for(i=0; i<n;++i)
     {

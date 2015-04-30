@@ -8,9 +8,9 @@
 //void HAL_SPIMenuTitle (void);
 //void HAL_SPIMenuOptions (void);
 //void HAL_SPIChoose (void);
-//void HAL_SPIWriteByte (u16 addr, u16 data);
-//void HAL_SPIReadByte (u16 addr, u16 *readdata);
-//void HAL_SPIExchangeByte(u8 *data);
+void HAL_SPIWriteByte (u16 addr, u16 data);
+void HAL_SPIReadByte (u16 addr, u16 *readdata);
+void HAL_SPIExchangeByte(u8 *data);
 
 
 extern int32_t spi_ss;

@@ -83,7 +83,8 @@
 
 #define dev_err(dev, format, ...)		printf(format, ## __VA_ARGS__);printf("\n")
 #define dev_warn(dev, format, ...)		printf(format, ## __VA_ARGS__);printf("\n")
-#define dev_dbg(dev, format, ...)		printf(format, ## __VA_ARGS__);printf("\n")
+//#define dev_dbg(dev, format, ...)		printf(format, ## __VA_ARGS__);printf("\n")
+#define dev_dbg(dev, format, ...)		printf("")
 #define dev_info(dev, format, ...)		printf(format, ## __VA_ARGS__);printf("\n")
 #define printk(format, ...)			printf(format, ## __VA_ARGS__)
 #define WARN(format, ...)			printf(format, ## __VA_ARGS__)

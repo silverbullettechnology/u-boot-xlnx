@@ -61,18 +61,19 @@ prod_command prodline_cmd_list[] = {
 	{"adi_loopback", "Runs the internal BIST loopback test.", "", adi_loopback_test},
 	{"adi_temperature", "Outputs the temperature readings from the ADI chips.", "", adi_temperature},
 	{"adi_init", "Re-initializes the AD9361 devices.", "", adi_init},
-	{"asfe_rf_loopback", "Runs the built-in RF loopback test.", "", rf_loopback_test},
+	{"panel_rf_loopback", "Runs the built-in RF loopback test.", "", rf_loopback_test},
 	{"memtest", "Runs the BIST memory test.", "", memory_test},
 	{"tpm_test", "Runs the BIST TPM module test.", "", tpm_test},
 	{"led_test", "Runs the BIST LED test.", "", led_test},
 	{"xadc_temperature", "Outputs the temperature readings from the Zynq onboard XADC.", "", xadc_temperature},
-	{"distortion_test", "Runs a distortion loopback test.", "", rftest},
+	//{"distortion_test", "Runs a distortion loopback test.", "", rftest},
+	{"srio_test", "Runs a basic test of the SRIO modules", "", bist_srio_test},
 };
 const char prod_cmd_no = (sizeof(prodline_cmd_list) / sizeof(prod_command));
 
 prod_command amc_cmd_list[] = {
 	{"help", "Displays all available commands.", "", amc_get_help},
-	{"spi_test", "Runs the spi test interface for the Atmel MCU", "", amc_spi_test},
+	{"spi_test", "Opens the spi interface for the Atmel MCU", "", amc_spi_test},
 	{"lmk_prog", "Programs the clock module from the registers located at an address in memory", "", lmk_prog},
 };
 const char amc_cmd_no = (sizeof(amc_cmd_list) / sizeof(prod_command));
@@ -113,20 +114,33 @@ void rf_loopback_test(char (*param)[50], char param_no){
 	int min;
 	int arg1, arg2, arg3;
 	double freq;
+	char * argv[5];
 	printf("Running rf Loopback test.\r\n");
 	for (i = 0; i < param_no; i++) {
         printf("Argument %i is: %s\n", i, param[i]);
     }
 
-	if(param_no == 4){
+	if(param_no == 2){
 		sscanf(param[0],"%d",&arg1);
 		sscanf(param[1],"%d",&arg2);
-		sscanf(param[2],"%d",&arg3);
-		sscanf(param[3],"%lf",&freq);
+		//sscanf(param[2],"%d",&arg3);
+		//sscanf(param[3],"%lf",&freq);
+
+		if (run_command("run loadbist", 0) < 1){
+
+			//then execute
+			//do_go_exec ((void *)addr, argc - 1, argv + 1);
+			argv[0] = "prodline_RF_loopback_test";
+			argv[1] = param[0];
+			argv[2] = param[1];
+			argv[3] = "0";
+			argv[4] = "2400";
+			do_go_exec ((void *)0xc100168, 4, argv);
+		}
 
 		//prodline_RF_loopback_test(RSSI_UPPER,RSSI_LOWER, arg1, arg2, arg3, freq);
 	}else{
-		printf("\r\nInvalid number of arguments; expected 4. Example usage to test all channels:\r\n'asfe_rf_loopback 2 2 2 800'\r\nFirst argument is the desired AD9361 to test, 0:ADI1, 1:ADI2, 2:both.\r\nSecond argument is the desired TX/RX paths AD9361 to test, 0:TX1/RX1, 1:TX2/RX2, 2:both.\r\nThird argument is the desired sub-path to test 0:TXA/RXA, 1:TXC/RXC, 2:both\r\nFourth Argument is the test frequency in MHz\r\n");}
+		printf("\r\nInvalid number of arguments; expected 4. Example usage to test all channels:\r\n'asfe_rf_loopback 2 2 2 800'\r\nFirst argument is the desired AD9361 to test, 0:ADI1, 1:ADI2, 2:both.\r\nSecond argument is the desired TX/RX paths AD9361 to test, 0:TX1/RX1, 1:TX2/RX2, 2:both.\r\n");}
 }
 
 void memory_test(char (*param)[50], char param_no){
@@ -135,39 +149,90 @@ void memory_test(char (*param)[50], char param_no){
 	for (i = 0; i < param_no; i++) {
         printf("Argument %i is: %s\n", i, param[i]);
     }
-
+	Xil_ICacheEnable();
+	Xil_DCacheEnable();
 	hello_mem();
-
 }
 
 void adi_loopback_test(char (*param)[50], char param_no){
 	int i;
+	
+	char * argv[2];
 	printf("Running onboard ADI loopback Test.\r\n");
 	for (i = 0; i < param_no; i++) {
         printf("Argument %i is: %s\n", i, param[i]);
     }
+	
+	if(param_no == 1){
+		//ADI_Loopback_Test();
+		//Xil_ICacheEnable();
+		//Xil_DCacheEnable();
+		//first load the image from some location storend in env, make sure to check result
+		if (run_command("run loadbist", 0) < 1){
 
-	//ADI_Loopback_Test();
+			//then execute
+			//do_go_exec ((void *)addr, argc - 1, argv + 1);
+			argv[0] = "int_loopback";
+			argv[1] = param[0];
+			do_go_exec ((void *)0xc100168, 1, argv);
+		}
+	} else {
+		printf("\r\nInvalid number of arguments; expected 1. Example usage to test adi 1:\r\n'bist adi_loopback 1\r\n");
+	}
+
 
 }
 
 void adi_temperature(char (*param)[50], char param_no){
 	int i;
+	int ret;
+	char * argv[2];
 	printf("Reading AD9361 temperature.\r\n");
 	for (i = 0; i < param_no; i++) {
         printf("Argument %i is: %s\n", i, param[i]);
     }
-
-	//ADI_Get_Temperature();
+	//Xil_ICacheEnable();
+	//Xil_DCacheEnable();	
+	ret = run_command("run loadbist", 0);
+	
+	if (ret < 1){	
+		argv[0] = "adi_temperature";
+		argv[1] = "";
+		do_go_exec ((void *)0xc100168, 1, argv);
+	}
 }
 
 void adi_init(char (*param)[50], char param_no){
 	int i;
+	char * argv[2];
 	printf("Initializaing AD9361.\r\n");
 	for (i = 0; i < param_no; i++) {
         printf("Argument %i is: %s\n", i, param[i]);
     }
-	//ADI_initialization();
+	//Xil_ICacheEnable();
+	//Xil_DCacheEnable();	
+	if (run_command("run loadbist", 0) < 1){	
+		argv[0] = "adi_init";
+		argv[1] = "";
+		do_go_exec ((void *)0xc100168, 1, argv);
+	}
+
+}
+
+void bist_srio_test(char (*param)[50], char param_no){
+	int i;
+	char * argv[2];
+	printf("Initializaing AD9361.\r\n");
+	for (i = 0; i < param_no; i++) {
+        printf("Argument %i is: %s\n", i, param[i]);
+    }
+	//Xil_ICacheEnable();
+	//Xil_DCacheEnable();	
+	if (run_command("run loadbist", 0) < 1){	
+		argv[0] = "srio_test";
+		argv[1] = "";
+		do_go_exec ((void *)0xc100168, 1, argv);
+	}
 
 }
 
@@ -187,8 +252,10 @@ void led_test(char (*param)[50], char param_no){
 	for (i = 0; i < param_no; i++) {
         printf("Argument %i is: %s\n", i, param[i]);
     }
-	//hello_led();
-
+	Xil_ICacheEnable();
+	Xil_DCacheEnable();	
+	hello_led();
+	printf("Warning! Ethernet probably doesn't work now!\r\n");
 }
 
 void xadc_temperature(char (*param)[50], char param_no){
@@ -259,7 +326,8 @@ void amc_spi_test(char (*param)[50], char param_no){
 	for (i = 0; i < param_no; i++) {
         printf("Argument %i is: %s\n", i, param[i]);
     	}
-
+	Xil_ICacheEnable();
+	Xil_DCacheEnable();
 	atmel_write_read();
 }
 
@@ -277,6 +345,7 @@ void lmk_prog(char (*param)[50], char param_no){
 	
 	buf_loc = hexToInt(param[0]);
 	image = (char*)buf_loc;	
-
+	Xil_ICacheEnable();
+	Xil_DCacheEnable();
 	program_lmk(image);
 }
