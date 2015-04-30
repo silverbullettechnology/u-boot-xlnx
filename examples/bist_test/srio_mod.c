@@ -199,7 +199,7 @@ int swrite_tozynq_test()
 	Status = RxReceive(&Fifo_Target, TReqBuffer);
 	CheckData( swrite_pkt4, TReqBuffer, 7);
 
-	getchar();
+	//getchar();
 
 	return 1;
 }
@@ -373,7 +373,7 @@ int msg_test()
 //	temp    = AXILITE_TEST_mReadSlaveReg0 (XPAR_SYS_REG_0_BASEADDR, SRIO_TREQ_SRCDEST_REG);
 //  printf("\n RECEIVED TUSER: %x\n\r", temp);
 
-	getchar();
+	//getchar();
 }
 
 
@@ -438,7 +438,7 @@ int resp_test()
 	}
 	CheckData(resp_pkt3, TReqBuffer, 3);
 
-	getchar();
+	//getchar();
 }
 
 

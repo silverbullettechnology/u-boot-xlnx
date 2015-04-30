@@ -47,6 +47,9 @@
 /******************************************************************************/
 /********************** Macros and Constants Definitions **********************/
 /******************************************************************************/
+#define bist__DEBUG 0
+
+
 #define REG_SPI_CONF				 0x000 /* SPI Configuration */
 #define REG_MULTICHIP_SYNC_AND_TX_MON_CTRL	 0x001 /* Multi-Chip Sync and Tx Mon Control */
 #define REG_TX_ENABLE_FILTER_CTRL		 0x002 /* Tx Enable & Filter Control */

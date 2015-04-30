@@ -1,6 +1,6 @@
 /***************************************************************************//**
- *   @file   common.h
- *   @brief  Header file of Common Driver.
+ *   @file   console.h
+ *   @brief  Header file of Console Driver.
  *   @author DBogdan (dragos.bogdan@analog.com)
 ********************************************************************************
  * Copyright 2013(c) Analog Devices, Inc.
@@ -36,56 +36,34 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *******************************************************************************/
-#ifndef COMMON_H_
-#define COMMON_H_
+#ifndef __CONSOLE_H__
+#define __CONSOLE_H__
 
 /******************************************************************************/
-/***************************** Include Files **********************************/
+/******************** Macros and Constants Definitions ************************/
 /******************************************************************************/
-#include <stdlib.h>
-
-/******************************************************************************/
-/********************** Macros and Constants Definitions **********************/
-/******************************************************************************/
-#define false	0
-#define true	1
-
-#define EIO			5	/* I/O error */
-#define EAGAIN		11	/* Try again */
-#define ENOMEM		12	/* Out of memory */
-#define EFAULT		14	/* Bad address */
-#define ENODEV		19	/* No such device */
-#define EINVAL		22	/* Invalid argument */
-#define ETIMEDOUT	110	/* Connection timed out */
-#define _DEBUG 0
+#define UNKNOWN_CMD	-1
+#define DO_CMD	   	0
+#define READ_CMD	1
+#define WRITE_CMD	2
 
 /******************************************************************************/
-/*************************** Types Declarations *******************************/
+/************************ Functions Declarations ******************************/
 /******************************************************************************/
-/*#ifndef WIN32
-typedef unsigned char bool;
-#endif*/
+/* Initializes the serial console. */
+char console_init(unsigned long baud_rate);
 
-struct clk {
-	const char	*name;
-	uint32_t	rate;
-};
+/* Prints formatted data to console. */
+void console_print(char* str, ...);
 
-struct clk_hw {
-		struct clk *clk;
-};
+/* Reads one command from console. */
+void console_get_command(char* command);
+int console_get_num (char* command);
 
-struct clk_init_data {
-	const char				*name;
-	const struct clk_ops	*ops;
-	const char				**parent_names;
-	uint8_t					num_parents;
-	uint32_t				flags;
-};
+/* Compares two commands and returns the type of the command. */
+int console_check_commands(char*	   received_cmd,
+						   const char* expected_cmd,
+						   double*	   param,
+						   char*	   param_no);
 
-struct clk_onecell_data {
-	struct clk		**clks;
-	uint32_t		clk_num;
-};
-
-#endif
+#endif /*__CONSOLE_H__*/

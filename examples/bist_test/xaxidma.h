@@ -470,7 +470,7 @@ extern "C" {
 #ifdef __MICROBLAZE__
 #include "xenv.h"
 #else
-#include <string.h>
+#include "string.h"
 #include "xil_cache.h"
 #endif
 

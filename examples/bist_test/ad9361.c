@@ -56,7 +56,10 @@
 /******************************************************************************/
 /********************** Macros and Constants Definitions **********************/
 /******************************************************************************/
-#define DEBUG
+#define DEBUG 0
+#define _DEBUG 0
+#undef DEBUG
+#undef _DEBUG
 
 static const char *ad9361_ensm_states[] = {
 	"sleep", "", "", "", "", "alert", "tx", "tx flush",
@@ -91,7 +94,7 @@ static int32_t ad9361_spi_readm(struct spi_device *spi, uint32_t reg,
 		dev_err(&spi->dev, "Read Error %d", ret);
 		return ret;
 	}
-#ifdef _DEBUG
+#if 0
 	{
 		int32_t i;
 		for (i = 0; i < num; i++)
@@ -183,7 +186,7 @@ int32_t ad9361_spi_write(struct spi_device *spi,
 		return ret;
 	}
 
-#ifdef _DEBUG
+#if 0
 	dev_dbg(&spi->dev, "%s: reg 0x%X val 0x%X", __func__, reg, buf[2]);
 #endif
 
@@ -259,7 +262,7 @@ static int32_t ad9361_spi_writem(struct spi_device *spi,
 		return ret;
 	}
 
-#ifdef _DEBUG
+#if 0
 	{
 		int32_t i;
 		for (i = 0; i < num; i++)

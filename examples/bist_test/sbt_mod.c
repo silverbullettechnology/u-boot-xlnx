@@ -66,7 +66,7 @@ void reset_dsrc (u32 base_addr)
 		 printf ("reading reg[%x] -> %x \n\r",read_loop_index, AXILITE_TEST_mReadSlaveReg0 (base_addr, read_loop_index*4));
 	 }
 
-	 print("* setting bytes to send\n\r");
+	 printf("* setting bytes to send\n\r");
 	 // SET SRC MODULE PARAMETERS
 	 AXILITE_TEST_mWriteSlaveReg2 (base_addr, 0, MAX_PKT_LEN);
 	 printf("writing reg[%x] <- %x (bytes to send) \n\r",2, MAX_PKT_LEN);
@@ -74,7 +74,7 @@ void reset_dsrc (u32 base_addr)
 	//          printf ("reading reg[%x] -> %x \n\r",read_loop_index, AXILITE_TEST_mReadSlaveReg0 (base_addr, read_loop_index*4));
 	 }
 
-	 print("* setting pkts to send\n\r");
+	 printf("* setting pkts to send\n\r");
 	 // SET SRC MODULE PARAMETERS
 	 AXILITE_TEST_mWriteSlaveReg5 (base_addr, 0, NUM_PKT);
 	 printf("writing reg[%x] <- %x (pkts to send) \n\r",5, NUM_PKT);
@@ -82,7 +82,7 @@ void reset_dsrc (u32 base_addr)
 	//          printf ("reading reg[%x] -> %x \n\r",read_loop_index, AXILITE_TEST_mReadSlaveReg0 (base_addr, read_loop_index*4));
 	 }
 
-	 print("* setting test pattern\n\r");
+	 printf("* setting test pattern\n\r");
 	 // SET SRC MODULE PARAMETERS
 	 AXILITE_TEST_mWriteSlaveReg4 (base_addr, 0, 0x00);
 	 printf("writing reg[%x] <- %x (setting test pattern) \n\r",4, 0x00);
@@ -90,7 +90,7 @@ void reset_dsrc (u32 base_addr)
 	//          printf ("reading reg[%x] -> %x \n\r",read_loop_index, AXILITE_TEST_mReadSlaveReg0 (base_addr, read_loop_index*4));
 	 }
 
-	print("* enable source module\n\r");
+	printf("* enable source module\n\r");
 	// ENABLE SRC MODULE
 	AXILITE_TEST_mWriteSlaveReg0 (base_addr, 0, 0x01);
 	printf("writing reg[%x] <- %x (enable source module) \n\r",0,0x01);
@@ -599,10 +599,10 @@ void vita_endtoend_test (u32 adi_num, u32 srio_addr, u32 stream_id, u32 pkt_size
 	printf("set_adi_adc_snk (ADI_TO_SRIO); \n\r");
 	set_adi_adc_snk (ADI_TO_SRIO);
 
-	printf("set_swrite_bypass (0); \n\r"); getchar();
+	printf("set_swrite_bypass (0); \n\r"); inbyte();
 	set_swrite_bypass (0);   //send swrite packets to adi (not zynq fifo)
 
-	printf("enable_swrite_unpack(); \n\r"); getchar();
+	printf("enable_swrite_unpack(); \n\r"); inbyte();
 	reset_swrite_mod();
 	enable_swrite_unpack();
 	enable_swrite_pack();
@@ -688,7 +688,7 @@ void vita_endtoend_test (u32 adi_num, u32 srio_addr, u32 stream_id, u32 pkt_size
 
 	printf("wait \n\r");
 	while(1) {
-		getchar();
+		inbyte();
 		get_vita_clk();
 	}
 }

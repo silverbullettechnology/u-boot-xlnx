@@ -40,7 +40,7 @@
 /******************************************************************************/
 /********************** Macros and Constants Definitions **********************/
 /******************************************************************************/
-//#define CONSOLE_COMMANDS
+#define CONSOLE_COMMANDS
 #define XILINX_PLATFORM
 #define SW_SPI
 #define NO_9361
@@ -55,18 +55,18 @@
 #include "srio_mod.h"
 #include "spi.h"
 
-#ifdef CONSOLE_COMMANDS
-//#include "command.h"
-//#include "console.h"
-#endif
-#ifdef XILINX_PLATFORM
+
+#include "command.h"
+#include "console.h"
+
+
 #include <xil_cache.h>
 #include "xspips.h"
-#endif
-#if defined XILINX_PLATFORM || defined LINUX_PLATFORM
+
+
 #include "adc_core.h"
 #include "dac_core.h"
-#endif
+
 
 #include "sbt_mod.h"
 #include "rxtest.h"
@@ -357,10 +357,10 @@ int adi_main(int argc, char * const argv[])
 
 	/* Print the ABI version */
 
-#ifdef XILINX_PLATFORM
+
 	Xil_ICacheEnable();
 	Xil_DCacheEnable();
-#endif
+
 
 
 	// make sure that PL clocks are set correctly
@@ -443,11 +443,11 @@ int adi_main(int argc, char * const argv[])
 
 
 	printf("************ SPI INIT *********************\n\r");
-#ifdef SW_SPI
+//#ifdef SW_SPI
 	HAL_SPIInit();
-#else
-	adi_spi_init(SPI_DEVICE_ID, 1, 0);
-#endif
+//#else
+	//adi_spi_init(SPI_DEVICE_ID, 1, 0);
+//#endif
 
 
 	printf("************ SPI SS TEST *********************\n\r");
@@ -479,9 +479,9 @@ int adi_main(int argc, char * const argv[])
 	set_spi_ss(1);
 	ad9361_phy_1 = ad9361_init(&default_init_param, AD1_reset_pin, 1);
 
-	ad9361_phy_1->pdata->port_ctrl.lvds_invert[0] = 0xEF;
-	ad9361_phy_1->pdata->port_ctrl.lvds_invert[1] = 0x0F;
-	ad9361_pp_port_setup(ad9361_phy_1, false);
+//	ad9361_phy_1->pdata->port_ctrl.lvds_invert[0] = 0xEF;
+//	ad9361_phy_1->pdata->port_ctrl.lvds_invert[1] = 0x0F;
+//	ad9361_pp_port_setup(ad9361_phy_1, false);
 
 	ad9361_set_tx_fir_config(ad9361_phy_1, tx_fir_config);
 	ad9361_set_rx_fir_config(ad9361_phy_1, rx_fir_config);
@@ -501,9 +501,9 @@ int adi_main(int argc, char * const argv[])
 
 //#ifdef NO_VITA_INIT
 	// INITIALIZE VITA MODULES
-	//reset_vita_modules();
-	//pass_vita_modules();
-	//set_vita_clk (0xdead2020);
+	reset_vita_modules();
+	pass_vita_modules();
+	set_vita_clk (0xdead2020);
 //#endif
 
 
@@ -525,8 +525,8 @@ int adi_main(int argc, char * const argv[])
 
 #if defined XILINX_PLATFORM || defined LINUX_PLATFORM
 #ifdef DAC_DMA
-	dac_init( ad9361_phy_0, DATA_SEL_DMA);
-	dac_init( ad9361_phy_1, DATA_SEL_DMA);
+	//dac_init( ad9361_phy_0, DATA_SEL_DMA);
+	//dac_init( ad9361_phy_1, DATA_SEL_DMA);
 #else
 //	dac_init(DATA_SEL_DDS, ad9361_phy_0);
 //	dac_init(DATA_SEL_DDS, ad9361_phy_1);
@@ -539,9 +539,9 @@ int adi_main(int argc, char * const argv[])
     // cache after each adc_capture() call, keeping in mind that the
     // size of the capture and the start address must be alinged to the size
     // of the cache line.
-    adc_capture(16384, ADC_DDR_BASEADDR);
-    Xil_DCacheInvalidateRange(ADC_DDR_BASEADDR, 16384);
-    while(1);
+    //adc_capture(16384, ADC_DDR_BASEADDR);
+    //Xil_DCacheInvalidateRange(ADC_DDR_BASEADDR, 16384);
+    //while(1);
 #endif
 
 /*
@@ -564,8 +564,8 @@ int adi_main(int argc, char * const argv[])
 	printf("9361_0 SAMP CLK RATE: %d \n\r", temp);
 
 	printf ("Select ADI device to use (0 or 1):\r\n");
-	//temp = console_get_num(received_cmd);
-	temp = 0;
+	temp = console_get_num(received_cmd);
+	//temp = 0;
 
 
 	if (temp==0)
@@ -596,6 +596,7 @@ int adi_main(int argc, char * const argv[])
 
 	while (get_eye_rx (adi_phy, delay_vec) == 0);
 	set_eye_rx (adi_phy, delay_vec);
+	//set_eye_rx (adi_phy, 0x0f);
 
 
 	printf ("\n\r");

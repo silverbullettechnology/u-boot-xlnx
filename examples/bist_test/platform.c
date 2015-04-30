@@ -105,6 +105,7 @@ int32_t adi_spi_init(uint32_t device_id,
 				 uint8_t  clk_pol)
 {
 
+
 	uint32_t base_addr	 = 0;
 	uint32_t control_val = 0;
 #ifdef _XPARAMETERS_PS_H_
@@ -141,6 +142,7 @@ int32_t adi_spi_init(uint32_t device_id,
 	XSpi_IntrGlobalDisable(&spi_instance);
 	XSpi_SetSlaveSelect(&spi_instance, 1);
 #endif
+
 	return SUCCESS;
 }
 
