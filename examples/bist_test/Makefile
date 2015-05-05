@@ -51,7 +51,7 @@ LIBOBJS-y+= bist_bsp/ps7_cortexa9_0/libsrc/gpiops_v2_1/src/xgpiops.o \
 	   bist_bsp/ps7_cortexa9_0/libsrc/spips_v2_0/src/xspips_g.o \
 	   bist_bsp/ps7_cortexa9_0/libsrc/spips_v2_0/src/xspips.o
 
-LIBOBJS-y += atof.o sbt_mod.o routines.o adi_main.o stubs.o string.o ctype.o second.o dac_core.o adc_core.o ad9361.o ad9361_api.o rxtest.o srio_mod.o spi.o util.o platform.o console.o command.o rf_tests.o
+LIBOBJS-y += atof.o sbt_mod.o soft_spi_routines.o routines.o fixture_spi_test.o low_level_pdi.o adi_main.o stubs.o string.o ctype.o second.o dac_core.o adc_core.o ad9361.o ad9361_api.o rxtest.o srio_mod.o spi.o util.o platform.o console.o command.o rf_tests.o
 
 #LIBOBJS-y += stubs.o
 

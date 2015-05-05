@@ -80,11 +80,11 @@
  */
 //static XSpiPs SpiInstance;
 extern XGpioPs Gpio; //gpio instance from PDI
- char gpio_bank;
- char ss_pin;
- char mosi_pin;
- char miso_pin;
- char clk_pin;
+ extern char gpio_bank;
+ extern char ss_pin;
+ extern char mosi_pin;
+ extern char miso_pin;
+ extern char clk_pin;
  unsigned long port_mask;
  unsigned long miso_pin_mask;
  char miso_shift = 0;

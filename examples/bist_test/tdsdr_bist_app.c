@@ -83,6 +83,11 @@ int tdsdr_bist_app (int argc, char * const argv[])
 		prodline_RF_loopback_test(arg1, arg2, arg3, freq);
 	
 	}
+	else if (strcmp(argv[0], "hello_led") == 0){
+		printf("Running LED test.\r\n");
+		hello_led();
+	
+	}
 
 	/*printf ("Hit any key to exit ... ");
 	while (!tstc())

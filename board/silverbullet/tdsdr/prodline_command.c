@@ -205,13 +205,16 @@ void adi_temperature(char (*param)[50], char param_no){
 void adi_init(char (*param)[50], char param_no){
 	int i;
 	char * argv[2];
+	int ret;
 	printf("Initializaing AD9361.\r\n");
 	for (i = 0; i < param_no; i++) {
         printf("Argument %i is: %s\n", i, param[i]);
     }
 	//Xil_ICacheEnable();
-	//Xil_DCacheEnable();	
-	if (run_command("run loadbist", 0) < 1){	
+	//Xil_DCacheEnable();
+	ret = run_command("run loadbist", 0);
+	printf("ret: %d\r\n");
+	if (ret<1){	
 		argv[0] = "adi_init";
 		argv[1] = "";
 		do_go_exec ((void *)0xc100168, 1, argv);
@@ -248,14 +251,28 @@ void tpm_test(char (*param)[50], char param_no){
 
 void led_test(char (*param)[50], char param_no){
 	int i;
+	char * argv[2];
 	printf("Running LED test.\r\n");
 	for (i = 0; i < param_no; i++) {
         printf("Argument %i is: %s\n", i, param[i]);
     }
-	Xil_ICacheEnable();
+	//Xil_ICacheEnable();
+	//Xil_DCacheEnable();	
+	if (run_command("run loadbist", 0) < 1){	
+		argv[0] = "hello_led";
+		argv[1] = "";
+		do_go_exec ((void *)0xc100168, 1, argv);
+	}	
+
+/*int i;
+	printf("Running LED test.\r\n");
+	for (i = 0; i < param_no; i++) {
+        printf("Argument %i is: %s\n", i, param[i]);
+    }
+	/*Xil_ICacheEnable();
 	Xil_DCacheEnable();	
 	hello_led();
-	printf("Warning! Ethernet probably doesn't work now!\r\n");
+	printf("Warning! Ethernet probably doesn't work now!\r\n");*/
 }
 
 void xadc_temperature(char (*param)[50], char param_no){
