@@ -40,32 +40,39 @@
 
 #include <configs/zynq-common.h>
 
+/* Override what's set in zynq-common: align env size to flash sector size and locate at
+ * top of chip.  Use U-boot's protections for serial number and ethernet address. */
+#undef  CONFIG_ENV_SIZE
+#define CONFIG_ENV_SIZE                   0x00010000
+#undef  CONFIG_ENV_OFFSET
+#define CONFIG_ENV_OFFSET                 0x00FE0000
+#define CONFIG_ENV_OFFSET_REDUND          0x00FF0000
+#define CONFIG_SYS_REDUNDAND_ENVIRONMENT
+#define CONFIG_OVERWRITE_ETHADDR_ONCE
+#undef  CONFIG_ENV_OVERWRITE
+
+/* Use sdboot by default rather than $modeboot, since FSBL failover from SD-card to QSPI
+ * flash makes $modeboot problematic.  */
+#undef  CONFIG_BOOTCOMMAND
+#define CONFIG_BOOTCOMMAND		"run sdboot"
+
 /* Below may be deprecated information after change to Kconfig */
 /*=============================================================*/
 
 /* Default environment */
 #undef CONFIG_EXTRA_ENV_SETTINGS
 #define CONFIG_EXTRA_ENV_SETTINGS	\
-	"ethaddr=00:0a:35:00:01:22\0"	\
-	"kernel_image=uImage\0"	\
+	"ethaddr=02:98:6E:DE:FA:00\0"	\
+	"kernel_image=kernel.img\0"	\
 	"kernel_load_address=0x2080000\0" \
-	"ramdisk_image=ramdisk.img\0"	\
-	"ramdisk_load_address=0x4000000\0"	\
-	"devicetree_image=devicetree.dtb\0"	\
+	"devicetree_image=devtree.img\0"	\
 	"devicetree_load_address=0x2000000\0"	\
-	"bitstream_image=fpga.img\0"	\
 	"boot_image=BOOT.bin\0"	\
-	"loadbit_addr=0x100000\0"	\
 	"loadbootenv_addr=0x2000000\0" \
-	"kernel_size=0x500000\0"	\
+	"kernel_size=0x940000\0"	\
 	"devicetree_size=0x20000\0"	\
-	"bitstream_size=0x3DBAFC\0"	\
-	"ramdisk_size=0x5E0000\0"	\
-	"boot_size=0xF00000\0"	\
-	"kernel_qspi_offset=0x100000\0"        \
-	"devicetree_qspi_offset=0x0D0000\0"       \
-	"fpga_qspi_offset=0xB80000\0"          \
-	"ramdisk_qspi_offset=0x400000\0"          \
+	"kernel_qspi_offset=0x6a0000\0"        \
+	"devicetree_qspi_offset=0x680000\0"       \
 	"fdt_high=0x20000000\0"	\
 	"initrd_high=0x20000000\0"	\
 	"sdio_dev=0\0"	\
@@ -73,18 +80,12 @@
 	"bootenv=uEnv.txt\0" \
 	"loadbootenv=load mmc 0 ${loadbootenv_addr} ${bootenv}\0" \
 	"importbootenv=echo Importing environment from SD ...; " \
-		"env import -t ${loadbootenv_addr} $filesize\0" \
-	"mmc_loadbit=echo Loading bitstream from SD/MMC/eMMC to RAM.. && " \
-		"mmcinfo && " \
-		"load mmc ${sdio_dev} ${loadbit_addr} ${bitstream_image} && " \
-		"fpga loadb 0 ${loadbit_addr} ${filesize}\0" \
+		"env import -t ${loadbootenv_addr} ${filesize}\0" \
 	"qspiboot=echo Copying Linux from QSPI flash to RAM... && " \
 		"sf probe 0 0 0 && " \
-		"sf read ${kernel_load_address} 0x100000 ${kernel_size} && " \
-		"sf read ${devicetree_load_address} 0x600000 ${devicetree_size} && " \
-		"echo Copying ramdisk... && " \
-		"sf read ${ramdisk_load_address} 0x620000 ${ramdisk_size} && " \
-		"bootm ${kernel_load_address} ${ramdisk_load_address} ${devicetree_load_address}\0" \
+		"sf read ${kernel_load_address} ${kernel_qspi_offset} ${kernel_size} && " \
+		"sf read ${devicetree_load_address} ${devicetree_qspi_offset} ${devicetree_size} && " \
+		"bootm ${kernel_load_address} - ${devicetree_load_address}\0" \
 	"uenvboot=" \
 		"if run loadbootenv; then " \
 			"echo Loaded environment from ${bootenv}; " \
@@ -99,56 +100,30 @@
 			"echo Copying Linux from SD to RAM... && " \
 			"load mmc ${sdio_dev} ${kernel_load_address} ${kernel_image} && " \
 			"load mmc ${sdio_dev} ${devicetree_load_address} ${devicetree_image} && " \
-			"load mmc ${sdio_dev} ${ramdisk_load_address} ${ramdisk_image} && " \
-			"bootm ${kernel_load_address} ${ramdisk_load_address} ${devicetree_load_address}; " \
+			"bootm ${kernel_load_address} - ${devicetree_load_address}; " \
 		"fi\0" \
 	"usbboot=if usb start; then " \
 			"run uenvboot; " \
 			"echo Copying Linux from USB to RAM... && " \
 			"load usb ${usb_dev} ${kernel_load_address} ${kernel_image} && " \
 			"load usb ${usb_dev} ${devicetree_load_address} ${devicetree_image} && " \
-			"load usb ${usb_dev} ${ramdisk_load_address} ${ramdisk_image} && " \
-			"bootm ${kernel_load_address} ${ramdisk_load_address} ${devicetree_load_address}; " \
+			"bootm ${kernel_load_address} - ${devicetree_load_address}; " \
 		"fi\0" \
-	"jtagboot=echo TFTPing Linux to RAM... && " \
+	"netboot=echo TFTPing Linux to RAM... && " \
 		"tftpboot ${kernel_load_address} ${kernel_image} && " \
 		"tftpboot ${devicetree_load_address} ${devicetree_image} && " \
-		"tftpboot ${ramdisk_load_address} ${ramdisk_image} && " \
-		"bootm ${kernel_load_address} ${ramdisk_load_address} ${devicetree_load_address}\0" \
-	"rsa_qspiboot=echo Copying Image from QSPI flash to RAM... && " \
-		"sf probe 0 0 0 && " \
-		"sf read 0x100000 0x0 ${boot_size} && " \
-		"zynqrsa 0x100000 && " \
-		"bootm ${kernel_load_address} ${ramdisk_load_address} ${devicetree_load_address}\0" \
-	"rsa_sdboot=echo Copying Image from SD to RAM... && " \
-		"load mmc ${sdio_dev} 0x100000 ${boot_image} && " \
-		"zynqrsa 0x100000 && " \
-		"bootm ${kernel_load_address} ${ramdisk_load_address} ${devicetree_load_address}\0" \
-	"rsa_jtagboot=echo TFTPing Image to RAM... && " \
-		"tftpboot 0x100000 ${boot_image} && " \
-		"zynqrsa 0x100000 && " \
-		"bootm ${kernel_load_address} ${ramdisk_load_address} ${devicetree_load_address}\0" \
-	"qspifpga=echo Loading FPGA from QSPI... && "                      \
-		"sf read ${loadbit_addr} ${fpga_offs} ${fpga_size} && "            \
-		"fpga load 0 ${fpga_load} ${fpga_size}\0"                       \
-		"mmcinfo && " \
-		"load mmc ${sdio_dev} ${loadbit_addr} ${bitstream_image} && " \
-		"fpga load 0 ${loadbit_addr} ${filesize}\0" \
-	"sdiofpga=run mmc_loadbit\0"               \
+		"bootm ${kernel_load_address} - ${devicetree_load_address}\0" \
 	"sdio_to_qspi="                                                     \
 		"mmcinfo && sf probe 0 0 0 && "                                 \
-		"fatload mmc ${sdio_dev} ${loadbit_addr} ${bitstream_image} && "         \
-		"sf erase ${fpga_qspi_offset} +${filesize} && "                       \
-		"sf write ${loadbit_addr} ${fpga_qspi_offset} ${filesize} && "           \
+		"fatload mmc ${sdio_dev} ${kernel_load_address} ${boot_image} && "     \
+		"sf erase 0 +${filesize} && "                   \
+		"sf write ${kernel_load_address} 0 ${filesize} && "     \
 		"fatload mmc ${sdio_dev} ${kernel_load_address} ${kernel_image} && "     \
 		"sf erase ${kernel_qspi_offset} +${filesize} && "                   \
 		"sf write ${kernel_load_address} ${kernel_qspi_offset} ${filesize} && "     \
 		"fatload mmc ${sdio_dev} ${devicetree_load_address} ${devicetree_image} && "   \
 		"sf erase ${devicetree_qspi_offset} +${filesize} && "                 \
-		"sf write ${devicetree_load_address} ${devicetree_qspi_offset} ${filesize} && "  \
-		"fatload mmc ${sdio_dev} ${ramdisk_load_address} ${ramdisk_image} && "   \
-		"sf erase ${ramdisk_qspi_offset} +${filesize} && "                 \
-		"sf write ${ramdisk_load_address} ${ramdisk_qspi_offset} ${filesize}\0"    \
+		"sf write ${devicetree_load_address} ${devicetree_qspi_offset} ${filesize}\0"  \
 	"loadbist="                                                         \
 		"mmc dev ${sdio_dev} && "                                                 \
 		"fatload mmc ${sdio_dev} 0xc100000 tdsdr_bist_app.bin\0"                         \
