@@ -78,7 +78,7 @@
 	"sdio_dev=0\0"	\
 	"usb_dev=0\0"	\
 	"bootenv=uEnv.txt\0" \
-	"loadbootenv=load mmc 0 ${loadbootenv_addr} ${bootenv}\0" \
+	"loadbootenv=load mmc ${sdio_dev} ${loadbootenv_addr} ${bootenv}\0" \
 	"importbootenv=echo Importing environment from SD ...; " \
 		"env import -t ${loadbootenv_addr} ${filesize}\0" \
 	"qspiboot=echo Copying Linux from QSPI flash to RAM... && " \
@@ -95,7 +95,9 @@
 			"echo Running uenvcmd ...; " \
 			"run uenvcmd; " \
 		"fi\0" \
-	"sdboot=if mmcinfo; then " \
+	"sdboot=" \
+		"mmc dev ${sdio_dev} && "                                                 \
+		"if mmcinfo; then " \
 			"run uenvboot; " \
 			"echo Copying Linux from SD to RAM... && " \
 			"load mmc ${sdio_dev} ${kernel_load_address} ${kernel_image} && " \
@@ -114,6 +116,7 @@
 		"tftpboot ${devicetree_load_address} ${devicetree_image} && " \
 		"bootm ${kernel_load_address} - ${devicetree_load_address}\0" \
 	"sdio_to_qspi="                                                     \
+		"mmc dev ${sdio_dev} && "                                                 \
 		"mmcinfo && sf probe 0 0 0 && "                                 \
 		"fatload mmc ${sdio_dev} ${kernel_load_address} ${boot_image} && "     \
 		"sf erase 0 +${filesize} && "                   \
