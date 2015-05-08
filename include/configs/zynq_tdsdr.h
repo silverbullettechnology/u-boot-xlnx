@@ -54,7 +54,7 @@
 /* Use sdboot by default rather than $modeboot, since FSBL failover from SD-card to QSPI
  * flash makes $modeboot problematic.  */
 #undef  CONFIG_BOOTCOMMAND
-#define CONFIG_BOOTCOMMAND		"run sdboot"
+#define CONFIG_BOOTCOMMAND		"run multiboot"
 
 /* Below may be deprecated information after change to Kconfig */
 /*=============================================================*/
@@ -81,6 +81,11 @@
 	"loadbootenv=load mmc ${sdio_dev} ${loadbootenv_addr} ${bootenv}\0" \
 	"importbootenv=echo Importing environment from SD ...; " \
 		"env import -t ${loadbootenv_addr} ${filesize}\0" \
+	"multiboot=if mmc dev ${sdio_dev}; then " \
+			"run sdboot; " \
+		"else " \
+			"run qspiboot; " \
+		"fi\0" \
 	"qspiboot=echo Copying Linux from QSPI flash to RAM... && " \
 		"sf probe 0 0 0 && " \
 		"sf read ${kernel_load_address} ${kernel_qspi_offset} ${kernel_size} && " \
