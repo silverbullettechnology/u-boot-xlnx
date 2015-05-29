@@ -67,7 +67,6 @@ int atmel_write_read(void)
 	char *write_buffer_p = &write_buffer[0];
 	char *read_buffer_p = &read_buffer[0];
 
-while(1){
 	printf("Atmel SPI Test Function\r\n");
 
 	printf("Enter write string:\r\n");
@@ -176,7 +175,7 @@ while(1){
 	read_buffer[size] = '\0';
 	printf("\r\n%s\r\n",read_buffer);
 
-}
+
 printf("back to menu.\r\n");
 }
 

@@ -25,8 +25,9 @@ static int do_pdi(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 	int i;
 
 	buf_loc = hexToInt(argv[1]);
-	size = atoint (argv[2]);	
-	
+	//size = atoint (argv[2]);	
+	size = 0x20000;
+
 	image = (char*)buf_loc;
 
    printf("\n\nTD-SDR MMC Firmware Programmer\n\n");
@@ -78,7 +79,7 @@ static int do_pdi(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
  
  /***************************************************/
  //        name,#parms, isrepeatable?, cmd list, help text
- U_BOOT_CMD(pdi, 3, 1, do_pdi, "Perform firmware update on MMC module", "<ADDRESS> <Length>");
+ U_BOOT_CMD(pdi, 2, 1, do_pdi, "Perform firmware update on MMC module", "<ADDRESS>");
 
 
  /***************************************************/

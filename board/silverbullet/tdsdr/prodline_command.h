@@ -77,6 +77,7 @@ void rfinit(char (*param)[50], char param_no);
 void xadc_temperature(char (*param)[50], char param_no);
 void rftest(char (*param)[50], char param_no);
 void bist_srio_test(char (*param)[50], char param_no);
+int load_bist_image(void);
 
 /***************************************************************************/
 void amc_get_help(char (*param)[50], char param_no);

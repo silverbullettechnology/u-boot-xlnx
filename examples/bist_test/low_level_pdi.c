@@ -309,7 +309,7 @@ int hello_led(void)
 	printf("\n\r********************************************************\r\n");
 	printf("Test successful if D2303..D2306 are flashing.\r\n");
 
-	//Xil_DCacheEnable();
+	Xil_DCacheEnable();
 	Status = GpioPolledOutputExample(GPIO_DEVICE_ID, &InputData);
 	if (Status != XST_SUCCESS) {
 		printf("GPIO Polled Mode Example Test Failed\r\n");

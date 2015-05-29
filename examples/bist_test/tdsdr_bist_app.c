@@ -75,7 +75,7 @@ int tdsdr_bist_app (int argc, char * const argv[])
 	else if (strcmp(argv[0], "prodline_RF_loopback_test") == 0){
 		printf("Checking loopback connections.\r\n");
 
-		sscanf(argv[1],"%d",&arg1);
+		sscanf(argv[0],"%d",&arg1);
 		sscanf(argv[2],"%d",&arg2);
 		sscanf(argv[3],"%d",&arg3);
 		sscanf(argv[4],"%d",&freq);

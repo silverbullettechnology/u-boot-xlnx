@@ -95,6 +95,7 @@ void print_application (Atmel_application * app);
 void print_srecord (S_record rec);
 void print_flash_page_buffer (Flash_page_buffer buf);
 int compare_mem(char * write, char * read, int length);
+unsigned char srec_calc_checksum(unsigned char * line);
 
 /*
  * \brief Main function for PDI driver test
@@ -116,11 +117,6 @@ int pdi_main (char *buffer, unsigned int size)
   int line_counter;
   unsigned int addr;
   int equ;
-
-uint8_t cmd_buffer[20];
-enum status_code retval;
-uint8_t initialized = 0;
-char c;
 
   image = buffer;
   eol = image;
@@ -149,121 +145,25 @@ char c;
 	
 	//printf("parse Record: %d\r\n\r\n",num_srec);
         srec = parse_srec_line(line_buf);
-	//if (srec == 0)
-		//return 0;
-        //print_srecord(srec);
         
 	//printf("add srec to app\r\n",num_srec);
         //only add type 2 records to the program
         if(srec.s_type == 2)
             add_srec_to_app(srec, &flash_data);
-
+	else if(srec.s_type == 8)
+	    break;
+	else if(srec.s_type == 0xff){
+	    printf(line_buf);
+	    print_srecord(srec);
+            printf("\r\nChecksum Error record %d\r\n", num_srec);
+            return 0;
+	}
         num_srec++;
     }
 
     printf("\r\nend of parsing\r\n");
     //print_application(&flash_data);
-/*
-     printf("\n--------------\n");
-     printf(" q    Quit\n");
-     printf(" i    Initiate PDI firmware programming\n");
-     printf(" p    print loaded image to screen\n");
-     //printf(" l    Spin LEDs\n");
-     printf("-- enter cmd: ");
-	pdi_init();
 
-   for (;;)
-     {
-	while(1){	
-		pdi_mdelay(1);
-		if(XUartPs_IsReceiveData(STDIN_BASEADDRESS)){
-			c = inbyte();
-			printf("%c",c);
-			break;}
-	}
-
-     switch (c)
-       {
-       case 'q':
-         printf("exiting\n");
-         return 0;
-       case 'l':
-         printf("doing 'l'!\n");
-	 hello_led();
-         break;
-       case 'i':
-         printf("init PDI\n");
-	 pdi_init();
-         break;
-       case 'a':
-	 //fixture_write_read();
-         printf("Put in reset\n");
-		//Put the device in reset mode
-		xnvm_put_dev_in_reset();
-
-                cmd_buffer[0] = 0xc2;
-		cmd_buffer[1] = 0x02;
-                pdi_write(cmd_buffer, 2);
-         break;
-       case 'b':
-	 //fixture_write_read();
-         printf("Send Magic\n");
-		//Create the key command
-		cmd_buffer[0] = XNVM_PDI_KEY_INSTR;
-		cmd_buffer[1] = NVM_KEY_BYTE0;
-		cmd_buffer[2] = NVM_KEY_BYTE1;
-		cmd_buffer[3] = NVM_KEY_BYTE2;
-		cmd_buffer[4] = NVM_KEY_BYTE3;
-		cmd_buffer[5] = NVM_KEY_BYTE4;
-		cmd_buffer[6] = NVM_KEY_BYTE5;
-		cmd_buffer[7] = NVM_KEY_BYTE6;
-		cmd_buffer[8] = NVM_KEY_BYTE7;
-
-		pdi_write(cmd_buffer, 9);
-
-
-                //pdi_mdelay(200);
-
-
-		//xnvm_ctrl_wait_nvmbusy(WAIT_RETRIES_NUM);
-         break;
-       case 'c':
-	 //fixture_write_read();
-         printf("Read ID\n");
-  pdi_mdelay(10);
-  xnvm_read_memory(XNVM_DATA_BASE + NVM_MCU_CONTROL, dev_id, 3);
-  pdi_mdelay(50);
-
-  printf("\r\nDev ID: %02X ", dev_id[0]);
-  printf("%2X ", dev_id[1]);
-  printf("%2X \r\n", dev_id[2]);
-  printf("\r\nUsed Pages: %d\r\n",flash_data.used_buffers+1);
-         break;
-       case 'd':
-	 //fixture_write_read();
-         printf("deinit PDI\n");
-  xnvm_deinit();
-         break;
-       case 'e':
-	 //fixture_write_read();
-         printf("erase chip\n");
-  xnvm_chip_erase();
-  pdi_mdelay(100);
-         break;
-	case 'p':
-         printf("Printing Image:\n\n");
-	 for(i=0;i<size;i++){
-	 	printf("%c",*(image+i));
-	 }
-	 printf("\r\n**END**\r\n");	
-         break;
-       case '\r':
-         break;
-       default:
-         printf("Invalid command: '%c'\n", c);
-         break;
-       }
-     }
 
   /* Initialize the PDI interface */
   printf("initializing\r\n");
@@ -293,84 +193,49 @@ char c;
   i=0;
   j = 0;*/
 
-//program the flash with the application image.
+  //program the flash with the application image.
   
-for(i=0;i<=flash_data.used_buffers;i++){
+  for(i=0;i<=flash_data.used_buffers;i++){
   
-  if(flash_data.application_data[i].address >= 0x20000)
-    xnvm_erase_program_boot_flash_page(flash_data.application_data[i].address, flash_data.application_data[i].data, flash_data.application_data[i].byte_count);
-  else
-    xnvm_erase_program_flash_page(flash_data.application_data[i].address, flash_data.application_data[i].data, flash_data.application_data[i].byte_count);
-  pdi_mdelay(10);
+	  if(flash_data.application_data[i].address >= 0x20000)
+	    xnvm_erase_program_boot_flash_page(flash_data.application_data[i].address, flash_data.application_data[i].data, flash_data.application_data[i].byte_count);
+	  else
+	    xnvm_erase_program_flash_page(flash_data.application_data[i].address, flash_data.application_data[i].data, flash_data.application_data[i].byte_count);
+	  pdi_mdelay(10);
 
-  //Read back the flash contents to a buffer on the device
-  addr =  XNVM_FLASH_BASE+flash_data.application_data[i].address;
-  xnvm_read_memory(addr, page_buffer, PAGE_SIZE);
+	  //Read back the flash contents to a buffer on the device
+	  addr =  XNVM_FLASH_BASE+flash_data.application_data[i].address;
+	  xnvm_read_memory(addr, page_buffer, PAGE_SIZE);
 
-  equ = compare_mem(flash_data.application_data[i].data, page_buffer, flash_data.application_data[i].byte_count);
-  if(equ){
-    printf(".");
-    pdi_mdelay(10);
-  } else {
-    xnvm_chip_erase();
-    pdi_mdelay(100);
-    printf("\r\nProgramming error:\r\n");
-            
-            print_flash_page_buffer(flash_data.application_data[i]);
+	  equ = compare_mem(flash_data.application_data[i].data, page_buffer, flash_data.application_data[i].byte_count);
+	  if(equ){
+	    printf(".");
+	    pdi_mdelay(10);
+	  } else {
+	    xnvm_chip_erase();
+	    pdi_mdelay(100);
+	    printf("\r\nProgramming error:\r\n");
+		    
+		    print_flash_page_buffer(flash_data.application_data[i]);
 
-	    printf("\r\nReadback page %d: \r\n",i);
-	    line_counter = 0;
-	    printf("\r\n%06X    ",addr);
-	    for(j=0;j<PAGE_SIZE;j++){
-		if(line_counter > 15){
-		    printf("\r\n%06X    ",addr+j);
+		    printf("\r\nReadback page %d: \r\n",i);
 		    line_counter = 0;
+		    printf("\r\n%06X    ",addr);
+		    for(j=0;j<PAGE_SIZE;j++){
+			if(line_counter > 15){
+			    printf("\r\n%06X    ",addr+j);
+			    line_counter = 0;
+			    }
+			printf("%02X ",page_buffer[j]);
+			line_counter++;
 		    }
-		printf("%02X ",page_buffer[j]);
-		line_counter++;
-	    }
 
-	printf("\r\n");
- 	xnvm_deinit();
-  	xnvm_init();
-	break;
-  }	
-}
-
-
-  /* Write "hello world" to the EEPROM of the target device */
-  //xnvm_erase_program_eeprom_page(0x0000, hello_world_buf, 11);
-  //pdi_mdelay(100);
-
-  /* Read the EEPROM content */
-  //xnvm_read_memory(XNVM_EEPROM_BASE, page_buffer, 512);
-
-  /* Read fuses */
-  //xnvm_read_memory(XNVM_FUSE_BASE, fuses, 6);
-  //pdi_mdelay(100);
-
-  /* Option to write to fuses */
-  //xnvm_write_fuse_bit(0, 0xFF, 1000);
-  //xnvm_write_fuse_bit(1, 0x72, 1000);
-  //xnvm_write_fuse_bit(2, 0xFE, 1000);
-  /* Fuse byte number three is always 0x00 */
-  //xnvm_write_fuse_bit(4, 0xFE, 1000);
-  //xnvm_write_fuse_bit(5, 0xE2, 1000);
-
-  /* Read fuses */
-  //xnvm_read_memory(XNVM_FUSE_BASE, fuses, 6);
-
-  /* Option to write lock bits */
-  /* THIS WILL PREVENT FURTHER ACCESS TO THE DEVICE MEMORIES, RESET
-   *  BY ERASING THE DEVICE
-   */
-  //xnvm_write_fuse_bit(NVM_LOCKBIT_ADDR, 0x00, 1000);
-
-  /* Read lock bits */
-  //xnvm_read_memory(XNVM_FUSE_BASE + NVM_LOCKBIT_ADDR, &lock_bit, 1);
-
-  //disconnect the PDI interface and reset the device.
-  //xnvm_deinit();
+		printf("\r\n");
+	 	xnvm_deinit();
+	  	xnvm_init();
+		break;
+	  }	
+  }
   xnvm_init();
   xnvm_pull_dev_out_of_reset();
   xnvm_deinit();
@@ -500,6 +365,35 @@ int bytecount;
 
 }
 
+//function calculates srecord checksum
+unsigned char srec_calc_checksum(unsigned char * line){
+	int i = 0;
+	int length;
+	unsigned int tempval;
+	unsigned char crc = 0;
+	unsigned char templine[3];
+	unsigned char * eol;
+
+	templine[2] = '\0';
+
+	eol = strchr(line, '\n');
+	length = eol-line-3;
+	
+	while(i<length){
+
+	    templine[0] = line[i];
+	    templine[1] = line[i+1];
+
+	    tempval = hexToInt(templine);
+
+	    crc = crc+tempval;
+	    i = i+2;
+	}
+	crc = ~crc;
+
+	return crc;
+}
+
 //function returns a S_record struct after parsing a null terminated string
 S_record parse_srec_line (char * line){
     S_record srec;
@@ -509,6 +403,7 @@ S_record parse_srec_line (char * line){
     char * eof;
     int bytecount,bytes;
     int i;
+    unsigned char crc, calc_crc;
 
 	//printf("\r\nget record type\r\n");
     bof = line;
@@ -560,7 +455,7 @@ S_record parse_srec_line (char * line){
     bytes++;
     }
 
-	//printf("\r\nget checksum\r\n");
+    	//printf("\r\nget checksum\r\n");
     //get checksum
     eof = bof+2;
     i=0;
@@ -571,11 +466,16 @@ S_record parse_srec_line (char * line){
     }
     srec.checksum[2] = '\0';
 
-    //calculate the checksum of the srecord and return 0 if it is wrong.
+    crc = hexToInt(srec.checksum);
 
-	//printf("\r\nDone Srecord\r\n");
-	
-//print_srecord(srec);
+    calc_crc = srec_calc_checksum(line);
+
+    //if checksum is bad mark srec as bad
+    if(crc != calc_crc){
+        srec.s_type = 0xFF;
+	printf("int CRC: %02x\r\n", crc);
+	printf("calc CRC: %02x\r\n", calc_crc);
+    }
 
     return srec;
 }

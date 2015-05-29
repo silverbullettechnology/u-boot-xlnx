@@ -57,17 +57,18 @@
 /******************************************************************************/
 prod_command prodline_cmd_list[] = {
 	{"help", "Displays all available commands.", "", prod_get_help},
-	{"adi_basic_test", "Runs the basic ADI functional test.", "", adi_basic_test},
-	{"adi_loopback", "Runs the internal BIST loopback test.", "", adi_loopback_test},
-	{"adi_temperature", "Outputs the temperature readings from the ADI chips.", "", adi_temperature},
-	{"adi_init", "Re-initializes the AD9361 devices.", "", adi_init},
-	{"panel_rf_loopback", "Runs the built-in RF loopback test.", "", rf_loopback_test},
+	{"abt", "Runs the basic ADI functional test.", "", adi_basic_test},
+	{"aloop", "Runs the internal BIST loopback test.", "", adi_loopback_test},
+	{"atemp", "Outputs the temperature readings from the ADI chips.", "", adi_temperature},
+	{"ainit", "Re-initializes the AD9361 devices.", "", adi_init},
+	{"prl", "Runs the built-in RF loopback test.", "", rf_loopback_test},
 	{"memtest", "Runs the BIST memory test.", "", memory_test},
-	{"tpm_test", "Runs the BIST TPM module test.", "", tpm_test},
-	{"led_test", "Runs the BIST LED test.", "", led_test},
-	{"xadc_temperature", "Outputs the temperature readings from the Zynq onboard XADC.", "", xadc_temperature},
+	{"tpm", "Runs the BIST TPM module test.", "", tpm_test},
+	{"led", "Runs the BIST LED test.", "", led_test},
+	{"xadc", "Outputs the temperature readings from the Zynq onboard XADC.", "", xadc_temperature},
 	//{"distortion_test", "Runs a distortion loopback test.", "", rftest},
-	{"srio_test", "Runs a basic test of the SRIO modules", "", bist_srio_test},
+	{"srio", "Runs a basic test of the SRIO modules", "", bist_srio_test},
+	{"load", "loads the bist application to memory", "", load_bist_image}
 };
 const char prod_cmd_no = (sizeof(prodline_cmd_list) / sizeof(prod_command));
 
@@ -78,10 +79,32 @@ prod_command amc_cmd_list[] = {
 };
 const char amc_cmd_no = (sizeof(amc_cmd_list) / sizeof(prod_command));
 
+char bist_loaded = 0;
+
+#define LOAD_ADDR 0xc100168
 /************************** Variable Definitions *****************************/
 
 
 /************************** Function Definitions *****************************/
+
+int load_bist_image(void){
+	int i;
+	int retries;
+
+	//void crc32_wd_buf(const unsigned char *input, uint ilen, unsigned char *output, uint chunk_sz);
+	if(!bist_loaded){
+		if (run_command("run loadbist", 0) < 1){
+			bist_loaded = 1;	
+			return 0;	
+		} else{
+			return 1;
+		}
+	}else{
+		return 0;
+	}
+
+}
+
 void prod_get_help(char (*param)[50], char param_no){
 	int i;
 	printf("Running Help Command.\r\n");
@@ -126,7 +149,7 @@ void rf_loopback_test(char (*param)[50], char param_no){
 		//sscanf(param[2],"%d",&arg3);
 		//sscanf(param[3],"%lf",&freq);
 
-		if (run_command("run loadbist", 0) < 1){
+		if (load_bist_image() < 1){
 
 			//then execute
 			//do_go_exec ((void *)addr, argc - 1, argv + 1);
@@ -135,7 +158,7 @@ void rf_loopback_test(char (*param)[50], char param_no){
 			argv[2] = param[1];
 			argv[3] = "0";
 			argv[4] = "2400";
-			do_go_exec ((void *)0xc100168, 4, argv);
+			do_go_exec ((void *)LOAD_ADDR, 4, argv);
 		}
 
 		//prodline_RF_loopback_test(RSSI_UPPER,RSSI_LOWER, arg1, arg2, arg3, freq);
@@ -168,13 +191,13 @@ void adi_loopback_test(char (*param)[50], char param_no){
 		//Xil_ICacheEnable();
 		//Xil_DCacheEnable();
 		//first load the image from some location storend in env, make sure to check result
-		if (run_command("run loadbist", 0) < 1){
+		if (load_bist_image() < 1){
 
 			//then execute
 			//do_go_exec ((void *)addr, argc - 1, argv + 1);
 			argv[0] = "int_loopback";
 			argv[1] = param[0];
-			do_go_exec ((void *)0xc100168, 1, argv);
+			do_go_exec ((void *)LOAD_ADDR, 1, argv);
 		}
 	} else {
 		printf("\r\nInvalid number of arguments; expected 1. Example usage to test adi 1:\r\n'bist adi_loopback 1\r\n");
@@ -193,12 +216,12 @@ void adi_temperature(char (*param)[50], char param_no){
     }
 	//Xil_ICacheEnable();
 	//Xil_DCacheEnable();	
-	ret = run_command("run loadbist", 0);
+	ret = load_bist_image();
 	
 	if (ret < 1){	
 		argv[0] = "adi_temperature";
 		argv[1] = "";
-		do_go_exec ((void *)0xc100168, 1, argv);
+		do_go_exec ((void *)LOAD_ADDR, 1, argv);
 	}
 }
 
@@ -212,12 +235,12 @@ void adi_init(char (*param)[50], char param_no){
     }
 	//Xil_ICacheEnable();
 	//Xil_DCacheEnable();
-	ret = run_command("run loadbist", 0);
+	ret = load_bist_image();
 	printf("ret: %d\r\n");
 	if (ret<1){	
 		argv[0] = "adi_init";
 		argv[1] = "";
-		do_go_exec ((void *)0xc100168, 1, argv);
+		do_go_exec ((void *)LOAD_ADDR, 1, argv);
 	}
 
 }
@@ -231,10 +254,10 @@ void bist_srio_test(char (*param)[50], char param_no){
     }
 	//Xil_ICacheEnable();
 	//Xil_DCacheEnable();	
-	if (run_command("run loadbist", 0) < 1){	
+	if (load_bist_image() < 1){	
 		argv[0] = "srio_test";
 		argv[1] = "";
-		do_go_exec ((void *)0xc100168, 1, argv);
+		do_go_exec ((void *)LOAD_ADDR, 1, argv);
 	}
 
 }
@@ -258,10 +281,10 @@ void led_test(char (*param)[50], char param_no){
     }
 	//Xil_ICacheEnable();
 	//Xil_DCacheEnable();	
-	if (run_command("run loadbist", 0) < 1){	
+	if (load_bist_image() < 1){	
 		argv[0] = "hello_led";
 		argv[1] = "";
-		do_go_exec ((void *)0xc100168, 1, argv);
+		do_go_exec ((void *)LOAD_ADDR, 1, argv);
 	}	
 
 /*int i;
