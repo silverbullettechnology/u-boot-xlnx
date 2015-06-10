@@ -118,9 +118,9 @@
 /*
  * Cache
  */
+#define CONFIG_SYS_CACHELINE_SIZE 32
 #ifndef CONFIG_SYS_L2CACHE_OFF
 #define CONFIG_CMD_CACHE
-#define CONFIG_SYS_CACHELINE_SIZE 32
 #define CONFIG_SYS_L2_PL310
 // TODO: The below compiles to the wrong address, why?
 //#define CONFIG_SYS_PL310_BASE	PL310_L2_ABSOLUTE_BASE
@@ -354,7 +354,7 @@
 # define CONFIG_CMD_SF_TEST
 # define CONFIG_SPI_FLASH
 # define CONFIG_SPI_FLASH_SST
-//# define CONFIG_ENV_IS_IN_SPI_FLASH
+# define CONFIG_ENV_IS_IN_SPI_FLASH
 #endif
 
 /* SPI flash settings for boot */
