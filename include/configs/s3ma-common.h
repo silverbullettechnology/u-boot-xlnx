@@ -354,7 +354,7 @@
 # define CONFIG_CMD_SF_TEST
 # define CONFIG_SPI_FLASH
 # define CONFIG_SPI_FLASH_SST
-//# define CONFIG_ENV_IS_IN_SPI_FLASH
+# define CONFIG_ENV_IS_IN_SPI_FLASH
 #endif
 
 /* SPI flash settings for boot */

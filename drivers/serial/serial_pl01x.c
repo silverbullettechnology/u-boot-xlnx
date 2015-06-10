@@ -23,8 +23,10 @@
 
 #ifndef CONFIG_DM_SERIAL
 
+#define SECONDARY_CONS_INDEX ((CONFIG_CONS_INDEX+1)%NUM_PORTS)
 static volatile unsigned char *const port[] = CONFIG_PL01x_PORTS;
 #define base_regs ((struct pl01x_regs *)port[CONFIG_CONS_INDEX])
+#define base2_regs ((struct pl01x_regs *)port[SECONDARY_CONS_INDEX])
 #if defined(CONFIG_PL010_SERIAL)
 static const enum pl01x_type pl01x_type = TYPE_PL010;
 #elif defined(CONFIG_PL011_SERIAL)
@@ -196,15 +198,15 @@ static int pl01x_generic_setbrg(struct pl01x_regs *regs, enum pl01x_type type,
 }
 
 #ifndef CONFIG_DM_SERIAL
-static void pl01x_serial_init_baud(int baudrate)
+static void pl01x_serial_init_baud(struct pl01x_regs *regs, int baudrate)
 {
 	int clock = 0;
 
 #if defined(CONFIG_PL011_SERIAL)
 	clock = CONFIG_PL011_CLOCK;
 #endif
-	pl01x_generic_serial_init(base_regs, pl01x_type);
-	pl01x_generic_setbrg(base_regs, pl01x_type, clock, baudrate);
+	pl01x_generic_serial_init(regs, pl01x_type);
+	pl01x_generic_setbrg(regs, pl01x_type, clock, baudrate);
 }
 
 /*
@@ -214,7 +216,7 @@ static void pl01x_serial_init_baud(int baudrate)
  */
 int pl01x_serial_init(void)
 {
-	pl01x_serial_init_baud(CONFIG_BAUDRATE);
+	pl01x_serial_init_baud(base_regs, CONFIG_BAUDRATE);
 
 	return 0;
 }
@@ -256,7 +258,7 @@ static void pl01x_serial_setbrg(void)
 		WATCHDOG_RESET();
 	while (readl(&base_regs->fr) & UART_PL01x_FR_BUSY)
 		WATCHDOG_RESET();
-	pl01x_serial_init_baud(gd->baudrate);
+	pl01x_serial_init_baud(base_regs, gd->baudrate);
 }
 
 static struct serial_device pl01x_serial_drv = {
@@ -278,6 +280,70 @@ void pl01x_serial_initialize(void)
 __weak struct serial_device *default_serial_console(void)
 {
 	return &pl01x_serial_drv;
+}
+
+int secondary_pl01x_serial_init(void)
+{
+	pl01x_serial_init_baud(CONFIG_BAUDRATE);
+
+	return 0;
+}
+
+static void secondary_pl01x_serial_putc(const char c)
+{
+	if (c == '\n')
+		while (pl01x_putc(base_regs, '\r') == -EAGAIN);
+
+	while (pl01x_putc(base2_regs, c) == -EAGAIN);
+}
+
+static int secondary_pl01x_serial_getc(void)
+{
+	while (1) {
+		int ch = pl01x_getc(base2_regs);
+
+		if (ch == -EAGAIN) {
+			WATCHDOG_RESET();
+			continue;
+		}
+
+		return ch;
+	}
+}
+
+static int secondary_pl01x_serial_tstc(void)
+{
+	return pl01x_tstc(base2_regs);
+}
+
+static void pl01x_serial_setbrg(void)
+{
+	/*
+	 * Flush FIFO and wait for non-busy before changing baudrate to avoid
+	 * crap in console
+	 */
+	while (!(readl(&base2_regs->fr) & UART_PL01x_FR_TXFE))
+		WATCHDOG_RESET();
+	while (readl(&base2_regs->fr) & UART_PL01x_FR_BUSY)
+		WATCHDOG_RESET();
+	pl01x_serial_init_baud(base2_regs, gd->baudrate);
+}
+
+
+static struct serial_device secondary_pl01x_serial_drv = {
+	.name	= "pl01x_uart",
+	.start	= secondary_pl01x_serial_init,
+	.stop	= NULL,
+	.setbrg	= NULL,
+	.putc	= secondary_pl01x_serial_putc,
+	.puts	= default_serial_puts,
+	.getc	= secondary_pl01x_serial_getc,
+	.tstc	= secondary_pl01x_serial_tstc,
+};
+
+struct serial_device *secondary_serial_console(void)
+{
+	return &secondary_pl01x_serial_drv;
 }
 
 #endif /* nCONFIG_DM_SERIAL */
