@@ -20,6 +20,8 @@
 #include <linux/err.h>
 #include <linux/compiler.h>
 
+DECLARE_GLOBAL_DATA_PTR;
+
 /* Generic PHY support and helper functions */
 
 /**
@@ -442,6 +444,9 @@ static LIST_HEAD(phy_drivers);
 
 int phy_init(void)
 {
+#ifdef CONFIG_PHY_AQUANTIA
+	phy_aquantia_init();
+#endif
 #ifdef CONFIG_PHY_ATHEROS
 	phy_atheros_init();
 #endif
@@ -490,6 +495,20 @@ int phy_register(struct phy_driver *drv)
 	INIT_LIST_HEAD(&drv->list);
 	list_add_tail(&drv->list, &phy_drivers);
 
+#ifdef CONFIG_NEEDS_MANUAL_RELOC
+	if (drv->probe)
+		drv->probe += gd->reloc_off;
+	if (drv->config)
+		drv->config += gd->reloc_off;
+	if (drv->startup)
+		drv->startup += gd->reloc_off;
+	if (drv->shutdown)
+		drv->shutdown += gd->reloc_off;
+	if (drv->readext)
+		drv->readext += gd->reloc_off;
+	if (drv->writeext)
+		drv->writeext += gd->reloc_off;
+#endif
 	return 0;
 }
 

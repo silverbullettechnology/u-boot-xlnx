@@ -24,6 +24,10 @@
 #include <asm/arch/hardware.h>
 #include <asm/arch/sys_proto.h>
 
+#if !defined(CONFIG_PHYLIB)
+# error XILINX_GEM_ETHERNET requires PHYLIB
+#endif
+
 /* Bit/mask specification */
 #define ZYNQ_GEM_PHYMNTNC_OP_MASK	0x40020000 /* operation mask bits */
 #define ZYNQ_GEM_PHYMNTNC_OP_R_MASK	0x20000000 /* read operation */
@@ -138,7 +142,7 @@ struct emac_bd {
 	u32 status;
 };
 
-#define RX_BUF 3
+#define RX_BUF 32
 /* Page table entries are set to 1MB, or multiples of 1MB
  * (not < 1MB). driver uses less bd's so use 1MB bdspace.
  */
@@ -217,29 +221,6 @@ static u32 phywrite(struct eth_device *dev, u32 phy_addr, u32 regnum, u16 data)
 	return phy_setup_op(dev, phy_addr, regnum,
 				ZYNQ_GEM_PHYMNTNC_OP_W_MASK, &data);
 }
-
-#ifndef CONFIG_PHYLIB
-static int phy_rst(struct eth_device *dev)
-{
-	struct zynq_gem_priv *priv = dev->priv;
-	u16 tmp;
-
-	puts("Resetting PHY...\n");
-	phyread(dev, priv->phyaddr, 0, &tmp);
-	tmp |= 0x8000;
-	phywrite(dev, priv->phyaddr, 0, tmp);
-
-	phyread(dev, priv->phyaddr, 0, &tmp);
-	while (tmp & 0x8000) {
-		putc('.');
-		if (ctrlc())
-			return 1;
-		phyread(dev, priv->phyaddr, 0, &tmp);
-	}
-	puts("\nPHY reset complete.\n");
-	return 0;
-}
-#endif
 
 static void phy_detection(struct eth_device *dev)
 {
@@ -372,7 +353,6 @@ static int zynq_gem_init(struct eth_device *dev, bd_t * bis)
 #endif
 	phy_detection(dev);
 
-#ifdef CONFIG_PHYLIB
 	/* interface - look at tsec */
 	phydev = phy_connect(priv->bus, priv->phyaddr, dev,
 			     PHY_INTERFACE_MODE_MII);
@@ -415,46 +395,6 @@ static int zynq_gem_init(struct eth_device *dev, bd_t * bis)
 					ZYNQ_GEM_BASEADDR0, clk_rate);
 #endif
 
-#else
-	/* PHY Setup */
-	phywrite(dev, priv->phyaddr, 22, 2);	/* page 2 */
-
-	/* rx clock transition when data stable */
-	phywrite(dev, priv->phyaddr, 21, 0x3030);
-
-	phywrite(dev, priv->phyaddr, 22, 0);	/* page 0 */
-
-	u16 tmp;
-
-	/* link speed advertisement for autonegotiation */
-	phyread(dev, priv->phyaddr, 4, &tmp);
-	tmp |= 0xd80;		/* enable 100Mbps */
-	tmp &= ~0x60;		/* disable 10 Mbps */
-	phywrite(dev, priv->phyaddr, 4, tmp);
-
-	/* *disable* gigabit advertisement */
-	phyread(dev, priv->phyaddr, 9, &tmp);
-	tmp &= ~0x0300;
-	phywrite(dev, priv->phyaddr, 9, tmp);
-
-	/* enable autonegotiation, set 100Mbps, full-duplex, restart aneg */
-	phyread(dev, priv->phyaddr, 0, &tmp);
-	phywrite(dev, priv->phyaddr, 0, 0x3300 | (tmp & 0x1F));
-
-	if (phy_rst(dev))
-		return -1;
-
-	puts("\nWaiting for PHY to complete autonegotiation.");
-	do {
-		phyread(dev, priv->phyaddr, 1, &tmp);
-	} while (tmp & (1 << 5));
-
-	puts("\nPHY claims autonegotiation complete...\n");
-
-	puts("GEM link speed is 100Mbps\n");
-	writel(ZYNQ_GEM_NWCFG_INIT | ZYNQ_GEM_NWCFG_SPEED100, &regs->nwcfg);
-#endif
-
 	/* set hardware address because of ... */
 	if (!is_valid_ether_addr(dev->enetaddr)) {
 		printf("%s: mac address is not valid\n", dev->name);
@@ -475,9 +415,6 @@ static int zynq_gem_send(struct eth_device *dev, void *ptr, int len)
 	struct zynq_gem_priv *priv = dev->priv;
 	struct zynq_gem_regs *regs = (struct zynq_gem_regs *)dev->iobase;
 
-	setbits_le32(&regs->nwctrl, ZYNQ_GEM_NWCTRL_RXEN_MASK |
-		     ZYNQ_GEM_NWCTRL_TXEN_MASK);
-
 	/* setup BD */
 	writel((u32)priv->tx_bd, &regs->txqbase);
 
@@ -486,7 +423,8 @@ static int zynq_gem_send(struct eth_device *dev, void *ptr, int len)
 
 	priv->tx_bd->addr = (u32)ptr;
 	priv->tx_bd->status = (len & ZYNQ_GEM_TXBUF_FRMLEN_MASK) |
-				ZYNQ_GEM_TXBUF_LAST_MASK;
+			       ZYNQ_GEM_TXBUF_LAST_MASK |
+			       ZYNQ_GEM_TXBUF_WRAP_MASK;
 
 	addr = (u32) ptr;
 	addr &= ~(ARCH_DMA_MINALIGN - 1);
@@ -629,10 +567,8 @@ int zynq_gem_initialize(bd_t *bis, phys_addr_t base_addr,
 
 	eth_register(dev);
 
-#if defined(CONFIG_MII) || defined(CONFIG_CMD_MII) || defined(CONFIG_PHYLIB)
 	miiphy_register(dev->name, zynq_gem_miiphyread, zynq_gem_miiphy_write);
 	priv->bus = miiphy_get_dev_by_name(dev->name);
-#endif
 
 	return 1;
 }

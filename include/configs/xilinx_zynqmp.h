@@ -58,14 +58,14 @@
 #define CONFIG_ZYNQ_SERIAL_UART0
 #define CONFIG_ZYNQ_SERIAL
 
-#define CONFIG_ZYNQMP_QSPI
-#define CONFIG_ZYNQ_SDHCI0
-#define CONFIG_NAND_ARASAN
-
 #define CONFIG_CONS_INDEX		0
 #define CONFIG_BAUDRATE			115200
 #define CONFIG_SYS_BAUDRATE_TABLE \
 	{ 4800, 9600, 19200, 38400, 57600, 115200 }
+
+#define CONFIG_ZYNQMP_QSPI
+#define CONFIG_ZYNQ_SDHCI0
+#define CONFIG_NAND_ARASAN
 
 /* Command line configuration */
 #define CONFIG_CMD_ENV
@@ -144,10 +144,10 @@
 	"fdt_addr=0x7000000\0" \
 	"fdt_high=0x10000000\0" \
 	"sata_root=if test $scsidevs -gt 0; then setenv bootargs $bootargs root=/dev/sda rw rootfstype=ext4; fi\0" \
-	"veloce=fdt addr $fdt_addr && " \
-		"fdt set /amba/misc_clk clock-frequency <96000> && "\
-		"fdt set /amba_apu/timer clock-frequency <480000> && " \
-		"fdt set /amba/i2c_clk clock-frequency <480000> && " \
+	"veloce=fdt addr f000000 && " \
+		"fdt set /amba/misc_clk clock-frequency <48000> && "\
+		"fdt set /timer clock-frequency <240000> && " \
+		"fdt set /amba/i2c_clk clock-frequency <240000> && " \
 		"booti 80000 - f000000\0" \
 	"netboot=tftpboot 80000 Image && tftpboot $fdt_addr system.dtb && " \
 		 "booti 80000 - $fdt_addr\0" \

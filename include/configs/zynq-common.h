@@ -25,6 +25,11 @@
 # define CONFIG_SYS_PL310_BASE		0xf8f02000
 #endif
 
+#define ZYNQ_SCUTIMER_BASEADDR		0xF8F00600
+#define CONFIG_SYS_TIMERBASE		ZYNQ_SCUTIMER_BASEADDR
+#define CONFIG_SYS_TIMER_COUNTS_DOWN
+#define CONFIG_SYS_TIMER_COUNTER	(CONFIG_SYS_TIMERBASE + 0x4)
+
 /* Serial drivers */
 #define CONFIG_BAUDRATE		115200
 /* The following table includes the supported baudrates */
@@ -53,6 +58,10 @@
 # define CONFIG_PHYLIB
 # define CONFIG_PHY_MARVELL
 # define CONFIG_SYS_ENET
+# define CONFIG_BOOTP_SERVERIP
+# define CONFIG_BOOTP_BOOTPATH
+# define CONFIG_BOOTP_GATEWAY
+# define CONFIG_BOOTP_HOSTNAME
 # define CONFIG_BOOTP_MAY_FAIL
 # if !defined(CONFIG_ZYNQ_GEM_EMIO0)
 #  define CONFIG_ZYNQ_GEM_EMIO0	0
@@ -415,8 +424,6 @@
 #define CONFIG_OF_LIBFDT
 
 /* FIT support */
-#define CONFIG_FIT
-#define CONFIG_FIT_VERBOSE	1 /* enable fit_format_{error,warning}() */
 #define CONFIG_IMAGE_FORMAT_LEGACY /* enable also legacy image format */
 
 /* FDT support */
@@ -448,7 +455,9 @@
 #endif
 
 #if defined(CONFIG_CMD_ZYNQ_RSA)
-#define CONFIG_RSA
+# ifndef CONFIG_RSA
+#  define CONFIG_RSA
+# endif
 #define CONFIG_SHA256
 #define CONFIG_CMD_ZYNQ_AES
 #endif
