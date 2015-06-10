@@ -40,12 +40,6 @@ DECLARE_GLOBAL_DATA_PTR;
 
 int dram_init(void)
 {
-#ifndef CONFIG_RUN_ON_QEMU
-	s3ma_ddr_clock_enable();
-#ifndef CONFIG_PALLADIUM
-	s3ma_ddr_setup();
-#endif
-#endif
 	gd->ram_size = ((ulong)CONFIG_S3MA_RAM_SIZE);
 
 	return 0;
@@ -68,7 +62,7 @@ int board_mmc_init(bd_t *bis)
 	add_sdhci(host, 48000000, 48000000);
 #else
 	s3ma_sdhc_clk_enable();
-	add_sdhci(host, 0, 0);
+	add_sdhci(host, 48000000, 48000000/32);
 #endif
 	return 0;
 
@@ -138,12 +132,12 @@ int board_eth_init(bd_t *bis)
 }
 
 
-
 extern void platform_asfe_init(void);
 
 int board_early_init_f(void)
 {
 #ifdef CONFIG_AD9361
+
 	/* Init ASFE PA control GPIOs */
 //	platform_pa_bias_dis(0|ASFE_AD1_TX1_PA_BIAS|ASFE_AD1_TX2_PA_BIAS|ASFE_AD2_TX1_PA_BIAS|ASFE_AD2_TX2_PA_BIAS);
 	platform_asfe_init();
@@ -162,6 +156,10 @@ int overwrite_console(void)
 
 int board_init(void)
 {
+	/* Initialize CS lines on SPI4 */
+	s3ma_gpio33_set_value(CONFIG_SF_DEFAULT_CS, 1);
+	s3ma_gpio33_set_value(CONFIG_LT2640_DAC_CS, 1);
+
 	return 0;
 }
 
@@ -174,13 +172,13 @@ int checkboard(void)
 
 int misc_init_r(void)
 {
-	ulong env;
 
 #ifdef CONFIG_POST
 	writel(0, (CONFIG_SYS_POST_WORD_ADDR));
 #endif
 
 #ifdef CONFIG_LT2640_DAC
+	ulong env;
 	/* Initialize the DAC setting from saved env variable */
 	env = getenv_ulong("dac", 10, 0xFFFFFFFF);
 	if(env == 0xFFFFFFFF)
@@ -225,10 +223,9 @@ int spi_cs_is_valid(unsigned int bus, unsigned int cs)
 		/*TODO: Add AD9361 bus/cs checks here */
 
 	default:
-#ifdef CONFIG_AD9361
+		ret = 0;
 		if(bus < CONFIG_AD9361_MAX_DEVICE)
 			ret = 1;
-#endif
 		break;
 	}
 
@@ -243,7 +240,7 @@ void spi_cs_activate(struct spi_slave *slave)
 	case CONFIG_SF_DEFAULT_CS:
 		if (slave->bus == CONFIG_SF_DEFAULT_BUS)
 		{
-			gpio_set_value(slave->cs, 0);
+			s3ma_gpio33_set_value(slave->cs, 0);
 		}
 		break;
 #endif
@@ -251,7 +248,7 @@ void spi_cs_activate(struct spi_slave *slave)
 	case CONFIG_LT2640_DAC_CS:
 		if (slave->bus == CONFIG_LT2640_DAC_BUS)
 		{
-			gpio_set_value(slave->cs, 0);
+			s3ma_gpio33_set_value(slave->cs, 0);
 		}
 		break;
 #endif
@@ -268,7 +265,7 @@ void spi_cs_deactivate(struct spi_slave *slave)
 	case CONFIG_SF_DEFAULT_CS:
 		if (slave->bus == CONFIG_SF_DEFAULT_BUS)
 		{
-			gpio_set_value(slave->cs, 1);
+			s3ma_gpio33_set_value(slave->cs, 1);
 		}
 		break;
 #endif
@@ -276,7 +273,7 @@ void spi_cs_deactivate(struct spi_slave *slave)
 	case CONFIG_LT2640_DAC_CS:
 		if (slave->bus == CONFIG_LT2640_DAC_BUS)
 		{
-			gpio_set_value(slave->cs, 1);
+			s3ma_gpio33_set_value(slave->cs, 1);
 		}
 		break;
 #endif
@@ -310,5 +307,45 @@ void arch_memory_failure_handle(void)
 void udc_disconnect(void){}
 #endif
 
+int s3ma_dram_init(void)
+{
+#ifndef CONFIG_RUN_ON_QEMU
+	debug("Enabling DDR and PHY clocks\n");
+	s3ma_ddr_clock_enable();
+#ifndef CONFIG_PALLADIUM
+	debug("Setting up DDR ...\n");
+	s3ma_ddr_setup();
+#endif
+#endif
+	return 0;
+}
 
+
+int s3ma_gpio33_set_value(unsigned gpio, int value)
+{
+	int res = -1;
+
+	if((gpio >= GPIO33_0)&&(gpio <= GPIO33_7)){
+		res = 0;
+		if(value){
+			writel(1 << (gpio - GPIO33_0),ASFE_CONTROL_SET);
+		}
+		else{
+			writel(1 << (gpio - GPIO33_0),ASFE_CONTROL_RESET);
+		}
+	}
+
+	return res;
+}
+
+int s3ma_gpio33_get_value(unsigned gpio)
+{
+	int res = 0;
+	if((gpio >= GPIO33_0)&&(gpio <= GPIO33_7)){
+		res = readl(ASFE_CONTROL);
+		res &= 1 << (gpio - GPIO33_0);
+	}
+
+	return (!!res);
+}
 

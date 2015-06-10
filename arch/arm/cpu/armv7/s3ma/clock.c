@@ -37,12 +37,27 @@ void s3ma_setup_pll(void)
 
 	/* Initialize values for clock rates */
 	gd->cpu_clk = CONFIG_CPU_CLK_HZ;
-	gd->bus_clk = CONFIG_PERIPHCLK_HZ;
+	gd->bus_clk = CONFIG_APB_PERIPHCLK_HZ;
 }
 
 void s3ma_ddr_clock_enable(void)
 {
+	/* Enable clocks in the MRU */
 	clrbits_le32(CRT_CLK_DIS, DMC_DIS_BITMASK);
+	gd->mem_clk = CONFIG_CPU_CLK_HZ/4;
+#ifdef CONFIG_DDR_PHY_384
+	/* Select 384MHz clock vs. 192 MHz */
+	setbits_le32(DDR_CFG, DDR_PHY_CLK_SEL_BITMASK);
+	gd->mem_clk = CONFIG_CPU_CLK_HZ/2;
+#endif
+	/* Wait for DLL lock bit */
+	while(0 == (readl(PUBL_PGSR) & DLDONE_BITMASK));
+
+}
+
+void s3ma_ddr_clock_disable(void)
+{
+	setbits_le32(CRT_CLK_DIS, DMC_DIS_BITMASK);
 }
 
 void s3ma_ddr_phy_clk_sel_384(void)
@@ -60,6 +75,9 @@ void s3ma_ddr_phy_clk_sel_384(void)
 	clrbits_le32(CRT_CLK_DIS, (uint32_t)0x1 << (DMC_DIS_SHIFT + 2));// "ddr_phy_clk"
 	__udelay(1);
 
+	/* Wait for DLL lock bit */
+	while(0 == (readl(PUBL_PGSR) & DLDONE_BITMASK));
+
 	// mon_puts("  END CHANGE FREQUENCY OF DDR I/F: 192->384\n");
 }
 
@@ -76,6 +94,9 @@ void s3ma_ddr_phy_clk_sel_192(void)
 	// mon_puts("Enable clock to DDR I/F\n");
 	clrbits_le32(CRT_CLK_DIS, (uint32_t)0x1 << (DMC_DIS_SHIFT + 2)); // "ddr_phy_clk"
 	__udelay(1);
+
+	/* Wait for DLL lock bit */
+	while(0 == (readl(PUBL_PGSR) & DLDONE_BITMASK));
 
 //	mon_puts("  END CHANGE FREQUENCY OF DDR I/F: 384->192\n");
 }

@@ -15,7 +15,6 @@ SECTIONS
 	. = ALIGN(4);
 	.text :
 	{
-		*(.__image_copy_start)
 		*(.vectors)
 		CPUDIR/start.o (.text*)
 

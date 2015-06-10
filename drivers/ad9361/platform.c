@@ -48,6 +48,16 @@
 #include <ad9361/ad9361_api.h>
 #include <ad9361/util.h>
 
+#ifndef MAX_SPI_BYTES
+#   define MAX_SPI_BYTES 32	/* Maximum number of bytes we can handle */
+#endif
+
+#ifndef CONFIG_DEFAULT_SPI_BUS
+#   define CONFIG_DEFAULT_SPI_BUS	0
+#endif
+#ifndef CONFIG_DEFAULT_SPI_MODE
+#   define CONFIG_DEFAULT_SPI_MODE	SPI_MODE_1
+#endif
 
 /***************************************************************************//**
  * @brief usleep
@@ -84,13 +94,26 @@ int platform_spi_write_then_read(struct spi_device *spi,
 		unsigned char *rxbuf, unsigned n_rx)
 {
 	int rcode = 0;
-	struct spi_slave * slave = (struct spi_slave *)spi;
+	struct spi_slave * slave;
+	uint32_t bus = spi->dev.bus, cs = 0, mode = CONFIG_DEFAULT_SPI_MODE;
 
-	if(0 != spi_xfer(slave, n_tx*sizeof(*txbuf), txbuf, rxbuf,
-					SPI_XFER_BEGIN | SPI_XFER_END))
-	{
-		rcode = 1;
-	}
+	debug("%s:%d: SPI setup: bus = %d, cs = %d, mode = %d\n", __func__, __LINE__, bus, cs, mode);
+
+	slave = spi_setup_slave(bus, cs, 1000000, mode);
+	spi_claim_bus(slave);
+
+    if( (txbuf != NULL) && (n_tx > 0) ){
+     rcode = spi_xfer(slave, n_tx*sizeof(*txbuf)*8, txbuf, NULL,
+    					SPI_XFER_BEGIN | SPI_XFER_END);
+    }
+
+    if( (rxbuf != NULL) && (n_rx > 0) && (rcode == 0) ){
+        rcode = spi_xfer(slave, n_rx*sizeof(*rxbuf)*8,NULL, rxbuf,
+       					SPI_XFER_BEGIN | SPI_XFER_END);
+    }
+
+	spi_release_bus(slave);
+	spi_free_slave(slave);
 
 	return rcode;
 }
@@ -183,7 +206,7 @@ void platform_mdelay(unsigned long msecs)
 *******************************************************************************/
 unsigned long platform_msleep_interruptible(unsigned int msecs)
 {
-
+	platform_mdelay(msecs);
 	return 0;
 }
 
@@ -192,66 +215,76 @@ unsigned long platform_msleep_interruptible(unsigned int msecs)
 *******************************************************************************/
 void platform_axiadc_init(struct ad9361_rf_phy *phy)
 {
-	struct spi_slave *slave = (struct spi_slave *)phy->spi;
-	uint32_t bus = slave->bus;
+
+	uint32_t bus = phy->spi->dev.bus;
+
 	uint32_t val = 0;
 	uint32_t addr = 0;
-/*
- *	Enable RFIC interface I/O pads
- */
+
+	/*
+	 * Enable RF interface clocks
+	 */
+	clrbits_le32(CRT_RF_DIS, WFE_DIS_BITMASK);
+
+	/*
+	 *	Enable RFIC interface I/O pads
+	 */
 	/*
 	 * RF_IO_CTLx allows you to assert the PWRDN  and EXT_REF pins on the IO cells for each of the RFIC busses
 	 * Neither the RF_DriveX nor RF_IO_CTLx registers are initialized on a software reset.
 	 */
-
-	/*TODO: There is a discrepancy in the ASIC specification and include file. Correct bit names ?
-	 * Does _ENB mean we need to write 0 to activate or it's just a signal name?
+	/*
+	 * Bit0: RX_CM_EMF: LVDS receiver active high common mode enforcement'
+	 * Bit1: RX_REB:    LVDS receiver active high power down'
+	 * Bit2: TX_OEB:    LVDS driver active low output enable'
+	 * Bit3: TX_ENB:    LVDS driver active high power down'
+	 *
 	 */
+	debug("%s: Bus # 0x%x\n", __func__, bus);
 
-	addr = (RF_IO_CTL0) + bus*sizeof(val);
-	val  = (uint32_t)1 << RX_ENB_SHIFT;
-	val |= (uint32_t)1 << RX_OEB_SHIFT;
-	val |= (uint32_t)1 << RX_REB_SHIFT;
-	val |= (uint32_t)1 << RX_CM_EMF_SHIFT;
+	addr = (RF_IO_CTL0);
+
+	addr += 4*bus;
+	val = platform_axiadc_read(NULL,addr);
+	val &= ~(0|RX_REB_BITMASK|RX_OEB_BITMASK|RX_ENB_BITMASK);
+	val |= RX_CM_EMF_BITMASK;
 	platform_axiadc_write(NULL,addr,val);
 
-	/*TODO: There is nothing in the ASIC specification about how to control the drive strength
-	 * or what all fields mean. Let's just write all zeros
+
+	/*
+	 * For RF_DriveX LVDS drive strength mode: 0 = low current, 1 = high current
 	 */
 	addr = (RF_DRIVE0);
-	addr += bus*sizeof(val);
-	val = 0;
-	platform_axiadc_write(NULL,addr,val);
+
+	addr += 4*bus;
+	platform_axiadc_write(NULL,addr,0);
 
 /*
  *	Turn off RFIC RX/TX by driving control pins low
  */
-
 	val = (ENABLE0_BITMASK | TXNRX0_BITMASK) << (ENABLE1_SHIFT - ENABLE0_SHIFT)*bus;
-	platform_axiadc_write(NULL,(RF_CONTROL_RESET),val);
-
+	platform_axiadc_write(NULL, (RF_CONTROL_RESET), val);
 
 /*
  * 	Turn off RX/TX in RF_CONFIG register
  */
-	val = ~(RF_CONFIG_RX_ENABLE_BITMASK|RF_CONFIG_TX_ENABLE_BITMASK|RX_INTERRUPT_EN_BITMASK|TX_INTERRUPT_EN_BITMASK);
 
-	platform_axiadc_write(NULL,val,(RF_CONFIG));
+	platform_axiadc_write(NULL,(RF_CONFIG),0);
 
 /*
- *	clear enable bits for associated RX/TX Channels
+ *	clear all enable bits for RX/TX time slots
  */
-	val = ((1<< 2*bus)|(1 << (2*bus+1))) << RX_CH_ENABLE_SHIFT;
-	val |= val << TX_CH_ENABLE_SHIFT;
-	val = ~val;
-	platform_axiadc_write(NULL,(RF_CHANNEL_EN),val);
-/*
- * 	Initialize ADC sign bit location and shift
- * 	Keep the defaults for now
- */
-	val = (12 << SIGN_BIT0_SHIFT)|(4 << ROTATE0_SHIFT);
-	val <<= (SIGN_BIT1_SHIFT - SIGN_BIT0_SHIFT)*bus;
-	platform_axiadc_write(NULL,(AD_FORMAT),val);
+
+	platform_axiadc_write(NULL,(RF_CHANNEL_EN),0);
+
+	/* Multiplex time slots sequentially onto LVDS ports*/
+	platform_axiadc_write(NULL, (TX_SEL),0x76543210);
+
+	/* Make sure TX and RX shifts are initialized*/
+	platform_axiadc_write(NULL, (AD_FORMAT),0xb4b4b4b4);
+	platform_axiadc_write(NULL, (TX_TDM_FORMAT),0x44444444);
+	/* Select TX source for all time slots*/
+	platform_axiadc_write(NULL, TX_SOURCE, 0x55555555);
 
 }
 

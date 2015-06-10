@@ -55,6 +55,7 @@
 command cmd_list[] = {
 	{"help?", "Displays all available commands.", "", get_help},
 	{"register?", "Gets the specified register value.", "", get_register},
+	{"register=", "Sets the specified register value.", "", set_register},
 	{"aux_adc?", "Gets the AUX ADC value.", "", get_aux_adc},
 	{"aux_dac?", "Gets the AUX DAC1 or DAC2 value [mV].", "", get_aux_dac},
 	{"aux_dac=", "Sets the AUX DAC1 or DAC2 value [mV].", "", set_aux_dac},
@@ -86,8 +87,9 @@ command cmd_list[] = {
 	{"rx2_rf_gain=", "Sets the RX2 RF gain.", "", set_rx2_rf_gain},
 	{"rx_fir_en?", "Gets current RX FIR state.", "", get_rx_fir_en},
 	{"rx_fir_en=", "Sets the RX FIR state.", "", set_rx_fir_en},
-	{"tx_loopback_test","Runs DAC->ADC loopback test.","",tx_loopback_test},
+	{"tx_loopback_test=","Runs DAC->ADC loopback test.","",tx_loopback_test},
 	{"asic_loopback_test_en=","Enables/Disables ADC->DAC loopback test.","",set_asfe_loopback_test},
+	{"bist_loopback_en=","Enables/Disables DAC->ADC data ports loopback.","",bist_loopback},
 
 #if 0
 	{"dds_tx1_tone1_freq?", "Gets current DDS TX1 Tone 1 frequency [Hz].", "", get_dds_tx1_tone1_freq},
@@ -152,7 +154,7 @@ void get_help(double* param, char param_no) // "help?" command
 }
 
 /**************************************************************************//***
- * @brief Displays all available commands.
+ * @brief Gets the specified register value.
  *
  * @return None.
 *******************************************************************************/
@@ -163,7 +165,7 @@ void get_register(double* param, char param_no) // "register?" command
 
 	if(param_no >= 1)
 	{
-		reg_addr = param[0];
+		reg_addr = (uint16_t)param[0];
 		reg_val = ad9361_spi_read(ad9361_phy->spi, reg_addr);
 		console_print("register[0x%x]=0x%x\n", reg_addr, reg_val);
 	}
@@ -171,6 +173,27 @@ void get_register(double* param, char param_no) // "register?" command
 		show_invalid_param_message(1);
 }
 
+/**************************************************************************//***
+ * @brief Sets the specified register value.
+ *
+ * @return None.
+*******************************************************************************/
+void set_register(double* param, char param_no)
+{
+	uint16_t reg_addr;
+	uint8_t reg_val;
+
+	if(param_no >= 2)
+	{
+		reg_addr = (uint16_t)param[0];
+		reg_val = (uint8_t)param[1];
+		ad9361_spi_write(ad9361_phy->spi, reg_addr, reg_val);
+		console_print("register[0x%x]=0x%x\n", reg_addr, reg_val);
+	}
+	else
+		show_invalid_param_message(1);
+
+}
 /**************************************************************************//***
  * @brief Gets current TX LO frequency [MHz].
  *
@@ -629,6 +652,54 @@ void set_rx_fir_en(double* param, char param_no) // "rx_fir_en=" command
 }
 
 /**************************************************************************//***
+ * @brief Enables/disables DAC->ADC loopback test
+ *
+ * @return None.
+*******************************************************************************/
+void bist_loopback(double* param, char param_no)
+{
+	int32_t		status = 0;
+	uint32_t    en_dis = 0;
+
+	if(NULL == ad9361_phy)
+	{
+		console_print("%s: ad9361_phy structure is invalid\n",__func__);
+		return;
+	}
+
+	if(param_no >= 1)
+	{
+		en_dis = param[0];
+		/* Turn AD9361 loopback mode on */
+		status = ad9361_bist_loopback(ad9361_phy, en_dis);
+	}
+	else
+	{
+		show_invalid_param_message(1);
+		status = -1;
+	}
+
+
+	if(status)
+	{
+		console_print("%s: Failed to setup tx->rx loopback mode\n", __func__);
+		return;
+	}
+
+	if(en_dis)
+	{
+		console_print("BIST loopback mode is on\n");
+
+	}
+	else
+	{
+		console_print("BIST loopback mode is off\n");
+
+	}
+
+
+}
+/**************************************************************************//***
  * @brief Runs DAC->ADC loopback test
  *
  * @return None.
@@ -636,16 +707,20 @@ void set_rx_fir_en(double* param, char param_no) // "rx_fir_en=" command
 void tx_loopback_test(double* param, char param_no)
 {
 	uint32_t 	bus = 0;
-	uint32_t	*test_buf = (uint32_t*)CONFIG_AD9361_RAM_BUFFER_ADDR;
-	uint32_t	num_samples = 8192;
+	uint8_t	    *test_buf = (uint8_t*)CONFIG_AD9361_RAM_BUFFER_ADDR;
+	uint32_t	num_samples = 32;
 	uint32_t	i,j;
 	uint32_t	adc_rotate = 0;
-	uint16_t	pattern[] = {0x0000, 0xffff, 0xaaaa, 0x5555};
+	uint32_t    tx_shift = 0;
+	uint32_t	pattern[] = {0x00000000, 0xfff0fff0, 0xaaa0aaa0, 0x55505550,
+							 0x82008200, 0x41004100, 0x20802080, 0x10401040,
+							 0x08200820,0x04100410,0xaaa05550,0x12304560,0xded0bef0};
 	int32_t		status = 0;
+	uint32_t    val;
 
 	if(NULL != ad9361_phy)
 	{
-		bus = ((struct spi_slave *)ad9361_phy->spi)->bus;
+		bus = ad9361_phy->spi->dev.bus;
 	}
 	else
 	{
@@ -654,7 +729,14 @@ void tx_loopback_test(double* param, char param_no)
 	}
 
 	adc_rotate = platform_axiadc_read(NULL, (AD_FORMAT));
-	adc_rotate = (adc_rotate >> (8 * bus)) & ROTATE0_BITMASK;
+	debug("original adc_rotate register value = %x\n", adc_rotate);
+	adc_rotate = (adc_rotate >> (8 * bus)) & (ROTATE0_BITMASK);
+	debug("adc_rotate value after shift= %x\n", adc_rotate);
+
+	tx_shift = platform_axiadc_read(NULL, (TX_TDM_FORMAT));
+	debug("original tx_shift register value = %x\n", tx_shift);
+	tx_shift  = (tx_shift >> (8 * bus)) & (SLOT0_SHIFT_BITMASK);
+	debug("tx_shift value = %x\n", tx_shift);
 
 	/* Turn AD9361 loopback mode on */
 	status = ad9361_bist_loopback(ad9361_phy, 1);
@@ -663,72 +745,106 @@ void tx_loopback_test(double* param, char param_no)
 		console_print("%s: Failed to setup tx->rx loopback mode\n", __func__);
 		return;
 	}
+    do{
 
-	for (i = 0; i < ARRAY_SIZE((pattern)); i++)
-	{
-		/* Fill TX buffer with pattern
-		 * TODO:
-		 * It's unclear from ASIC spec which way TX samples are going to be shifted
-		 * ADC samples are rotated left, so it would be logical to assume that
-		 * TX samples are shifted right
-		 */
-		uint16_t	*tx_ptr = (uint16_t*)&test_buf[0];
-		uint16_t	*rx_ptr = (uint16_t*)test_buf[num_samples];
+    	for (i = 0; i < ARRAY_SIZE((pattern)); i++)
+    	{
+    		/* Fill TX buffer with pattern
+    		 * TODO:
+    		 * It's unclear from ASIC spec which way TX samples are going to be shifted
+    		 * ADC samples are rotated left, so it would be logical to assume that
+    		 * TX samples are shifted right
+    		 */
+    		uint16_t	*tx_ptr = (uint16_t*)&test_buf[0];
+    		uint16_t	*rx_ptr = (uint16_t*)&test_buf[CONFIG_AD9361_RAM_BUFFER_SIZE];
 
-		for(j = 0; j < num_samples*2; j++)
-		{
-			tx_ptr[j] = pattern[i];
-		}
-		console_print("Trying pattern %x\n", pattern[i]);
+    		memset(&test_buf[0], 0xbb, CONFIG_S3MA_OCM_RAM_SIZE);
 
-		/* Setup TX DMA registers */
-		platform_axiadc_write(NULL, RF_WRITE_BASE, (uint32_t)&test_buf[0]);
-		platform_axiadc_write(NULL, RF_WRITE_TOP, (uint32_t)&test_buf[num_samples-1]);
-		platform_axiadc_write(NULL, RF_WRITE_COUNT, num_samples);
+    		for(j = 0; j < num_samples; j++)
+    		{
+    			((uint32_t*)tx_ptr)[j] = pattern[i];
+    		}
+    		console_print("Trying pattern %x\n", pattern[i]);
 
-		/* Setup RX DMA registers */
-		platform_axiadc_write(NULL, RF_READ_BASE, (uint32_t)&test_buf[num_samples]);
-		platform_axiadc_write(NULL, RF_READ_TOP, (uint32_t)&test_buf[2*num_samples-1]);
-		platform_axiadc_write(NULL, RF_READ_COUNT, num_samples);
+    		/* Setup TX DMA registers */
+    		val = (uint32_t)tx_ptr;
+    		val -= CONFIG_AD9361_RAM_BUFFER_ADDR;
+    		debug("RF_READ_BASE setting to %x\n",val);
+    		platform_axiadc_write(NULL, RF_READ_BASE, val);
+    		debug("RF_READ_BASE is %x\n",platform_axiadc_read(NULL, RF_READ_BASE));
 
-		/* Select both channels for TX and RX*/
-		platform_axiadc_write(NULL, RF_CHANNEL_EN, ((0x3 << RX_CH_ENABLE_SHIFT)|(0x3 << TX_CH_ENABLE_SHIFT)) << bus);
-		/* Select TX source */
-		platform_axiadc_write(NULL, TX_SOURCE, (0x55  << bus));
-		/* Enable transfer */
-		platform_axiadc_write(NULL, RF_CONFIG, RF_CONFIG_RX_ENABLE_BITMASK|RF_CONFIG_TX_ENABLE_BITMASK);
+    		val += num_samples*sizeof(uint32_t);
+    		debug("RF_READ_TOP setting to %x\n",val);
+    		platform_axiadc_write(NULL, RF_READ_TOP, val);
+    		debug("RF_READ_TOP is %x\n",platform_axiadc_read(NULL, RF_READ_TOP));
 
-		/* Wait for transfer to complete  */
-		while(platform_axiadc_read(NULL,RF_READ_COUNT_AXI) >0x0)
-		{
-			/* TODO:May want to add a timeout check here in case transfer never completes */
-		}
+    		platform_axiadc_write(NULL, RF_READ_COUNT, 8*num_samples);
+    		debug("RF_READ_COUNT is %x\n",platform_axiadc_read(NULL, RF_READ_COUNT));
 
-		/* Disable transfer */
-		platform_axiadc_write(NULL, RF_CONFIG, ~(RF_CONFIG_RX_ENABLE_BITMASK|RF_CONFIG_TX_ENABLE_BITMASK));
+    		/* Setup RX DMA registers */
+    		val = (uint32_t)rx_ptr;
+    		val -= CONFIG_AD9361_RAM_BUFFER_ADDR;
 
-		/* Compare buffers and identify errors along with associated channel */
-		status = 0;
+    		debug("RF_WRITE_BASE setting to %x\n",val);
+    		platform_axiadc_write(NULL, RF_WRITE_BASE, (uint32_t)val);
+    		debug("RF_WRITE_BASE is %x\n",platform_axiadc_read(NULL,RF_WRITE_BASE));
 
-		for(j = 0; j < num_samples*2; j++)
-		{
-			if((tx_ptr[j] >> adc_rotate) != (rx_ptr[j] >> adc_rotate))
-			{
-				console_print("Error in sample %d: tx_sample= 0x%x rx_sample= 0x%x\n", j/2, tx_ptr[j] >> adc_rotate, rx_ptr[j] >> adc_rotate);
-				status = 1;
-			}
-		}
+    		val += num_samples*sizeof(uint32_t);
+    		debug("RF_WRITE_TOP setting to %x\n",val);
+    		platform_axiadc_write(NULL, RF_WRITE_TOP, val);
+    		debug("RF_WRITE_TOP is %x\n",platform_axiadc_read(NULL,RF_WRITE_TOP));
 
-		if(status)
-		{
-			console_print("Pattern %x test: FAIL\n", pattern[i]);
-		}
-		else
-		{
-			console_print("Pattern %x test: PASS\n", pattern[i]);
+    		platform_axiadc_write(NULL, RF_WRITE_COUNT, 4*num_samples);
+    		debug("RF_WRITE_COUNT is %x\n",platform_axiadc_read(NULL,RF_WRITE_COUNT));
 
-		}
-	}
+    		/* Select both channels for TX and RX*/
+    		platform_axiadc_write(NULL,
+    							 RF_CHANNEL_EN,
+    				             ((0x3 << RX_CH_ENABLE_SHIFT)|(0x3 << TX_CH_ENABLE_SHIFT)) << (2*bus));
+
+    		debug("RF_CHANNEL_EN = 0x%x\n",platform_axiadc_read(NULL,RF_CHANNEL_EN));
+
+    		/* Select TX source */
+    		platform_axiadc_write(NULL, TX_SOURCE, 0x55555555);
+    		debug("TX_SOURCE = 0x%x\n",platform_axiadc_read(NULL,TX_SOURCE));
+
+    		/* Enable transfer */
+    		platform_axiadc_write(NULL, RF_CONFIG, RF_CONFIG_RX_ENABLE_BITMASK|RF_CONFIG_TX_ENABLE_BITMASK);
+
+    		/* Wait for transfer to complete  */
+    		while(platform_axiadc_read(NULL,RF_WRITE_COUNT_AXI) > 0x0)
+    		{
+    			/* TODO:May want to add a timeout check here in case transfer never completes */
+    		}
+
+    		/* Disable transfer */
+    		platform_axiadc_write(NULL, RF_CONFIG, 0);
+    		platform_axiadc_write(NULL,(RF_CHANNEL_EN),0);
+
+    		status = 0;
+
+    		for(j = 0; j < num_samples*2; j++)
+    		{
+    			if((tx_ptr[j] >> tx_shift) != (rx_ptr[j] >> adc_rotate))
+    			{
+    				console_print("Error in sample %d: tx_sample= 0x%x rx_sample= 0x%x\n", j/2, tx_ptr[j] >> adc_rotate, rx_ptr[j] >> adc_rotate);
+    				status = 1;
+    			}
+    		}
+    		if(status)
+    		{
+    			console_print("Pattern %x test: FAIL\n", pattern[i]);
+    		}
+    		else
+    		{
+    			console_print("Pattern %x test: PASS\n", pattern[i]);
+
+    		}
+    	}
+
+//    }while(!ctrlc());
+    }while(0);
+
 }
 /**************************************************************************//***
  * @brief Enables/Disables ADC->DAC loopback test

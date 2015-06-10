@@ -52,7 +52,7 @@
 /******************************************************************************/
 const AD9361_InitParam default_init_param = {
 	/* Reference Clock */
-	40000000UL,	//reference_clk_rate
+	38400000UL,	//reference_clk_rate
 	/* Base Configuration */
 	1,		//two_rx_two_tx_mode_enable *** adi,2rx-2tx-mode-enable
 	1,		//frequency_division_duplex_mode_enable *** adi,frequency-division-duplex-mode-enable
@@ -78,8 +78,10 @@ const AD9361_InitParam default_init_param = {
 	2400000000UL,	//rx_synthesizer_frequency_hz *** adi,rx-synthesizer-frequency-hz
 	2400000000UL,	//tx_synthesizer_frequency_hz *** adi,tx-synthesizer-frequency-hz
 	/* Rate & BW Control */
-	{983040000, 245760000, 122880000, 61440000, 30720000, 30720000},//uint32_t	rx_path_clock_frequencies[6] *** adi,rx-path-clock-frequencies
-	{983040000, 122880000, 122880000, 61440000, 30720000, 30720000},//uint32_t	tx_path_clock_frequencies[6] *** adi,tx-path-clock-frequencies
+//	{983040000, 245760000, 122880000, 61440000, 30720000, 30720000},//uint32_t	rx_path_clock_frequencies[6] *** adi,rx-path-clock-frequencies
+//	{983040000, 122880000, 122880000, 61440000, 30720000, 30720000},//uint32_t	tx_path_clock_frequencies[6] *** adi,tx-path-clock-frequencies
+	{1228800000, 307200000, 153600000, 76800000, 38400000, 38400000},
+	{1228800000, 307200000, 153600000, 76800000, 38400000, 38400000},
 	18000000,//rf_rx_bandwidth_hz *** adi,rf-rx-bandwidth-hz
 	18000000,//rf_tx_bandwidth_hz *** adi,rf-tx-bandwidth-hz
 	/* RF Port Control */
@@ -225,8 +227,8 @@ const AD9361_InitParam default_init_param = {
 	0,		//delay_rx_data *** adi,delay-rx-data
 	0,		//rx_data_clock_delay *** adi,rx-data-clock-delay
 	4,		//rx_data_delay *** adi,rx-data-delay
-	7,		//tx_fb_clock_delay *** adi,tx-fb-clock-delay
-	0,		//tx_data_delay *** adi,tx-data-delay
+	0,		//tx_fb_clock_delay *** adi,tx-fb-clock-delay
+	5,		//tx_data_delay *** adi,tx-data-delay
 	150,	//lvds_bias_mV *** adi,lvds-bias-mV
 	1,		//lvds_rx_onchip_termination_enable *** adi,lvds-rx-onchip-termination-enable
 	0,		//rx1rx2_phase_inversion_en *** adi,rx1-rx2-phase-inversion-enable
@@ -314,7 +316,7 @@ static struct axiadc_chip_info axiadc_chip_info_tbl[] =
  * @return A structure that contains the AD9361 current state in case of
  *         success, negative error code otherwise.
  */
-struct ad9361_rf_phy *ad9361_init (AD9361_InitParam *init_param, struct spi_device * spi_dev)
+struct ad9361_rf_phy *ad9361_init (const AD9361_InitParam *init_param, uint32_t bus)
 {
 	struct ad9361_rf_phy *phy;
 	int32_t ret = 0;
@@ -355,7 +357,7 @@ struct ad9361_rf_phy *ad9361_init (AD9361_InitParam *init_param, struct spi_devi
 	phy->clk_refin->rate = init_param->reference_clk_rate;
 
 	/* SPI interface */
-	phy->spi = spi_dev;
+	phy->spi->dev.bus = bus;
 
 	if(NULL == init_param)
 		init_param = &default_init_param;
@@ -598,11 +600,12 @@ struct ad9361_rf_phy *ad9361_init (AD9361_InitParam *init_param, struct spi_devi
 
 	ad9361_reset(phy);
 	ad9361_spi_write(phy->spi, REG_SPI_CONF, SOFT_RESET | _SOFT_RESET);
+	platform_mdelay(1);
 	ad9361_spi_write(phy->spi, REG_SPI_CONF, 0x0);
 
 	ret = ad9361_spi_read(phy->spi, REG_PRODUCT_ID);
 	if ((ret & PRODUCT_ID_MASK) != PRODUCT_ID_9361) {
-		printf("%s : Unsupported PRODUCT_ID 0x%X", "ad9361_init", (unsigned int)ret);
+		printf("%s : Unsupported PRODUCT_ID 0x%X\n", "ad9361_init", (unsigned int)ret);
 		ret = -ENODEV;
 		goto out;
 	}
@@ -637,7 +640,7 @@ out:
 	free(phy);
 	printf("%s : AD9361 initialization error\n", "ad9361_init");
 
-	return (struct ad9361_rf_phy *)ERR_PTR(ENODEV);
+	return (struct ad9361_rf_phy *)NULL;
 }
 
 /**

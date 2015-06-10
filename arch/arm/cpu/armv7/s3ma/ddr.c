@@ -37,7 +37,7 @@ static int s3ma_init_dmc_main(void)				// TODO: turn into separate LPDDR2_200 an
 	// -------------------------------
 
 	// simple check to make sure we can talk to DMC (if fail, stop immediately as no point in continuing)
-	if(readl(MEMC_CONFIG != 0x03111200))
+	if(0x03111200 != readl(MEMC_CONFIG))
 	{
 		return -1;
 	}
@@ -131,7 +131,7 @@ static int s3ma_init_phy_main(void)
 	// -------------------------------
 	// Initial Error Checking
 	// -------------------------------
-	if(readl(PUBL_RIDR != 0x0020020b))
+	if(0x0020020b != readl(PUBL_RIDR))
 	{
 		return -1;
 	}
@@ -212,20 +212,27 @@ void s3ma_ddr_setup(void)
 {
 	int status = 0;
 
-	status = s3ma_init_dmc_main();
+	do{
+		status = s3ma_init_dmc_main();
 
-	if(0 != status)
-	{
-		//Report an error here
-	}
+		if(0 != status)
+		{
+			//Report an error here
+			debug("%s:%d: Could not initialize DMC, error %d\n", __func__, __LINE__, status);
+			break;
+		}
 
-	status = s3ma_init_phy_main();
+		status = s3ma_init_phy_main();
+		if(0 != status)
+		{
+			//Report an error here
+			debug("%s:%d: Could not initialize DDR PHY, error %d\n", __func__, __LINE__, status);
+			break;
+		}
 
-	if(0 != status)
-	{
-		//Report an error here
-	}
-
+		debug("Trying to access DDR space\n");
+		debug("%x:%x\n",0x80000000, *((uint32_t*)0x80000000));
+	}while(0);
 }
 
 
