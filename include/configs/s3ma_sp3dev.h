@@ -19,7 +19,7 @@
 /* Simulation in RTL */
 //#define CONFIG_RTL_SIMULATION
 /* Simulation on palladium */
-#define CONFIG_PALLADIUM
+//#define CONFIG_PALLADIUM
 
 /* Cache settings */
 #define CONFIG_SYS_ICACHE_OFF
@@ -35,6 +35,7 @@
 #define CONFIG_S3MA_I2C
 #define CONFIG_S3MA_SPI
 #define CONFIG_S3MA_USB
+#define CONFIG_S3MA_DAC
 #define CONFIG_CMD_DFU /* firmware download gadget */
 //#define CONFIG_S3MA_AD9361
 
