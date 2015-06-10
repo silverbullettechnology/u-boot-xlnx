@@ -23,4 +23,5 @@ obj-y += input/
 # SOC specific infrastructure drivers.
 obj-y += soc/
 obj-y += thermal/
+obj-y += dac/
 obj-$(CONFIG_AD9361) += ad9361/
