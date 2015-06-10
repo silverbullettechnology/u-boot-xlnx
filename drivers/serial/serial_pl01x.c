@@ -284,7 +284,7 @@ __weak struct serial_device *default_serial_console(void)
 
 int secondary_pl01x_serial_init(void)
 {
-	pl01x_serial_init_baud(CONFIG_BAUDRATE);
+	pl01x_serial_init_baud(base2_regs, CONFIG_BAUDRATE);
 
 	return 0;
 }
@@ -316,7 +316,7 @@ static int secondary_pl01x_serial_tstc(void)
 	return pl01x_tstc(base2_regs);
 }
 
-static void pl01x_serial_setbrg(void)
+static void secondary_pl01x_serial_setbrg(void)
 {
 	/*
 	 * Flush FIFO and wait for non-busy before changing baudrate to avoid
@@ -334,7 +334,7 @@ static struct serial_device secondary_pl01x_serial_drv = {
 	.name	= "pl01x_uart",
 	.start	= secondary_pl01x_serial_init,
 	.stop	= NULL,
-	.setbrg	= NULL,
+	.setbrg	= secondary_pl01x_serial_setbrg,
 	.putc	= secondary_pl01x_serial_putc,
 	.puts	= default_serial_puts,
 	.getc	= secondary_pl01x_serial_getc,
