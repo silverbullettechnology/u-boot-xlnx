@@ -125,7 +125,9 @@ int board_eth_init(bd_t *bis)
 #ifdef CONFIG_USB_GADGET_S3C_UDC_OTG
 
 	/* For otg ethernet*/
+#ifdef CONFIG_USB_ETHER
 	usb_eth_initialize(bis);
+#endif
 	return s3c_udc_probe(&s3ma_otg_data);
 #endif
 	return 0;

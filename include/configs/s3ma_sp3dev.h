@@ -34,7 +34,7 @@
 #define CONFIG_S3MA_SERIAL_UART0
 #define CONFIG_S3MA_I2C
 #define CONFIG_S3MA_SPI
-#define CONFIG_S3MA_USB
+//#define CONFIG_S3MA_USB
 #define CONFIG_S3MA_DAC
 #define CONFIG_CMD_DFU /* firmware download gadget */
 //#define CONFIG_S3MA_AD9361
