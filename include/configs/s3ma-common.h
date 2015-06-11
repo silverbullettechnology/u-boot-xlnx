@@ -182,7 +182,9 @@
 /* 1.5MHz */
 //# define CONFIG_BAUDRATE			1209448  /* 1524KHz current baudrate*/
 /* 1.7MHz */
-# define CONFIG_BAUDRATE			2123502  /* 1736KHz current baudrate*/
+//# define CONFIG_BAUDRATE			2123502  /* 1736KHz current baudrate*/
+/* 1.9MHz */
+# define CONFIG_BAUDRATE			1887557 /* 1953KHz current baudrate */
 #else
 # define CONFIG_BAUDRATE			115200
 #endif
@@ -197,8 +199,7 @@
 # define CONFIG_SYS_I2C
 # define CONFIG_SYS_I2C_DW
 # define CONFIG_SYS_I2C_SPEED		(1000)
-//# define CONFIG_SYS_I2C_BASE		(I2C_APB_ABSOLUTE_BASE)
-# define CONFIG_SYS_I2C_BASE		0x080A0000
+# define CONFIG_SYS_I2C_BASE		(I2C_APB_ABSOLUTE_BASE)
 # define CONFIG_SYS_I2C_SLAVE		0x90
 #endif
 
