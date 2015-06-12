@@ -40,8 +40,8 @@ DECLARE_GLOBAL_DATA_PTR;
 
 int dram_init(void)
 {
+	s3ma_dram_init();
 	gd->ram_size = ((ulong)CONFIG_S3MA_RAM_SIZE);
-
 	return 0;
 }
 

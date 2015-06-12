@@ -46,8 +46,10 @@ static int s3ma_init_dmc_main(void)				// TODO: turn into separate LPDDR2_200 an
 	// Send DMC to CONFIG State
 	// -------------------------------
 
-	writel(0x00000000,MEMC_CMD);				// Waiting until DMC is in config status
-	while(readl(MEMC_STATUS) != 0);
+	if(readl(MEMC_STATUS) != 0) {
+		writel(0x00000000,MEMC_CMD);				// Waiting until DMC is in config status
+		while(readl(MEMC_STATUS) != 0);
+	}
 
 
 	// -------------------------------
