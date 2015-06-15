@@ -191,6 +191,7 @@ obj-$(CONFIG_CMD_SPL) += cmd_spl.o
 obj-$(CONFIG_CMD_ZIP) += cmd_zip.o
 obj-$(CONFIG_CMD_ZFS) += cmd_zfs.o
 obj-$(CONFIG_CMD_ZYNQ_RSA) += cmd_zynq_rsa.o
+obj-$(CONFIG_CMD_DAC) += cmd_dac.o
 
 # others
 obj-$(CONFIG_BOOTSTAGE) += bootstage.o

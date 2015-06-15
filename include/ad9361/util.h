@@ -79,13 +79,13 @@
 #define pr_warning					printf
 
 
-struct device {
+struct ad9361_device {
 	uint32_t  bus;
 };
 
 
 struct spi_device {
-	struct device dev;
+	struct ad9361_device dev;
 };
 
 struct axiadc_state {
