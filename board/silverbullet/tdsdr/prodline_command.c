@@ -163,7 +163,7 @@ void rf_loopback_test(char (*param)[50], char param_no){
 
 		//prodline_RF_loopback_test(RSSI_UPPER,RSSI_LOWER, arg1, arg2, arg3, freq);
 	}else{
-		printf("\r\nInvalid number of arguments; expected 4. Example usage to test all channels:\r\n'asfe_rf_loopback 2 2 2 800'\r\nFirst argument is the desired AD9361 to test, 0:ADI1, 1:ADI2, 2:both.\r\nSecond argument is the desired TX/RX paths AD9361 to test, 0:TX1/RX1, 1:TX2/RX2, 2:both.\r\n");}
+		printf("\r\nInvalid number of arguments; expected 2. Example usage to test all channels:\r\n'bist prl 2 2'\r\nFirst argument is the desired AD9361 to test, 0:ADI1, 1:ADI2, 2:both.\r\nSecond argument is the desired TX/RX paths AD9361 to test, 0:TX1/RX1, 1:TX2/RX2, 2:both.\r\n");}
 }
 
 void memory_test(char (*param)[50], char param_no){

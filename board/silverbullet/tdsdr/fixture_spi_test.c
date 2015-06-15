@@ -264,6 +264,13 @@ int program_lmk(char *image)
 		uwire_program_register(&Gpio, active_reg);
 	}
 
+	//double program as specified in documentation	
+	for(i=0;i<REGISTER_BUFFER_SIZE;i++){
+		
+		active_reg = lmk_register_buffer[i];
+		uwire_program_register(&Gpio, active_reg);
+	}
+
 	printf("Back to menu.\r\n");
 }
 

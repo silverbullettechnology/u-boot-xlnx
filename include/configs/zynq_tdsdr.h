@@ -134,7 +134,10 @@
 		"sf write ${devicetree_load_address} ${devicetree_qspi_offset} ${filesize}\0"  \
 	"loadbist="                                                         \
 		"mmc dev ${sdio_dev} && "                                                 \
-		"fatload mmc ${sdio_dev} 0x100000 tdsdr_bist_app.img && bootm 0x100000\0"                         \
+		"fatload mmc ${sdio_dev} 0x100000 system_top_bist.bit.bin && " \
+		"fpga load 0 0x100000 ${filesize} && " \
+		"fatload mmc ${sdio_dev} 0x100000 tdsdr_bist_app.img && " \
+		"bootm 0x100000\0"                         \
 	"bist="                                                             \
 		"run loadbist && "                                              \
 		"go 0x100000 \0"                                                \
