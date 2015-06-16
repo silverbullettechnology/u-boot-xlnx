@@ -37,7 +37,7 @@
 //#define CONFIG_S3MA_USB
 #define CONFIG_S3MA_DAC
 //#define CONFIG_CMD_DFU /* firmware download gadget */
-#define CONFIG_S3MA_AD9361
+//#define CONFIG_S3MA_AD9361
 
 #define CONFIG_AD9361_MAX_DEVICE 4
 
