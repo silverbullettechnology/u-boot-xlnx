@@ -50,9 +50,10 @@ void s3ma_ddr_clock_enable(void)
 	setbits_le32(DDR_CFG, DDR_PHY_CLK_SEL_BITMASK);
 	gd->mem_clk = CONFIG_CPU_CLK_HZ/2;
 #endif
+#ifndef CONFIG_PALLADIUM
 	/* Wait for DLL lock bit */
 	while(0 == (readl(PUBL_PGSR) & DLDONE_BITMASK));
-
+#endif
 }
 
 void s3ma_ddr_clock_disable(void)
