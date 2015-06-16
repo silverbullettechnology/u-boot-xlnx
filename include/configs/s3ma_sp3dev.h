@@ -11,7 +11,7 @@
 #define __CONFIG_H
 
 /* Custom build options for debugging  */
-#define DEBUG
+//#define DEBUG
 //#define CONFIG_DEBUG_BUILD
 //#define CONFIG_RUN_ON_QEMU
 //#define CONFIG_MMC_TRACE
@@ -29,7 +29,7 @@
 /* Enable peripheral options */
 
 #define CONFIG_S3MA_GPIO
-//#define CONFIG_S3MA_SDHCI0
+#define CONFIG_S3MA_SDHCI0
 //#define CONFIG_S3MA_FUSE
 #define CONFIG_S3MA_SERIAL_UART0
 #define CONFIG_S3MA_I2C
@@ -37,7 +37,7 @@
 //#define CONFIG_S3MA_USB
 #define CONFIG_S3MA_DAC
 //#define CONFIG_CMD_DFU /* firmware download gadget */
-//#define CONFIG_S3MA_AD9361
+#define CONFIG_S3MA_AD9361
 
 #define CONFIG_AD9361_MAX_DEVICE 4
 

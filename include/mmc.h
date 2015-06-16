@@ -12,6 +12,7 @@
 
 #include <linux/list.h>
 #include <linux/compiler.h>
+#include <common.h>
 #include <part.h>
 
 /* SD/MMC version bits; 8 flags, 8 major, 8 minor, 8 change */

@@ -74,8 +74,9 @@
 /*
  * Memory configurations
  */
+#define PHYS_SDRAM		       		(DMC_S_ABSOLUTE_BASE)
 #define CONFIG_NR_DRAM_BANKS		1
-#define CONFIG_SYS_SDRAM_BASE		0x80000000
+#define CONFIG_SYS_SDRAM_BASE		(PHYS_SDRAM)
 #define CONFIG_SYS_SDRAM_SIZE		CONFIG_S3MA_RAM_SIZE
 #define CONFIG_SYS_TEXT_BASE	    0x00000000
 #define CONFIG_S3MA_OCM_RAM_BASE		(OCM_S_ABSOLUTE_BASE)
@@ -84,13 +85,12 @@
 #define CONFIG_SYS_MALLOC_LEN		(1 * 1024 * 1024)
 #define CONFIG_SYS_FALLBACK_MALLOC_LEN		(32 * 1024)
 
-#define CONFIG_SYS_INIT_RAM_ADDR	(CONFIG_S3MA_OCM_RAM_BASE + CONFIG_S3MA_OCM_RAM_SIZE) //Use upper half of OCM
-#define CONFIG_SYS_INIT_RAM_SIZE	0x2000
+#define CONFIG_SYS_INIT_RAM_ADDR	(CONFIG_S3MA_OCM_RAM_BASE)
+#define CONFIG_SYS_INIT_RAM_SIZE	(CONFIG_S3MA_OCM_RAM_SIZE)
 #define CONFIG_SYS_INIT_SP_OFFSET \
 	(CONFIG_SYS_INIT_RAM_SIZE - GENERATED_GBL_DATA_SIZE)
-#define CONFIG_SYS_INIT_SP_ADDR					\
-	(CONFIG_SYS_INIT_RAM_ADDR + CONFIG_SYS_INIT_RAM_SIZE -	\
-	GENERATED_GBL_DATA_SIZE)
+#define CONFIG_SYS_INIT_SP_ADDR	\
+	(CONFIG_SYS_INIT_RAM_ADDR + CONFIG_SYS_INIT_SP_OFFSET)
 
 /* Memory test commands */
 #define CONFIG_CMD_MEMTEST
@@ -101,7 +101,7 @@
 /*
  * Standalone applications
  */
-#define CONFIG_STANDALONE_LOAD_ADDR	CONFIG_SYS_SDRAM_BASE
+#define CONFIG_STANDALONE_LOAD_ADDR	   0x80100000
 #define CONFIG_LOADADDR			       CONFIG_SYS_SDRAM_BASE
 #define CONFIG_SYS_LOAD_ADDR	       CONFIG_LOADADDR
 //#define CONFIG_API
@@ -122,9 +122,7 @@
 #ifndef CONFIG_SYS_L2CACHE_OFF
 #define CONFIG_CMD_CACHE
 #define CONFIG_SYS_L2_PL310
-// TODO: The below compiles to the wrong address, why?
-//#define CONFIG_SYS_PL310_BASE	PL310_L2_ABSOLUTE_BASE
-#define CONFIG_SYS_PL310_BASE	0x080D1000
+#define CONFIG_SYS_PL310_BASE	(PL310_L2_ABSOLUTE_BASE)
 #endif
 
 /*This one has to be defined by
@@ -170,8 +168,8 @@
 			{(void *)CONFIG_SYS_SERIAL0,	\
 			 (void *)CONFIG_SYS_SERIAL1 }
 
-# define	CONFIG_SYS_SERIAL0	UART0_APB_ABSOLUTE_BASE
-# define	CONFIG_SYS_SERIAL1	UART1_APB_ABSOLUTE_BASE
+# define	CONFIG_SYS_SERIAL0	(UART0_APB_ABSOLUTE_BASE)
+# define	CONFIG_SYS_SERIAL1	(UART1_APB_ABSOLUTE_BASE)
 //# define CONFIG_PL011_SERIAL_FLUSH_ON_INIT
 
 # define CONFIG_CONS_INDEX	0
@@ -198,7 +196,7 @@
 # define CONFIG_CMD_I2C
 # define CONFIG_SYS_I2C
 # define CONFIG_SYS_I2C_DW
-# define CONFIG_SYS_I2C_SPEED		(1000)
+# define CONFIG_SYS_I2C_SPEED		(100000)
 # define CONFIG_SYS_I2C_BASE		(I2C_APB_ABSOLUTE_BASE)
 # define CONFIG_SYS_I2C_SLAVE		0x90
 #endif
@@ -207,7 +205,7 @@
  * MMC/SD
  */
 #ifdef CONFIG_S3MA_SDHCI0
-# define CONFIG_ENV_IS_IN_MMC
+//# define CONFIG_ENV_IS_IN_MMC
 # define CONFIG_SDHCI
 # define CONFIG_MMC
 # define CONFIG_CMD_MMC
@@ -293,15 +291,15 @@
 #define CONFIG_EXTRA_ENV_SETTINGS	\
 	"ethaddr=00:0a:35:00:01:22\0"	\
 	"kernel_image=uImage\0"	\
-	"kernel_load_address=0x2080000\0" \
+	"kernel_load_address=0x82080000\0" \
 	"ramdisk_image=uramdisk.image.gz\0"	\
-	"ramdisk_load_address=0x4000000\0"	\
+	"ramdisk_load_address=0x84000000\0"	\
 	"devicetree_image=devicetree.dtb\0"	\
-	"devicetree_load_address=0x2000000\0"	\
+	"devicetree_load_address=0x82000000\0"	\
 	"bitstream_image=system.bit.bin\0"	\
 	"boot_image=BOOT.bin\0"	\
 	"loadbit_addr=0x100000\0"	\
-	"loadbootenv_addr=0x2000000\0" \
+	"loadbootenv_addr=0x82000000\0" \
 	"kernel_size=0x500000\0"	\
 	"devicetree_size=0x20000\0"	\
 	"ramdisk_size=0x5E0000\0"	\
@@ -368,6 +366,7 @@
 # define CONFIG_ENV_SIZE		(16 * 1024)
 # define CONFIG_ENV_OFFSET		(6 * 64 * 1024)
 # define CONFIG_SYS_MMC_ENV_DEV	0
+# define CONFIG_ENV_SECT_SIZE	(16 * 1024)
 #elif defined(CONFIG_ENV_IS_IN_SPI_FLASH)
 # define CONFIG_ENV_SIZE		(16 * 1024)
 # define CONFIG_ENV_OFFSET		(0)
