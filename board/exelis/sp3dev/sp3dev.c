@@ -38,13 +38,6 @@ DECLARE_GLOBAL_DATA_PTR;
  * used by hardware bootloader
  */
 
-int dram_init(void)
-{
-	s3ma_dram_init();
-	gd->ram_size = ((ulong)CONFIG_S3MA_RAM_SIZE);
-	return 0;
-}
-
 #ifdef CONFIG_CMD_MMC
 int board_mmc_init(bd_t *bis)
 {
@@ -322,6 +315,12 @@ int s3ma_dram_init(void)
 	return 0;
 }
 
+int dram_init(void)
+{
+	s3ma_dram_init();
+	gd->ram_size = ((ulong)CONFIG_S3MA_RAM_SIZE);
+	return 0;
+}
 
 int s3ma_gpio33_set_value(unsigned gpio, int value)
 {
