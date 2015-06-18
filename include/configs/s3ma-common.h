@@ -151,6 +151,16 @@
 #endif
 
 /*
+ * LED (status bit locations defined by platform)
+ */
+#ifdef CONFIG_S3MA_GPIO
+# define CONFIG_STATUS_LED               /* Status LED enabled */
+# define CONFIG_CMD_LED
+# define CONFIG_BOARD_SPECIFIC_LED
+# define CONFIG_GPIO_LED
+#endif
+
+/*
  * eFuse
  */
 // TBD: Fuse support

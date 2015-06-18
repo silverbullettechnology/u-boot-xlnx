@@ -37,7 +37,7 @@
 //#define CONFIG_S3MA_USB
 #define CONFIG_S3MA_DAC
 //#define CONFIG_CMD_DFU /* firmware download gadget */
-//#define CONFIG_S3MA_AD9361
+#define CONFIG_S3MA_AD9361
 
 #define CONFIG_AD9361_MAX_DEVICE 4
 
@@ -51,6 +51,20 @@
 #else
 # define CONFIG_S3MA_RAM_SIZE		(1024 * 1024 * 1024)
 #endif
+
+/* Board LED Map */
+#define GREEN_LED_GPIO                  21
+#define GREEN_LED_DEV                   0
+#define RED_LED_GPIO                    22
+#define RED_LED_DEV                     1
+#define STATUS_LED_BIT                  GREEN_LED_GPIO
+#define STATUS_LED_BIT1                 RED_LED_GPIO
+#define STATUS_LED_STATE                STATUS_LED_ON
+#define STATUS_LED_STATE1               STATUS_LED_OFF
+#define STATUS_LED_PERIOD               (CONFIG_SYS_HZ / 2)
+#define STATUS_LED_PERIOD1              (CONFIG_SYS_HZ / 2)
+#define STATUS_LED_BOOT                 GREEN_LED_DEV
+#define STATUS_LED_RED                  RED_LED_DEV
 
 #include "s3ma-common.h"
 
