@@ -24,7 +24,10 @@ ENTRY(lowlevel_init)
 		cmp		r11, #0
 		BEQ     _continue
 
+		/* Other cpus halt here.  Branch to 0 on wakeup */
 		wfi
+		mov r0, #0
+		bx r0
 
 _continue:
 	/*
