@@ -756,7 +756,7 @@ void tx_loopback_test(double* param, char param_no)
     		 * TX samples are shifted right
     		 */
     		uint16_t	*tx_ptr = (uint16_t*)&test_buf[0];
-    		uint16_t	*rx_ptr = (uint16_t*)&test_buf[CONFIG_AD9361_RAM_BUFFER_SIZE];
+    		uint16_t	*rx_ptr = (uint16_t*)&test_buf[CONFIG_AD9361_RAM_BUFFER_SIZE/2];
 
     		memset(&test_buf[0], 0xbb, CONFIG_S3MA_OCM_RAM_SIZE);
 
