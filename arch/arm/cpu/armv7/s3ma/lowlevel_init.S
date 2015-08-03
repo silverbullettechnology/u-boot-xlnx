@@ -24,7 +24,17 @@ ENTRY(lowlevel_init)
 		cmp		r11, #0
 		BEQ     _continue
 
+		/* Secondary CPUs: configure the GIC CPU Interface:
+		 * - enable interrupts at all priorities
+		 * - set enable bit in ICCICR */
+		ldr	r0, =0x3BE00100
+		ldr	r1, =0xFFFF
+		str	r1, [r0, #0x04]
+		mov	r1, #1
+		str	r1, [r0]
+
 		/* Other cpus halt here.  Branch to 0 on wakeup */
+		/* IRQs ignored, IRQ/FIQ are still set from earlier */
 		wfi
 		mov r0, #0
 		bx r0
