@@ -15,7 +15,7 @@
 #define ARMV7_DCACHE_INVAL_RANGE	3
 #define ARMV7_DCACHE_CLEAN_INVAL_RANGE	4
 
-#ifndef CONFIG_SYS_DCACHE_OFF
+#if !defined(CONFIG_SYS_DCACHE_OFF) || defined(CONFIG_SYS_DCACHE_ALWAYS_INVALIDATE)
 /*
  * Write the level and type you want to Cache Size Selection Register(CSSELR)
  * to get size details from Current Cache Size ID Register(CCSIDR)
@@ -295,7 +295,7 @@ void  flush_cache(unsigned long start, unsigned long size)
 {
 	flush_dcache_range(start, start + size);
 }
-#else /* #ifndef CONFIG_SYS_DCACHE_OFF */
+#else /* #if !defined(CONFIG_SYS_DCACHE_OFF) || defined(CONFIG_SYS_DCACHE_ALWAYS_INVALIDATE) */
 void invalidate_dcache_all(void)
 {
 }
@@ -327,9 +327,9 @@ void mmu_page_table_flush(unsigned long start, unsigned long stop)
 void arm_init_domains(void)
 {
 }
-#endif /* #ifndef CONFIG_SYS_DCACHE_OFF */
+#endif /* #if !defined(CONFIG_SYS_DCACHE_OFF) || defined(CONFIG_SYS_DCACHE_ALWAYS_INVALIDATE) */
 
-#ifndef CONFIG_SYS_ICACHE_OFF
+#if !defined(CONFIG_SYS_ICACHE_OFF) || defined(CONFIG_SYS_ICACHE_ALWAYS_INVALIDATE)
 /* Invalidate entire I-cache and branch predictor array */
 void invalidate_icache_all(void)
 {

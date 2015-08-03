@@ -61,6 +61,11 @@ int cleanup_before_linux(void)
 	 */
 	invalidate_dcache_all();
 
+	/* Invalidate SCU tag RAMs */
+#ifdef CONFIG_SYS_SCU_TAG_RAM_INVALIDATE
+	writel(0x0000FFFF, ARM_PRIVATE_ABSOLUTE_BASE + 0xc);
+#endif
+
 	/*
 	 * Some CPU need more cache attention before starting the kernel.
 	 */
