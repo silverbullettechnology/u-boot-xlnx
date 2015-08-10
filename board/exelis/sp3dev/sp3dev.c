@@ -155,6 +155,18 @@ int board_init(void)
 	s3ma_gpio33_set_value(CONFIG_SF_DEFAULT_CS, 1);
 	s3ma_gpio33_set_value(CONFIG_LT2640_DAC_CS, 1);
 
+	/* Enable peripheral clocks */
+	clrbits_le32(CRT_CLK_DIS, (DMA_DIS_BITMASK | USB_DIS_BITMASK | SD_DIS_BITMASK));
+	mdelay(100);
+
+	/* Reset USB PHY */
+	gpio_direction_output(USB_RESET_GPIO, 0);
+	mdelay(25);
+	gpio_set_value(USB_RESET_GPIO, 1);
+
+	/* Release reset on PL330 DMA engine */
+	setbits_le32(D330CTL, D330_SRST_N_BITMASK);
+
 	return 0;
 }
 

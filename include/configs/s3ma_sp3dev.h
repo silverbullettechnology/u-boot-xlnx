@@ -69,6 +69,8 @@
 #define STATUS_LED_BOOT                 GREEN_LED_DEV
 #define STATUS_LED_RED                  RED_LED_DEV
 
+#define USB_RESET_GPIO                  23
+
 #include "s3ma-common.h"
 
 #endif	       /* __CONFIG_H */
