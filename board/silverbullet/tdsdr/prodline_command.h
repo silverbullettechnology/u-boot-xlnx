@@ -82,6 +82,7 @@ int load_bist_image(void);
 /***************************************************************************/
 void amc_get_help(char (*param)[50], char param_no);
 void amc_spi_test(char (*param)[50], char param_no);
+void amc_gpio_test(char (*param)[50], char param_no);
 void lmk_prog(char (*param)[50], char param_no);
 
 /************************** Variable Definitions ****************************/

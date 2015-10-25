@@ -60,7 +60,8 @@
  * tuned for faster or slower processor speeds.
  */
 #define LED_DELAY		10000000
-#define PDI_DELAY		314 //period of ~10us
+#define PDI_DELAY		152 //period of ~5us
+//#define PDI_DELAY		314 //period of ~10us
 //#define PDI_DELAY		628 //period of ~20us
 
 /*
@@ -589,8 +590,15 @@ enum status_code pdi_get_byte( uint8_t *ret, uint32_t retries )
  */
 void pdi_deinit( void )
 {
-  XGpioPs_WritePin(&Gpio, PDI_DATA_pin, 0);
-  XGpioPs_WritePin(&Gpio, PDI_CLOCK_pin, !PDI_CLOCK_Value);
-  XGpioPs_SetDirectionPin(&Gpio, PDI_DATA_pin, 0);
-  XGpioPs_SetDirectionPin(&Gpio, PDI_CLOCK_pin, 0);
+    volatile int Delay;
+
+    XGpioPs_WritePin(&Gpio, PDI_DATA_pin, 0);
+    XGpioPs_WritePin(&Gpio, PDI_CLOCK_pin, PDI_CLOCK_Value);
+    for (Delay = 0; Delay < PDI_DELAY / 2; Delay++);
+    XGpioPs_WritePin(&Gpio, PDI_CLOCK_pin, !PDI_CLOCK_Value);
+    for (Delay = 0; Delay < PDI_DELAY / 2; Delay++);
+    XGpioPs_WritePin(&Gpio, PDI_CLOCK_pin, PDI_CLOCK_Value);
+
+  //XGpioPs_SetDirectionPin(&Gpio, PDI_DATA_pin, 0);
+  //XGpioPs_SetDirectionPin(&Gpio, PDI_CLOCK_pin, 0);
 }

@@ -195,6 +195,7 @@ int pdi_main (char *buffer, unsigned int size)
 
   //program the flash with the application image.
   
+
   for(i=0;i<=flash_data.used_buffers;i++){
   
 	  if(flash_data.application_data[i].address >= 0x20000)
@@ -236,9 +237,11 @@ int pdi_main (char *buffer, unsigned int size)
 		break;
 	  }	
   }
+  
+  xnvm_deinit();
   xnvm_init();
   xnvm_pull_dev_out_of_reset();
-  xnvm_deinit();
+
 }
 
 int compare_mem(char * write, char * read, int length){
@@ -455,7 +458,6 @@ S_record parse_srec_line (char * line){
     bytes++;
     }
 
-    	//printf("\r\nget checksum\r\n");
     //get checksum
     eof = bof+2;
     i=0;

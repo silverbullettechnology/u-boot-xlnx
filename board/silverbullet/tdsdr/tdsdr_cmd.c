@@ -48,6 +48,7 @@ static int do_pdi(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
        {
        case 'q':
          printf("exiting\n");
+	 pdi_deinit();
          return 0;
        case 'l':
          printf("doing 'l'!\n");

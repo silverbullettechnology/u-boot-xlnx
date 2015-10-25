@@ -1,6 +1,7 @@
 
 
 int atmel_write_read(void);
+int amc_gpio_interface(void);
 int ADI_read_reg(u16 SpiDeviceId, u16 SlaveSelectVar);
 int TRSS_test(void);
 int read_adi_reg(void);

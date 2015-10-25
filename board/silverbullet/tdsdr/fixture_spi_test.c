@@ -46,7 +46,66 @@ static char Device_Id_Var = 2;
 * @note		None
 *
 ******************************************************************************/
+/******************************************************************************/
+int amc_gpio_interface(void)
+{
+	XGpioPs_Config *ConfigPtr;	
+	int Status;
+	int i;
+	int pin = 60;
+	int val = 0;
+	char invert;
+	
+	char buffer[5];
 
+	char *buffer_p = &buffer[0];
+
+	printf("AMC GPIO Test Function\r\n*WARNING! YOU CAN DAMAGE THE SDR WITH THIS UTILITY!!\r\n");
+	
+	ConfigPtr = XGpioPs_LookupConfig(GPIO_DEVICE_ID);
+	Status = XGpioPs_CfgInitialize(&Gpio, ConfigPtr,
+					ConfigPtr->BaseAddr);
+	if (Status != XST_SUCCESS) {
+		return XST_FAILURE;
+	}
+	   for (;;)
+	     {
+	     XGpioPs_SetDirectionPin(&Gpio, pin, 1);
+	     XGpioPs_SetOutputEnablePin(&Gpio, pin, 1);
+	     XGpioPs_WritePin(&Gpio, pin, val);
+
+	     printf("\n--------------\n");
+	     printf("active GPIO: %d\r\n", pin);
+	     printf(" q    	Quit\n");
+	     printf(" a    	change active gpio\n");
+	     printf(" SPACE     toggle GPIO\n");
+	     //printf(" l    Spin LEDs\n");
+	     printf("-- enter cmd: ");
+	     char c = getc();
+	     switch (c)
+	       {
+	       case 'q':
+		 printf("exiting\n");
+		 return 0;
+	       case ' ':
+		 val = !val;
+		 printf("toggling the pin: %d\n", val);
+		 XGpioPs_WritePin(&Gpio, pin, val);
+		 break;
+	       case 'a':
+		 printf("\nEnter gpio pin: \n");
+		 xil_fgets(buffer, 4);
+		 pin = atoint(buffer);
+		 break;
+	       default:
+		 printf("Invalid command: '%c'\n", c);
+		 break;
+	       }
+	     }
+	printf("back to menu.\r\n");
+}
+
+/******************************************************************************/
 
 /******************************************************************************/
 int atmel_write_read(void)
@@ -136,6 +195,9 @@ int atmel_write_read(void)
 	XGpioPs_SetOutputEnablePin(&Gpio, ss_pin, 1);
 	XGpioPs_SetOutputEnablePin(&Gpio, miso_pin, 0);
 
+	XGpioPs_WritePin(&Gpio, mosi_pin, 0x0);
+	XGpioPs_WritePin(&Gpio, clk_pin, 0x0);
+
 	/*
 	 * Set the chip select, must use GPIO due to Zynq errata?
 	 */
@@ -151,14 +213,9 @@ int atmel_write_read(void)
 	for (Delay = 0; Delay < LED_DELAY; Delay++);
 
 	//start a polled transfer
-	invert = 0;
-	if(invert){
-		printf("Starting inverted data transfer\r\n");
-		soft_spi_transfer_invert(&Gpio, write_buffer_p, read_buffer_p,size);
-	}
-	else{
-		soft_spi_transfer(&Gpio, write_buffer_p, read_buffer_p,size);
-	}
+
+	soft_spi_transfer(&Gpio, write_buffer_p, read_buffer_p,size);
+
 	//printf("Clear the Select pin %d\r\n",Slave_Select_Var);
 
 	/*
@@ -175,6 +232,15 @@ int atmel_write_read(void)
 	read_buffer[size] = '\0';
 	printf("\r\n%s\r\n",read_buffer);
 
+	XGpioPs_SetDirectionPin(&Gpio, mosi_pin, 0);
+	XGpioPs_SetDirectionPin(&Gpio, clk_pin, 0);
+	XGpioPs_SetDirectionPin(&Gpio, ss_pin, 0);
+	XGpioPs_SetDirectionPin(&Gpio, miso_pin, 0);
+
+	XGpioPs_SetOutputEnablePin(&Gpio, mosi_pin, 0);
+	XGpioPs_SetOutputEnablePin(&Gpio, clk_pin, 0);
+	XGpioPs_SetOutputEnablePin(&Gpio, ss_pin, 0);
+	XGpioPs_SetOutputEnablePin(&Gpio, miso_pin, 0);
 
 printf("back to menu.\r\n");
 }

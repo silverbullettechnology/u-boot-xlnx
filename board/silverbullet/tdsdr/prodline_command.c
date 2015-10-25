@@ -75,6 +75,7 @@ const char prod_cmd_no = (sizeof(prodline_cmd_list) / sizeof(prod_command));
 prod_command amc_cmd_list[] = {
 	{"help", "Displays all available commands.", "", amc_get_help},
 	{"spi_test", "Opens the spi interface for the Atmel MCU", "", amc_spi_test},
+	{"gpio", "Opens the gpio test interface", "", amc_gpio_test},
 	{"lmk_prog", "Programs the clock module from the registers located at an address in memory", "", lmk_prog},
 };
 const char amc_cmd_no = (sizeof(amc_cmd_list) / sizeof(prod_command));
@@ -369,6 +370,17 @@ void amc_spi_test(char (*param)[50], char param_no){
 	Xil_ICacheEnable();
 	Xil_DCacheEnable();
 	atmel_write_read();
+}
+
+void amc_gpio_test(char (*param)[50], char param_no){
+	int i;
+	printf("Running AMC gpio test.\r\n");
+	for (i = 0; i < param_no; i++) {
+        printf("Argument %i is: %s\n", i, param[i]);
+    	}
+	Xil_ICacheEnable();
+	Xil_DCacheEnable();
+	amc_gpio_interface();
 }
 
 void lmk_prog(char (*param)[50], char param_no){
