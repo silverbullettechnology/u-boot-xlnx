@@ -82,6 +82,13 @@ int load_bist_image(void);
 /***************************************************************************/
 void amc_get_help(char (*param)[50], char param_no);
 void amc_spi_test(char (*param)[50], char param_no);
+void amc_set_xtal_sw(char (*param)[50], char param_no);
+void amc_set_bus_sw(char (*param)[50], char param_no);
+void amc_set_led_sw(char (*param)[50], char param_no);
+void amc_set_sync_sw(char (*param)[50], char param_no);
+void amc_reset_atmel(char (*param)[50], char param_no);
+void amc_get_status(char (*param)[50], char param_no);
+void amc_get_firmware(char (*param)[50], char param_no);
 void amc_gpio_test(char (*param)[50], char param_no);
 void lmk_prog(char (*param)[50], char param_no);
 

@@ -1,5 +1,5 @@
 
-
+int atmel_spi_transaction(char * write_buffer,char * read_buffer, int size);
 int atmel_write_read(void);
 int amc_gpio_interface(void);
 int ADI_read_reg(u16 SpiDeviceId, u16 SlaveSelectVar);

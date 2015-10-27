@@ -60,12 +60,12 @@
 #include "xil_testmem.h"
 #include "xil_io.h"
 #include "xil_assert.h"
+#include "xuartps_hw.h"
 
 /************************** Constant Definitions ****************************/
 /************************** Function Prototypes *****************************/
 
 static u32 RotateLeft(u32 Input, u8 Width);
-
 /* define ROTATE_RIGHT to give access to this functionality */
 /* #define ROTATE_RIGHT */
 #ifdef ROTATE_RIGHT
@@ -102,8 +102,35 @@ static u32 RotateRight(u32 Input, u8 Width);
 * patterns used not to repeat over the region tested.
 *
 *****************************************************************************/
+int spinval = 0;
+void spinner(){
+
+	if(spinval <= 0){
+		outbyte(0x7f);
+		outbyte(0x7c);
+		spinval++;
+	}else if(spinval == 1){
+		outbyte(0x7f);
+		outbyte(0x2f);
+		spinval++;
+	}else if(spinval == 2){
+		outbyte(0x7f);
+		outbyte(0x2d);
+		spinval++;
+	}else if(spinval >= 3){
+		outbyte(0x7f);
+		outbyte(0x5c);
+		spinval=0;
+	}
+}
+
+void outbyte(char c) {
+	 XUartPs_SendByte(STDOUT_BASEADDRESS, c);
+}
+
 int Xil_TestMem32(u32 *Addr, u32 Words, u32 Pattern, u8 Subtest)
 {
+#define MODVAL 0x100000
 	u32 I;
 	u32 J;
 	u32 Val;
@@ -131,12 +158,14 @@ int Xil_TestMem32(u32 *Addr, u32 Words, u32 Pattern, u8 Subtest)
 		/* fall through case statement */
 
 	case XIL_TESTMEM_INCREMENT:
-		
 		/*
 		 * Fill the memory with incrementing
 		 * values starting from 'FirtVal'
 		 */
 		for (I = 0L; I < Words; I++) {
+			if(I % MODVAL == 0){//update spinner
+				spinner();
+			}
 			Addr[I] = Val;
 			Val++;
 		}
@@ -153,8 +182,10 @@ int Xil_TestMem32(u32 *Addr, u32 Words, u32 Pattern, u8 Subtest)
 		 * with the incrementing reference
 		 * Val
 		 */
-
 		for (I = 0L; I < Words; I++) {
+			if(I % MODVAL == 0){//update spinner
+				spinner();
+			}			
 			Word = Addr[I];
 
 			if (Word != Val) {
@@ -179,7 +210,6 @@ int Xil_TestMem32(u32 *Addr, u32 Words, u32 Pattern, u8 Subtest)
 		 * set up to cycle through all possible initial
 		 * test Patterns for walking ones test
 		 */
-		
 		for (J = 0L; J < 32; J++) {
 			/*
 			 * Generate an initial value for walking ones test
@@ -233,7 +263,6 @@ int Xil_TestMem32(u32 *Addr, u32 Words, u32 Pattern, u8 Subtest)
 		 * set up to cycle through all possible
 		 * initial test Patterns for walking zeros test
 		 */
-
 		for (J = 0L; J < 32; J++) {
 
 			/*
@@ -285,6 +314,9 @@ int Xil_TestMem32(u32 *Addr, u32 Words, u32 Pattern, u8 Subtest)
 	case XIL_TESTMEM_INVERSEADDR:
 		/* Fill the memory with inverse of address */
 		for (I = 0L; I < Words; I++) {
+			if(I % MODVAL == 0){//update spinner
+				spinner();
+			}
 			/* write memory location */
 			Val = (u32) (~((u32) (&Addr[I])));
 			Addr[I] = Val;
@@ -294,8 +326,10 @@ int Xil_TestMem32(u32 *Addr, u32 Words, u32 Pattern, u8 Subtest)
 		 * Check every word within the words
 		 * of tested memory
 		 */
-		
 		for (I = 0L; I < Words; I++) {
+			if(I % MODVAL == 0){//update spinner
+				spinner();
+			}
 			/* Read the location */
 			Word = Addr[I];
 			Val = (u32) (~((u32) (&Addr[I])));
@@ -317,7 +351,6 @@ int Xil_TestMem32(u32 *Addr, u32 Words, u32 Pattern, u8 Subtest)
 		 * Generate an initial value for
 		 * memory testing
 		 */
-
 		if (Pattern == 0) {
 			Val = 0xDEADBEEF;
 		}
@@ -328,8 +361,10 @@ int Xil_TestMem32(u32 *Addr, u32 Words, u32 Pattern, u8 Subtest)
 		/*
 		 * Fill the memory with fixed Pattern
 		 */
-
 		for (I = 0L; I < Words; I++) {
+			if(I % MODVAL == 0){//update spinner
+				spinner();
+			}
 			/* write memory location */
 			Addr[I] = Val;
 		}
@@ -339,9 +374,10 @@ int Xil_TestMem32(u32 *Addr, u32 Words, u32 Pattern, u8 Subtest)
 		 * of tested memory and compare it
 		 * with the fixed Pattern
 		 */
-		
 		for (I = 0L; I < Words; I++) {
-			
+			if(I % MODVAL == 0){//update spinner
+				spinner();
+			}
 			/* read memory location */
 			
 			Word = Addr[I];
@@ -365,6 +401,9 @@ int Xil_TestMem32(u32 *Addr, u32 Words, u32 Pattern, u8 Subtest)
 	}			/* end of switch */
 
 	/* Successfully passed memory test ! */
+	outbyte(0x7f);
+	outbyte('\r');
+	outbyte('\n');
 
 	return 0;
 }

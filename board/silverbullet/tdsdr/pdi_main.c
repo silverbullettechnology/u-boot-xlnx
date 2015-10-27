@@ -126,6 +126,11 @@ int pdi_main (char *buffer, unsigned int size)
   flash_data.application_data[0].address = 0;
   flash_data.application_data[0].byte_count = 0;
 
+  //Xil_DCacheFlush();
+  //Xil_DCacheDisable();
+  //Xil_ICacheDisable();
+  Xil_ICacheEnable();
+  Xil_DCacheEnable();
 
   printf("\r\nStart of parsing\r\n");
   //parse the srecord file passed from uboot
@@ -400,7 +405,7 @@ unsigned char srec_calc_checksum(unsigned char * line){
 //function returns a S_record struct after parsing a null terminated string
 S_record parse_srec_line (char * line){
     S_record srec;
-    char tmp[8];
+    char tmp[8] = { '\0' };
     char temp;
     char * bof;
     char * eof;

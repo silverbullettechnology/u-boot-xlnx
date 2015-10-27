@@ -33,19 +33,10 @@
 *
 *
 ******************************************************************************/
- #include <common.h> 
-//#include <stdio.h>
-//#include "definitions.h"
+#include <common.h> 
 
 #include "routines.h"
 #include "fixture_spi_test.h"
-
-//#include "xparameters.h"
-//#include "xil_cache.h"
-
-//#include "xgpiops.h"
-//#include "xstatus.h"
-//#include "xuartps_hw.h"
 
 #include "prodline_command.h"
 
@@ -67,13 +58,20 @@ prod_command prodline_cmd_list[] = {
 	{"led", "Runs the BIST LED test.", "", led_test},
 	{"xadc", "Outputs the temperature readings from the Zynq onboard XADC.", "", xadc_temperature},
 	//{"distortion_test", "Runs a distortion loopback test.", "", rftest},
-	{"srio", "Runs a basic test of the SRIO modules", "", bist_srio_test},
+	//{"srio", "Runs a basic test of the SRIO modules", "", bist_srio_test},
 	{"load", "loads the bist application to memory", "", load_bist_image}
 };
 const char prod_cmd_no = (sizeof(prodline_cmd_list) / sizeof(prod_command));
 
 prod_command amc_cmd_list[] = {
 	{"help", "Displays all available commands.", "", amc_get_help},
+	{"xtal_sw", "Sets the source for the main system/RF clock", "", amc_set_xtal_sw},
+	{"bus_sw", "Sets the condition of the backplane bus switch", "", amc_set_bus_sw},
+	{"led_sw", "Sets the source of the lock LED (green)", "", amc_set_led_sw},
+	{"sync_sw", "Sets the source for the external clock synchronization (PLL1)", "", amc_set_sync_sw},
+	{"status", "Reads the status indicators from the AMC MCU", "", amc_get_status},
+	{"reset_amc", "Resets the AMC MCU (also the Zynq)", "", amc_reset_atmel},
+	{"firmware", "Reads the AMC MCU firmware version", "", amc_get_firmware},
 	{"spi_test", "Opens the spi interface for the Atmel MCU", "", amc_spi_test},
 	{"gpio", "Opens the gpio test interface", "", amc_gpio_test},
 	{"lmk_prog", "Programs the clock module from the registers located at an address in memory", "", lmk_prog},
@@ -127,8 +125,12 @@ void adi_basic_test(char (*param)[50], char param_no){
 	for (i = 0; i < param_no; i++) {
         printf("Argument %i is: %s\n", i, param[i]);
     }
-
+	Xil_ICacheEnable();
+	Xil_DCacheEnable();
 	adi_xcvr_test();
+	Xil_DCacheFlush();
+	Xil_DCacheDisable();
+	Xil_ICacheDisable();
 }
 
 
@@ -173,9 +175,14 @@ void memory_test(char (*param)[50], char param_no){
 	for (i = 0; i < param_no; i++) {
         printf("Argument %i is: %s\n", i, param[i]);
     }
-	Xil_ICacheEnable();
+	Xil_DCacheFlush();
 	Xil_DCacheEnable();
+	Xil_ICacheEnable();
 	hello_mem();
+	Xil_DCacheFlush();
+	Xil_DCacheDisable();
+	Xil_ICacheDisable();
+	bist_loaded = 0;
 }
 
 void adi_loopback_test(char (*param)[50], char param_no){
@@ -188,9 +195,6 @@ void adi_loopback_test(char (*param)[50], char param_no){
     }
 	
 	if(param_no == 1){
-		//ADI_Loopback_Test();
-		//Xil_ICacheEnable();
-		//Xil_DCacheEnable();
 		//first load the image from some location storend in env, make sure to check result
 		if (load_bist_image() < 1){
 
@@ -200,11 +204,9 @@ void adi_loopback_test(char (*param)[50], char param_no){
 			argv[1] = param[0];
 			do_go_exec ((void *)LOAD_ADDR, 1, argv);
 		}
-	} else {
+	} else
 		printf("\r\nInvalid number of arguments; expected 1. Example usage to test adi 1:\r\n'bist adi_loopback 1\r\n");
-	}
-
-
+	
 }
 
 void adi_temperature(char (*param)[50], char param_no){
@@ -215,8 +217,6 @@ void adi_temperature(char (*param)[50], char param_no){
 	for (i = 0; i < param_no; i++) {
         printf("Argument %i is: %s\n", i, param[i]);
     }
-	//Xil_ICacheEnable();
-	//Xil_DCacheEnable();	
 	ret = load_bist_image();
 	
 	if (ret < 1){	
@@ -234,8 +234,6 @@ void adi_init(char (*param)[50], char param_no){
 	for (i = 0; i < param_no; i++) {
         printf("Argument %i is: %s\n", i, param[i]);
     }
-	//Xil_ICacheEnable();
-	//Xil_DCacheEnable();
 	ret = load_bist_image();
 	printf("ret: %d\r\n");
 	if (ret<1){	
@@ -252,9 +250,7 @@ void bist_srio_test(char (*param)[50], char param_no){
 	printf("Initializaing AD9361.\r\n");
 	for (i = 0; i < param_no; i++) {
         printf("Argument %i is: %s\n", i, param[i]);
-    }
-	//Xil_ICacheEnable();
-	//Xil_DCacheEnable();	
+    }	
 	if (load_bist_image() < 1){	
 		argv[0] = "srio_test";
 		argv[1] = "";
@@ -269,7 +265,7 @@ void tpm_test(char (*param)[50], char param_no){
 	for (i = 0; i < param_no; i++) {
         printf("Argument %i is: %s\n", i, param[i]);
     }
-	//TRSS_test();
+	TRSS_test();
 
 }
 
@@ -279,24 +275,17 @@ void led_test(char (*param)[50], char param_no){
 	printf("Running LED test.\r\n");
 	for (i = 0; i < param_no; i++) {
         printf("Argument %i is: %s\n", i, param[i]);
-    }
-	//Xil_ICacheEnable();
-	//Xil_DCacheEnable();	
+    }	
 	if (load_bist_image() < 1){	
 		argv[0] = "hello_led";
 		argv[1] = "";
+		Xil_ICacheEnable();
+		Xil_DCacheEnable();
 		do_go_exec ((void *)LOAD_ADDR, 1, argv);
+		Xil_DCacheFlush();
+		Xil_DCacheDisable();
+		Xil_ICacheDisable();
 	}	
-
-/*int i;
-	printf("Running LED test.\r\n");
-	for (i = 0; i < param_no; i++) {
-        printf("Argument %i is: %s\n", i, param[i]);
-    }
-	/*Xil_ICacheEnable();
-	Xil_DCacheEnable();	
-	hello_led();
-	printf("Warning! Ethernet probably doesn't work now!\r\n");*/
 }
 
 void xadc_temperature(char (*param)[50], char param_no){
@@ -305,7 +294,12 @@ void xadc_temperature(char (*param)[50], char param_no){
 	for (i = 0; i < param_no; i++) {
         printf("Argument %i is: %s\n", i, param[i]);
     }
+	Xil_ICacheEnable();
+	Xil_DCacheEnable();
 	xadc_main();
+	Xil_DCacheFlush();
+	Xil_DCacheDisable();
+	Xil_ICacheDisable();
 
 }
 
@@ -367,8 +361,8 @@ void amc_spi_test(char (*param)[50], char param_no){
 	for (i = 0; i < param_no; i++) {
         printf("Argument %i is: %s\n", i, param[i]);
     	}
-	Xil_ICacheEnable();
-	Xil_DCacheEnable();
+	//Xil_ICacheEnable();
+	//Xil_DCacheEnable();
 	atmel_write_read();
 }
 
@@ -378,8 +372,8 @@ void amc_gpio_test(char (*param)[50], char param_no){
 	for (i = 0; i < param_no; i++) {
         printf("Argument %i is: %s\n", i, param[i]);
     	}
-	Xil_ICacheEnable();
-	Xil_DCacheEnable();
+	//Xil_ICacheEnable();
+	//Xil_DCacheEnable();
 	amc_gpio_interface();
 }
 
@@ -388,7 +382,6 @@ void lmk_prog(char (*param)[50], char param_no){
 
 	uint32_t buf_loc;
 	char *image;
-	unsigned int size;
 
 	printf("LMK Programming Utility.\r\n");
 	for (i = 0; i < param_no; i++) {
@@ -400,4 +393,231 @@ void lmk_prog(char (*param)[50], char param_no){
 	Xil_ICacheEnable();
 	Xil_DCacheEnable();
 	program_lmk(image);
+	Xil_DCacheFlush();
+	Xil_DCacheDisable();
+	Xil_ICacheDisable();
+}
+
+void amc_set_xtal_sw(char (*param)[50], char param_no){
+	int i, val, size;
+	#define write_array_size 128
+	char write_buffer[write_array_size];
+	char read_buffer[write_array_size];
+
+	printf("Setting system clock switch.\r\n");
+	for (i = 0; i < param_no; i++) {
+        printf("Argument %i is: %s\n", i, param[i]);
+    	}
+
+	if(param_no == 1){
+		sscanf(param[0],"%d",&val);
+
+		write_buffer[0] = 's';
+		write_buffer[1] = 'x';
+		write_buffer[2] = 's';
+		write_buffer[3] = ' ';
+		write_buffer[4] = val+48;
+		size = 5;
+		Xil_ICacheEnable();
+		Xil_DCacheEnable();
+		atmel_spi_transaction(write_buffer, read_buffer, size);
+		Xil_DCacheFlush();
+		Xil_DCacheDisable();
+		Xil_ICacheDisable();	
+		
+	} else {
+		printf("\r\nInvalid number of arguments; Enter the desired clock, 0:onboard, 1:TCLKA, 2:Front Panel.\r\n");
+	}
+}
+
+void amc_set_bus_sw(char (*param)[50], char param_no){
+	int i, val, size;
+	#define write_array_size 128
+	char write_buffer[write_array_size];
+	char read_buffer[write_array_size];
+	printf("Setting AMC backplane switches\r\n");
+	for (i = 0; i < param_no; i++) {
+        printf("Argument %i is: %s\n", i, param[i]);
+    	}
+	if(param_no == 1){
+		sscanf(param[0],"%d",&val);
+
+		write_buffer[0] = 's';
+		write_buffer[1] = 'b';
+		write_buffer[2] = 's';
+		write_buffer[3] = ' ';
+		write_buffer[4] = val+48;
+		size = 5;
+		Xil_ICacheEnable();
+		Xil_DCacheEnable();
+		atmel_spi_transaction(write_buffer, read_buffer, size);
+		Xil_DCacheFlush();
+		Xil_DCacheDisable();
+		Xil_ICacheDisable();
+	} else {
+		printf("\r\nInvalid number of arguments; Enter the backplane settings, 0:None Connected, 1:SW1, 2:SW2, 3:Both\r\n");
+	}
+}
+
+void amc_set_led_sw(char (*param)[50], char param_no){
+	int i, val, size;
+	#define write_array_size 128
+	char write_buffer[write_array_size];
+	char read_buffer[write_array_size];
+	printf("Setting Lock LED source\r\n");
+	for (i = 0; i < param_no; i++) {
+        printf("Argument %i is: %s\n", i, param[i]);
+    	}
+	if(param_no == 1){
+		sscanf(param[0],"%d",&val);
+
+		write_buffer[0] = 's';
+		write_buffer[1] = 'l';
+		write_buffer[2] = 's';
+		write_buffer[3] = ' ';
+		write_buffer[4] = val+48;
+		size = 5;
+		Xil_ICacheEnable();
+		Xil_DCacheEnable();
+		atmel_spi_transaction(write_buffer, read_buffer, size);
+		Xil_DCacheFlush();
+		Xil_DCacheDisable();
+		Xil_ICacheDisable();
+	} else {
+		printf("\r\nInvalid number of arguments; Enter the LED source, 0:PLL2, 1:PLL1 and PLL2, 2:NO LED\r\n");
+	}
+}
+
+void amc_set_sync_sw(char (*param)[50], char param_no){
+	int i, val, size;
+	#define write_array_size 128
+	char write_buffer[write_array_size];
+	char read_buffer[write_array_size];
+	printf("Setting clock synchronization source\r\n");
+	for (i = 0; i < param_no; i++) {
+        printf("Argument %i is: %s\n", i, param[i]);
+    	}
+	if(param_no == 1){
+		sscanf(param[0],"%d",&val);
+
+		write_buffer[0] = 's';
+		write_buffer[1] = 's';
+		write_buffer[2] = 's';
+		write_buffer[3] = ' ';
+		write_buffer[4] = val+48;
+		size = 5;
+		Xil_ICacheEnable();
+		Xil_DCacheEnable();
+		atmel_spi_transaction(write_buffer, read_buffer, size);
+		Xil_DCacheFlush();
+		Xil_DCacheDisable();
+		Xil_ICacheDisable();
+	} else {
+		printf("\r\nInvalid number of arguments; Enter the synchronization clock source, 0:TCLKA, 1:TCLKC, 2:Front Panel\r\n");
+	}
+}
+
+void amc_reset_atmel(char (*param)[50], char param_no){
+	int i, val, size;
+	#define write_array_size 128
+	char write_buffer[write_array_size];
+	char read_buffer[write_array_size];
+	printf("Resetting AMC MCU, system rebooting now\r\n");
+	for (i = 0; i < param_no; i++) {
+        printf("Argument %i is: %s\n", i, param[i]);
+    	}
+
+	write_buffer[0] = 'r';
+	write_buffer[1] = 's';
+	write_buffer[2] = 't';
+	size = 3;
+	Xil_ICacheEnable();
+	Xil_DCacheEnable();
+	atmel_spi_transaction(write_buffer, read_buffer, size);
+	Xil_DCacheFlush();
+	Xil_DCacheDisable();
+	Xil_ICacheDisable();
+
+}
+
+void amc_get_status(char (*param)[50], char param_no){
+	int i, size;
+	char val;
+	#define write_array_size 128
+	char write_buffer[write_array_size];
+	char read_buffer[write_array_size];
+	printf("Getting AMC MCU status\r\n");
+	for (i = 0; i < param_no; i++) {
+        printf("Argument %i is: %s\n", i, param[i]);
+	}
+
+	write_buffer[0] = 'g';
+	write_buffer[1] = 's';
+	write_buffer[2] = 't';
+	size = 3;
+
+	Xil_ICacheEnable();
+	Xil_DCacheEnable();
+	atmel_spi_transaction(write_buffer, read_buffer, size);
+	Xil_DCacheFlush();
+	Xil_DCacheDisable();
+	Xil_ICacheDisable();
+
+	for(i=0;i<32;i++){
+		write_buffer[i] = ' ';
+	}
+	
+	size = 16;
+	
+	Xil_ICacheEnable();
+	Xil_DCacheEnable();
+	atmel_spi_transaction(write_buffer, read_buffer, size);
+	Xil_DCacheFlush();
+	Xil_DCacheDisable();
+	Xil_ICacheDisable();
+	
+	printf("LED Status : %c\r\n", read_buffer[2]);
+	printf("XTAL Source: %c\r\n", read_buffer[4]);
+	printf("AMC Switch : %c\r\n", read_buffer[6]);
+	printf("Sync Source: %c\r\n", read_buffer[8]);
+	printf("LED Source : %c\r\n", read_buffer[10]);
+}
+
+void amc_get_firmware(char (*param)[50], char param_no){
+	int i, val, size;
+	#define write_array_size 128
+	char write_buffer[write_array_size];
+	char read_buffer[write_array_size];
+	printf("Getting AMC MCU firmware version\r\n");
+	for (i = 0; i < param_no; i++) {
+        printf("Argument %i is: %s\n", i, param[i]);
+	}
+
+	write_buffer[0] = 'g';
+	write_buffer[1] = 'f';
+	write_buffer[2] = 'w';
+	size = 3;
+
+	Xil_ICacheEnable();
+	Xil_DCacheEnable();
+	atmel_spi_transaction(write_buffer, read_buffer, size);
+	Xil_DCacheFlush();
+	Xil_DCacheDisable();
+	Xil_ICacheDisable();
+
+	for(i=0;i<127;i++){
+		write_buffer[i] = ' ';
+	}
+	
+	size = 16;
+	
+	Xil_ICacheEnable();
+	Xil_DCacheEnable();
+	atmel_spi_transaction(write_buffer, read_buffer, size);
+	Xil_DCacheFlush();
+	Xil_DCacheDisable();
+	Xil_ICacheDisable();
+	
+	read_buffer[size] = '\0';
+	printf("AMC Firmware Version: %c%c%c%c", read_buffer[4],read_buffer[5],read_buffer[6],read_buffer[7]);
 }
